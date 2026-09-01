@@ -868,9 +868,14 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		addSection("squire.gui.command.common");
 		var context = dev.squire.server.gui.CommandCatalog.Context.of(handler.state());
 		var entries = dev.squire.server.gui.CommandCatalog.visible(context);
+		dev.squire.server.gui.CommandCatalog.Entry equipment = null;
 		int column = 0;
 		int top = 0;
 		for (var entry : entries) {
+			if ("equip.self".equals(entry.id())) {
+				equipment = entry;
+				continue;
+			}
 			if (entry.compact()) {
 				column = 0; // 紧凑行独占一整条，不和上一行的半格拼在一起
 				addCompactEntry(entry);
@@ -883,6 +888,20 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			column = (column + 1) % 2;
 		}
 		nextUnlockY = take(LINE_H + 4);
+		if (equipment != null) {
+			gap(3);
+			addSection("squire.gui.command.equipment_supplies");
+			var variant = equipment.defaultVariant();
+			if (variant != null) {
+				int equipmentTop = take(BTN_H + 3);
+				final int actionId = variant.actionId();
+				addPageWidget(ButtonWidget.builder(
+						Text.translatable("squire.gui.button.auto_equip_best_armor"),
+						b -> click(actionId))
+					.dimensions(x + CONTENT_MARGIN, y + equipmentTop,
+						contentWidth(), BTN_H).build());
+			}
+		}
 	}
 
 	/** 「下一相关能力」那一行画在哪。文字每帧现取，所以位置排死。 */
@@ -907,11 +926,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	}
 
 	/**
-	 * 说明在左、一排小格子在右。「要 16 / 64 / 256 个」是一个选择，不是三件事。
+	 * 说明在左、一排小格子在右。同一动作有多个合法档位时在这里紧凑显示。
 	 *
-	 * <p>格子宽度<b>按最长的那个标签算</b>，不是写死的 34px：中文的「铁套装」三个字
-	 * 塞得进去，英文的 {@code Netherite set} 塞不进去，而写死宽度时这件事没有任何
-	 * 迹象——按钮照画，字直接糊出格子。整条放不下就把说明单独占一行、下面一行等分，
+	 * <p>格子宽度<b>按最长的那个标签算</b>，不是写死的 34px；否则较长的本地化文案
+	 * 会直接糊出格子。整条放不下就把说明单独占一行、下面一行等分，
 	 * 两种语言都不会溢出。</p>
 	 */
 	private void addCompactEntry(dev.squire.server.gui.CommandCatalog.Entry entry) {

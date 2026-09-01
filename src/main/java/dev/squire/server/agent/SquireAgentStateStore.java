@@ -78,6 +78,13 @@ public final class SquireAgentStateStore extends PersistentState {
 		public final ItemStack[] armor = new ItemStack[] {
 			ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY };
 		public float health = 20.0f;
+		/** Server-authoritative recall-bell quality; item NBT is only a mirror. */
+		public String bellTier = dev.squire.server.item.BellTier.COMMON.id();
+		/** True only after an actual death, never for an ordinary dismiss/recall. */
+		public boolean deathPending;
+		public long deathTick;
+		/** Absolute overworld game tick. Swapping or upgrading bells cannot shorten it. */
+		public long reviveAvailableTick;
 		/** 长期策略引用（如 GuardPolicy JSON），phase D 填充。 */
 		public final List<String> persistentPolicies = new ArrayList<>();
 		/**
@@ -267,6 +274,46 @@ public final class SquireAgentStateStore extends PersistentState {
 		});
 	}
 
+	/** Commit a validated quality upgrade to the identity, not to one physical bell. */
+	public synchronized boolean setBellTier(UUID agentId,
+			dev.squire.server.item.BellTier expected,
+			dev.squire.server.item.BellTier next) {
+		ensureWritable();
+		AgentRecord record = recordsByAgent.get(agentId);
+		if (record == null || expected == null || next == null
+				|| dev.squire.server.item.BellTier.byId(record.bellTier) != expected
+				|| expected.next() != next) {
+			return false;
+		}
+		record.bellTier = next.id();
+		markDirty();
+		return true;
+	}
+
+	/** Record death after belongings were snapshotted at their exact counts/durability. */
+	public synchronized void markDeath(UUID agentId, long deathTick,
+			long reviveAvailableTick) {
+		ensureWritable();
+		AgentRecord record = recordsByAgent.get(agentId);
+		if (record == null) return;
+		record.deathPending = true;
+		record.deathTick = Math.max(0L, deathTick);
+		record.reviveAvailableTick = Math.max(record.deathTick, reviveAvailableTick);
+		record.activeBody = false;
+		markDirty();
+	}
+
+	/** Clear the death gate only after a body was successfully materialized and adjusted. */
+	public synchronized void completeRevival(UUID agentId) {
+		ensureWritable();
+		AgentRecord record = recordsByAgent.get(agentId);
+		if (record == null) return;
+		record.deathPending = false;
+		record.deathTick = 0L;
+		record.reviveAvailableTick = 0L;
+		markDirty();
+	}
+
 	/** Add or replace a named durable runtime policy (for example persistent Guard). */
 	public synchronized void putPersistentPolicy(UUID agentId, String policy) {
 		ensureWritable();
@@ -394,6 +441,14 @@ public final class SquireAgentStateStore extends PersistentState {
 			c.put("armor" + i, r.armor[i].writeNbt(new NbtCompound()));
 		}
 		c.putFloat("health", r.health);
+		if (!dev.squire.server.item.BellTier.COMMON.id().equals(r.bellTier)) {
+			c.putString("bellTier", r.bellTier);
+		}
+		if (r.deathPending) {
+			c.putBoolean("deathPending", true);
+			c.putLong("deathTick", r.deathTick);
+			c.putLong("reviveAvailableTick", r.reviveAvailableTick);
+		}
 		if (!r.persistentPolicies.isEmpty()) {
 			NbtList policies = new NbtList();
 			for (String policy : r.persistentPolicies) {
@@ -444,6 +499,18 @@ public final class SquireAgentStateStore extends PersistentState {
 			}
 		}
 		r.health = c.getFloat("health");
+		r.bellTier = dev.squire.server.item.BellTier.byId(
+			c.contains("bellTier") ? c.getString("bellTier") : null).id();
+		r.deathPending = c.getBoolean("deathPending");
+		r.deathTick = Math.max(0L, c.getLong("deathTick"));
+		r.reviveAvailableTick = Math.max(0L, c.getLong("reviveAvailableTick"));
+		// Pre-feature death snapshots were inactive records with exactly zero health.
+		// They get one immediately eligible low-health revival rather than the old
+		// accidental full heal or an unknowable retroactive wait.
+		if (!c.contains("deathPending") && !r.activeBody && r.health <= 0.0f) {
+			r.deathPending = true;
+			r.reviveAvailableTick = 0L;
+		}
 		NbtList policies = c.getList("policies", NbtElement.STRING_TYPE);
 		for (int i = 0; i < policies.size(); i++) {
 			r.persistentPolicies.add(policies.getString(i));

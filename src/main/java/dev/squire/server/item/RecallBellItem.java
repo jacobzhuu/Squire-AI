@@ -43,10 +43,51 @@ public final class RecallBellItem extends Item {
 	}
 
 	@Override
+	public void onCraft(ItemStack stack, World world, PlayerEntity player) {
+		super.onCraft(stack, world, player);
+		if (world.isClient || !stack.hasNbt()
+				|| !stack.getNbt().contains(SquireItems.NBT_UPGRADE_FROM)) return;
+		if (SquireRuntime.isAlive() && player instanceof ServerPlayerEntity serverPlayer) {
+			SquireRuntime.get().commitBellUpgrade(serverPlayer, stack);
+		}
+		stack.getOrCreateNbt().remove(SquireItems.NBT_UPGRADE_FROM);
+	}
+
+	@Override
 	public void appendTooltip(ItemStack stack, World world, List<Text> tooltip,
 			TooltipContext context) {
 		tooltip.add(Text.translatable("item.squire.recall_bell.tooltip")
 			.formatted(Formatting.GRAY));
+		BellTier tier = SquireItems.tierOf(stack);
+		BellReviveConfig defaults = BellReviveConfig.defaults();
+		BellReviveConfig.TierRule rule = defaults.rule(tier);
+		var nbt = stack.getNbt();
+		double reviveHealth = nbt != null && nbt.contains(SquireItems.NBT_REVIVE_HEALTH)
+			? nbt.getDouble(SquireItems.NBT_REVIVE_HEALTH) : rule.reviveHealth();
+		long reviveCooldown = nbt != null
+			&& nbt.contains(SquireItems.NBT_REVIVE_COOLDOWN)
+			? nbt.getLong(SquireItems.NBT_REVIVE_COOLDOWN) : rule.reviveCooldown();
+		int levelRequirement = nbt != null
+			&& nbt.contains(SquireItems.NBT_REVIVE_LEVEL_REQUIREMENT)
+			? nbt.getInt(SquireItems.NBT_REVIVE_LEVEL_REQUIREMENT)
+			: rule.levelRequirement();
+		boolean hasBuff = nbt != null && nbt.contains(SquireItems.NBT_REVIVE_HAS_BUFF)
+			? nbt.getBoolean(SquireItems.NBT_REVIVE_HAS_BUFF)
+			: !rule.reviveBuff().empty();
+		tooltip.add(Text.translatable("item.squire.recall_bell.quality",
+			Text.translatable(tier.translationKey())).formatted(Formatting.AQUA));
+		tooltip.add(Text.translatable("item.squire.recall_bell.revive_health",
+			Math.round(reviveHealth * 100.0)).formatted(Formatting.GRAY));
+		tooltip.add(Text.translatable("item.squire.recall_bell.revive_cooldown",
+			reviveCooldown / 1200L).formatted(Formatting.GRAY));
+		if (hasBuff) {
+			tooltip.add(Text.translatable("item.squire.recall_bell.blessing_requirement",
+				levelRequirement).formatted(Formatting.DARK_AQUA));
+		}
+		if (tier.next() != null) {
+			tooltip.add(Text.translatable("item.squire.recall_bell.upgrade_cost."
+				+ tier.id()).formatted(Formatting.DARK_GRAY));
+		}
 		if (stack.hasNbt() && stack.getNbt().containsUuid(SquireItems.NBT_OWNER)) {
 			tooltip.add(Text.translatable("item.squire.recall_bell.bound")
 				.formatted(Formatting.GOLD));

@@ -207,22 +207,11 @@ public final class CommandCatalog {
 			single("squire.gui.button.heal_self",
 				SquireScreenHandler.BUTTON_HEAL_SELF)),
 
-		// —— 物资。数量是一个选择，不是三件事。
-		new Entry("inventory.give", "给我物品", Gate.COMMON, Nav.NONE, List.of(
-			variant("16", "squire.gui.button.give_16",
-				SquireScreenHandler.BUTTON_GIVE_16),
-			variant("64", "squire.gui.button.give_64",
-				SquireScreenHandler.BUTTON_GIVE_64),
-			variant("256", "squire.gui.button.give_256",
-				SquireScreenHandler.BUTTON_GIVE_256))),
-		new Entry("equip.self", "自动装备", Gate.of(SquireProfession.GUARD), Nav.NONE,
-			List.of(
-				variant("iron", "squire.gui.button.equip_iron",
-					SquireScreenHandler.BUTTON_EQUIP_IRON),
-				variant("diamond", "squire.gui.button.equip_diamond",
-					SquireScreenHandler.BUTTON_EQUIP_DIAMOND),
-				variant("netherite", "squire.gui.button.equip_netherite",
-					SquireScreenHandler.BUTTON_EQUIP_NETHERITE))),
+		// —— 装备与补给。只整理现有物品；普通生存面板不提供任何复制/生成入口。
+		new Entry("equip.self", "自动装备最佳护甲",
+			Gate.of(SquireProfession.GUARD), Nav.NONE,
+			single("squire.gui.button.auto_equip_best_armor",
+				SquireScreenHandler.BUTTON_AUTO_EQUIP_BEST_ARMOR)),
 		// 巡逻档位在顶部状态条上，这里管的是巡逻<b>点</b>——两件不同的事。
 		new Entry("patrol.points", "巡逻点", Gate.COMMON, Nav.NONE, List.of(
 			variant("add", "squire.gui.button.patrol_add",

@@ -131,7 +131,8 @@ class CommandCatalogTest {
 				"「解除护卫」必须永远点得动，否则一个转错职的玩家会被永久护卫着");
 			assertTrue(ids.contains("aid.owner"));
 			assertTrue(ids.contains("heal.self"));
-			assertTrue(ids.contains("inventory.give"));
+			assertFalse(ids.contains("inventory.give"),
+				"普通生存面板不能暴露复制手持物的入口");
 			assertTrue(ids.contains("build.basic"),
 				"基础施工是固定模板，谁都点得动");
 		}
@@ -230,7 +231,8 @@ class CommandCatalogTest {
 		}
 		List<String> ids = bindable.stream().map(Entry::id).toList();
 		assertTrue(ids.contains("guard.start"));
-		assertTrue(ids.contains("inventory.give"));
+		assertFalse(ids.contains("inventory.give"));
+		assertTrue(ids.contains("equip.self"));
 		assertTrue(ids.contains("build.basic"),
 			"面板上它是个入口，但快捷可以直接绑到某个模板上");
 		assertFalse(ids.contains("blueprint.open"),
@@ -241,12 +243,13 @@ class CommandCatalogTest {
 	/** 档位参数就是快捷存下来的那个字符串，认不出的一律回 null 而不是猜一个。 */
 	@Test
 	void variantsResolveByTheirStoredArgument() {
-		Entry give = CommandCatalog.byId("inventory.give");
-		assertNotNull(give);
-		assertEquals(SquireScreenHandler.BUTTON_GIVE_64, give.variant("64").actionId());
-		assertEquals(SquireScreenHandler.BUTTON_GIVE_16, give.variant("16").actionId());
-		assertNull(give.variant("999"), "认不出的档位必须回 null");
-		assertNull(give.variant(""), "多档位的动作不能默认挑一个，那是在替玩家决定");
+		assertNull(CommandCatalog.byId("inventory.give"),
+			"复制手持物的旧目录项不能再被 UI 或快捷绑定找到");
+		Entry equip = CommandCatalog.byId("equip.self");
+		assertNotNull(equip);
+		assertEquals(SquireScreenHandler.BUTTON_AUTO_EQUIP_BEST_ARMOR,
+			equip.variant("").actionId());
+		assertNull(equip.variant("iron"), "旧套装材质档位不能再生成装备");
 
 		// 单档位的动作：参数是空串，老数据缺参数时也认得出来。
 		Entry stop = CommandCatalog.byId("guard.stop");
@@ -267,7 +270,8 @@ class CommandCatalogTest {
 
 	@Test
 	void describeNamesTheActionAndTheVariant() {
-		assertEquals("给我物品 64", CommandCatalog.describe("inventory.give", "64"));
+		assertEquals("自动装备最佳护甲", CommandCatalog.describe("equip.self", ""));
+		assertEquals("", CommandCatalog.describe("inventory.give", "64"));
 		assertEquals("解除护卫", CommandCatalog.describe("guard.stop", ""));
 		assertEquals("", CommandCatalog.describe("gone.away", ""),
 			"认不出的动作说空话，而不是编一个名字");

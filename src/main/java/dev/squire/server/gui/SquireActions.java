@@ -243,7 +243,7 @@ public final class SquireActions {
 					: "背包已经是整理过的样子了。");
 			}));
 
-		// —— 指挥页：战斗与救援 / 盖房子 / 要物资 / 自我武装。
+		// —— 指挥页：战斗与救援 / 盖房子 / 生存模式下的库存内换装。
 		all.add(new Action(SquireScreenHandler.BUTTON_GUARD_START,
 			"squire.gui.button.guard_start", Page.COMMAND, 0, 0, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().startGuard(p, 16, true))));
@@ -260,21 +260,9 @@ public final class SquireActions {
 		// 不带确认的旧建造路径，而工程页的「基础施工」同样谁都点得动，还多了
 		// 幽灵预览、缺料清单和确认这一步。聊天里说「盖个木屋」那条路没有动，
 		// SquireRuntime#buildHouse 也照旧在。
-		all.add(new Action(SquireScreenHandler.BUTTON_GIVE_16, "squire.gui.button.give_16",
-			Page.COMMAND, 5, 0, 3, false, null, (p, a) -> requestHeldItem(p, 16)));
-		all.add(new Action(SquireScreenHandler.BUTTON_GIVE_64, "squire.gui.button.give_64",
-			Page.COMMAND, 5, 1, 3, false, null, (p, a) -> requestHeldItem(p, 64)));
-		all.add(new Action(SquireScreenHandler.BUTTON_GIVE_256, "squire.gui.button.give_256",
-			Page.COMMAND, 5, 2, 3, false, null, (p, a) -> requestHeldItem(p, 256)));
-		all.add(new Action(SquireScreenHandler.BUTTON_EQUIP_IRON,
-			"squire.gui.button.equip_iron", Page.COMMAND, 7, 0, 3, false, null,
-			(p, a) -> report(p, SquireRuntime.get().equipSelfSet(p, "iron", false))));
-		all.add(new Action(SquireScreenHandler.BUTTON_EQUIP_DIAMOND,
-			"squire.gui.button.equip_diamond", Page.COMMAND, 7, 1, 3, false, null,
-			(p, a) -> report(p, SquireRuntime.get().equipSelfSet(p, "diamond", false))));
-		all.add(new Action(SquireScreenHandler.BUTTON_EQUIP_NETHERITE,
-			"squire.gui.button.equip_netherite", Page.COMMAND, 7, 2, 3, false, null,
-			(p, a) -> report(p, SquireRuntime.get().equipSelfSet(p, "netherite", false))));
+		all.add(new Action(SquireScreenHandler.BUTTON_AUTO_EQUIP_BEST_ARMOR,
+			"squire.gui.button.auto_equip_best_armor", Page.COMMAND, 7, 0, 1,
+			false, null, SquireActions::autoEquipBestArmor));
 		all.add(new Action(SquireScreenHandler.BUTTON_PATROL_ADD,
 			"squire.gui.button.patrol_add", Page.COMMAND, 9, 0, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().addPatrolPoint(p))));
@@ -507,18 +495,19 @@ public final class SquireActions {
 		say(player, (had ? "已收回权限：" : "已授予权限：") + node);
 	}
 
-	/**
-	 * 「照着我手上这个再来 N 个」。取物是最高频的操作，但打字要报物品名——
-	 * 手里拿着样品点一下，物品 id 由服务端直接读，既不用打字也不会认错东西。
-	 */
-	private static void requestHeldItem(ServerPlayerEntity player, int count) {
-		var held = player.getMainHandStack();
-		if (held.isEmpty()) {
-			say(player, "先把想要的东西拿在手上，再点这个按钮。");
+	/** 服务端直接操作当前面板绑定的实体，客户端永远不能提交或生成候选装备。 */
+	private static void autoEquipBestArmor(ServerPlayerEntity player,
+			dev.squire.server.body.avatar.AvatarEntity avatar) {
+		var result = avatar.items().autoEquipBestArmor();
+		if (!result.success()) {
+			say(player, "背包无法安全交换全部护甲，已保持原样。");
 			return;
 		}
-		var id = net.minecraft.registry.Registries.ITEM.getId(held.getItem());
-		report(player, SquireRuntime.get().giveByCommand(player, id.toString(), count, false));
+		if (result.changedSlots() == 0) {
+			say(player, "当前已经是背包里最合适的护甲。");
+		} else {
+			say(player, "已从自己的背包换上最佳护甲（" + result.changedSlots() + " 个槽位）。");
+		}
 	}
 
 	static void say(ServerPlayerEntity player, String message) {

@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -528,6 +530,24 @@ public final class AvatarInventory {
 		}
 	}
 
+	/** 一键护甲换装的事务结果。四个护甲槽要么全部安全完成，要么全部回滚。 */
+	public record AutoArmorResult(boolean success, int changedSlots, String errorCode) {
+		static AutoArmorResult ok(int changedSlots) {
+			return new AutoArmorResult(true, changedSlots, null);
+		}
+
+		static AutoArmorResult fail(String code) {
+			return new AutoArmorResult(false, 0, code);
+		}
+	}
+
+	private record PlannedArmor(EquipmentSlot slot, int mainIndex) {
+	}
+
+	private static final List<EquipmentSlot> ARMOR_SLOTS = List.of(
+		EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
+		EquipmentSlot.FEET);
+
 	/**
 	 * 把主背包某一槽的物品装备上；原装备回到背包。整个过程只搬运，不复制
 	 * （方案 C2：Guard 自动换装不得复制物品）。
@@ -741,21 +761,61 @@ public final class AvatarInventory {
 			net.minecraft.enchantment.Enchantments.POWER, stack);
 	}
 
-	/** 对应护甲槽里防御值最高的一件（含已装备的那件）。 */
+	/**
+	 * 对应护甲槽里综合生存价值最高的一件（含已装备的那件）。
+	 *
+	 * <p>这里是自动换装与回家整理的共同事实源：不只看材质，也计算韧性、击退抗性、
+	 * 附魔、剩余耐久和诅咒。绑定诅咒不会被自动穿上；如果已经穿着，则保持原位。</p>
+	 */
 	public SlotRef bestArmorSlot(EquipmentSlot armorSlot) {
+		if (!ARMOR_SLOTS.contains(armorSlot)) {
+			return null;
+		}
+		ItemStack worn = equipped(armorSlot);
+		if (hasBindingCurse(worn)) {
+			return SlotRef.of(armorSlot);
+		}
 		SlotRef best = null;
-		int bestProtection = armorProtection(equipped(armorSlot), armorSlot);
-		if (bestProtection > 0) {
+		double bestScore = armorScore(worn, armorSlot);
+		if (Double.isFinite(bestScore)) {
 			best = SlotRef.of(armorSlot);
 		}
 		for (int i = 0; i < main.size(); i++) {
-			int protection = armorProtection(main.getStack(i), armorSlot);
-			if (protection > bestProtection) {
-				bestProtection = protection;
+			double score = armorScore(main.getStack(i), armorSlot);
+			// 同分保留身上或更靠前的物品，避免每次整理都无意义换装。
+			if (score > bestScore + 0.0001D) {
+				bestScore = score;
 				best = SlotRef.main(i);
 			}
 		}
 		return best;
+	}
+
+	/**
+	 * 只在当前穿戴与 36 格 Squire 主背包之间选择最佳护甲；不读取玩家背包，也不创建物品。
+	 * 先为四个槽位独立做计划，再用快照保证整批交换的原子性。
+	 */
+	public AutoArmorResult autoEquipBestArmor() {
+		List<PlannedArmor> plan = new ArrayList<>(ARMOR_SLOTS.size());
+		for (EquipmentSlot slot : ARMOR_SLOTS) {
+			SlotRef best = bestArmorSlot(slot);
+			if (best != null && !best.isEquipment()) {
+				plan.add(new PlannedArmor(slot, best.mainIndex()));
+			}
+		}
+		if (plan.isEmpty()) {
+			return AutoArmorResult.ok(0);
+		}
+
+		Snapshot before = snapshot();
+		for (PlannedArmor choice : plan) {
+			EquipResult result = equipFromMain(choice.mainIndex(), choice.slot());
+			if (!result.success()) {
+				restore(before);
+				return AutoArmorResult.fail(result.errorCode());
+			}
+		}
+		return AutoArmorResult.ok(plan.size());
 	}
 
 	/** 这件东西作为近战武器的伤害。战斗层用它判断「手上拿的算不算武器」。 */
@@ -775,14 +835,77 @@ public final class AvatarInventory {
 			net.minecraft.enchantment.Enchantments.SHARPNESS, stack) * 0.5;
 	}
 
-	private static int armorProtection(ItemStack stack, EquipmentSlot slot) {
+	/**
+	 * 自动护甲综合分。公开只为 GameTest 验证真实规则；业务选择统一走 {@link #bestArmorSlot}。
+	 */
+	public static double armorScore(ItemStack stack, EquipmentSlot slot) {
 		if (stack == null || stack.isEmpty()
 				|| !(stack.getItem() instanceof ArmorItem armor)
-				|| armor.getSlotType() != slot) {
-			return 0;
+				|| armor.getSlotType() != slot
+				|| stack.getCount() != 1
+				|| hasBindingCurse(stack)) {
+			return Double.NEGATIVE_INFINITY;
 		}
-		return armor.getProtection() * 4 + EnchantmentHelper.getLevel(
-			net.minecraft.enchantment.Enchantments.PROTECTION, stack);
+
+		double score = armor.getProtection() * 10.0D
+			+ armor.getToughness() * 4.0D
+			+ armor.getMaterial().getKnockbackResistance() * 40.0D;
+		for (var entry : EnchantmentHelper.get(stack).entrySet()) {
+			score += enchantmentScore(entry.getKey(), entry.getValue());
+		}
+
+		if (stack.isDamageable()) {
+			double remaining = Math.max(0.0D,
+				1.0D - (double) stack.getDamage() / stack.getMaxDamage());
+			// 半耐久约保留 42% 分数，濒坏装备只保留约 10%，避免自动穿上消耗品。
+			double durabilityFactor = 0.10D
+				+ 0.90D * Math.pow(remaining, 1.5D);
+			score *= durabilityFactor;
+		}
+		return score;
+	}
+
+	private static boolean hasBindingCurse(ItemStack stack) {
+		return stack != null && !stack.isEmpty()
+			&& EnchantmentHelper.getLevel(Enchantments.BINDING_CURSE, stack) > 0;
+	}
+
+	private static double enchantmentScore(Enchantment enchantment, int level) {
+		if (level <= 0) {
+			return 0.0D;
+		}
+		if (enchantment == Enchantments.PROTECTION) {
+			return level * 8.0D;
+		}
+		if (enchantment == Enchantments.FIRE_PROTECTION
+				|| enchantment == Enchantments.BLAST_PROTECTION
+				|| enchantment == Enchantments.PROJECTILE_PROTECTION) {
+			return level * 4.0D;
+		}
+		if (enchantment == Enchantments.FEATHER_FALLING) {
+			return level * 6.0D;
+		}
+		if (enchantment == Enchantments.RESPIRATION
+				|| enchantment == Enchantments.DEPTH_STRIDER
+				|| enchantment == Enchantments.SWIFT_SNEAK) {
+			return level * 3.0D;
+		}
+		if (enchantment == Enchantments.AQUA_AFFINITY
+				|| enchantment == Enchantments.MENDING) {
+			return level * 4.0D;
+		}
+		if (enchantment == Enchantments.UNBREAKING) {
+			return level * 2.0D;
+		}
+		if (enchantment == Enchantments.THORNS
+				|| enchantment == Enchantments.FROST_WALKER
+				|| enchantment == Enchantments.SOUL_SPEED) {
+			return level * 2.0D;
+		}
+		if (enchantment.isCursed()) {
+			return level * -24.0D;
+		}
+		return level;
 	}
 
 	// ------------------------------------------------------------------ 耐久写回

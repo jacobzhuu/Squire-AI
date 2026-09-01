@@ -1,3 +1,6 @@
 {
-  "parent": "minecraft:item/bell"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "squire:item/recall_bell"
+  }
 }

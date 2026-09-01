@@ -21,7 +21,7 @@ public enum AutonomyLevel {
 	/** 默认。会自卫、会在你受伤时来救你、会接着做没做完的任务。 */
 	STANDARD("standard", "标准", "会自卫、会来救你", true),
 	/** 还会主动做收尾工作：收工存料、回家换装、发现威胁主动报告。 */
-	PROACTIVE("proactive", "积极", "还会主动收尾与预警", true),
+	PROACTIVE("proactive", "积极", "会协同狩猎、主动收尾与预警", true),
 	/** 未开放：自主消耗材料、自主改动世界。 */
 	AUTONOMOUS("autonomous", "完全自动", "未开放", false);
 

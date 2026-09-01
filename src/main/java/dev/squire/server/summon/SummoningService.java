@@ -104,6 +104,8 @@ public final class SummoningService {
 				return false;
 			}
 			ItemStack bell = SquireItems.boundRecallBell(player.getUuid(), avatar.agentId());
+			runtime.syncRecallBellDisplay(bell,
+				dev.squire.server.item.BellTier.COMMON);
 			if (!player.giveItemStack(bell)) {
 				player.dropItem(bell, false);
 			}

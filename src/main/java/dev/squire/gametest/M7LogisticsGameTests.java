@@ -73,6 +73,17 @@ public final class M7LogisticsGameTests implements FabricGameTest {
 		return inventory;
 	}
 
+	private static int ownedItemCount(AvatarInventory items) {
+		int total = 0;
+		for (int i = 0; i < items.size(); i++) {
+			total += items.getStack(i).getCount();
+		}
+		for (EquipmentSlot slot : AvatarInventory.EQUIPMENT_SLOTS) {
+			total += items.equipped(slot).getCount();
+		}
+		return total;
+	}
+
 	// ============================================================ C1：权威背包
 
 	/**
@@ -271,6 +282,143 @@ public final class M7LogisticsGameTests implements FabricGameTest {
 			context.assertTrue(items.countOf(new Identifier("minecraft:diamond_pickaxe"))
 					== items.size() - 1,
 				"nothing else was displaced or duplicated");
+
+			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
+			context.complete();
+		});
+	}
+
+	/** 自动装备只搬运已有物品；Protection IV 钻石胸甲可以胜过无附魔下界合金。 */
+	@GameTest(templateName = FLOOR)
+	public void autoArmorPrefersStrongSurvivalEnchantmentsWithoutGeneratingItems(
+			TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "best-armor-enchant-owner");
+		place(owner, Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+
+		context.runAtTick(5, () -> {
+			AvatarInventory items = rt.summonFor(owner).items();
+			items.setEquipped(EquipmentSlot.CHEST,
+				new ItemStack(Items.NETHERITE_CHESTPLATE));
+			ItemStack diamond = new ItemStack(Items.DIAMOND_CHESTPLATE);
+			diamond.addEnchantment(Enchantments.PROTECTION, 4);
+			items.insert(diamond);
+			int before = ownedItemCount(items);
+
+			var result = items.autoEquipBestArmor();
+			context.assertTrue(result.success(), "auto armor failed: " + result.errorCode());
+			context.assertTrue(result.changedSlots() == 1, "exactly the chest slot changes");
+			context.assertTrue(items.equipped(EquipmentSlot.CHEST)
+				.isOf(Items.DIAMOND_CHESTPLATE),
+				"Protection IV diamond must beat plain netherite by the real score");
+			context.assertTrue(net.minecraft.enchantment.EnchantmentHelper.getLevel(
+				Enchantments.PROTECTION, items.equipped(EquipmentSlot.CHEST)) == 4,
+				"the selected enchanted stack itself is worn");
+			context.assertTrue(items.countOf(new Identifier(
+				"minecraft:netherite_chestplate")) == 1,
+				"the old armor returns to the Squire backpack");
+			context.assertTrue(ownedItemCount(items) == before,
+				"auto armor must not create or destroy items");
+
+			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
+			context.complete();
+		});
+	}
+
+	/** 濒坏的高材质护甲要被明显降权，不能替换一件完好的实用护甲。 */
+	@GameTest(templateName = FLOOR)
+	public void autoArmorStronglyPenalizesLowDurability(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "best-armor-durability-owner");
+		place(owner, Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+
+		context.runAtTick(5, () -> {
+			AvatarInventory items = rt.summonFor(owner).items();
+			items.setEquipped(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+			ItemStack almostBroken = new ItemStack(Items.DIAMOND_CHESTPLATE);
+			almostBroken.setDamage(almostBroken.getMaxDamage() - 1);
+			items.insert(almostBroken);
+			int before = ownedItemCount(items);
+
+			var result = items.autoEquipBestArmor();
+			context.assertTrue(result.success(), "scoring itself must not fail");
+			context.assertTrue(result.changedSlots() == 0,
+				"near-broken diamond armor must lose to full-durability iron");
+			context.assertTrue(items.equipped(EquipmentSlot.CHEST)
+				.isOf(Items.IRON_CHESTPLATE), "the useful armor stays worn");
+			context.assertTrue(ownedItemCount(items) == before, "item count stays constant");
+
+			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
+			context.complete();
+		});
+	}
+
+	/** 绑定诅咒候选是硬排除：即使材质更好，也不会被自动穿上。 */
+	@GameTest(templateName = FLOOR)
+	public void autoArmorNeverEquipsBindingCurse(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "best-armor-binding-owner");
+		place(owner, Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+
+		context.runAtTick(5, () -> {
+			AvatarInventory items = rt.summonFor(owner).items();
+			ItemStack cursed = new ItemStack(Items.NETHERITE_BOOTS);
+			cursed.addEnchantment(Enchantments.BINDING_CURSE, 1);
+			items.insert(cursed);
+			items.insert(new ItemStack(Items.IRON_BOOTS));
+			int before = ownedItemCount(items);
+
+			var result = items.autoEquipBestArmor();
+			context.assertTrue(result.success(), "a safe non-cursed candidate exists");
+			context.assertTrue(items.equipped(EquipmentSlot.FEET).isOf(Items.IRON_BOOTS),
+				"Binding Curse must be rejected regardless of material");
+			context.assertTrue(items.countOf(new Identifier("minecraft:netherite_boots")) == 1,
+				"the cursed candidate remains untouched in the Squire backpack");
+			context.assertTrue(ownedItemCount(items) == before, "item count stays constant");
+
+			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
+			context.complete();
+		});
+	}
+
+	/** 四个槽位独立选优；即使主背包全满，旧装备也只能回到腾出的候选槽，不能丢。 */
+	@GameTest(templateName = FLOOR)
+	public void autoArmorSwapsAllSlotsAtomicallyOnAFullBackpack(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "best-armor-full-owner");
+		place(owner, Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+
+		context.runAtTick(5, () -> {
+			AvatarInventory items = rt.summonFor(owner).items();
+			items.setEquipped(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+			items.setEquipped(EquipmentSlot.CHEST, new ItemStack(Items.IRON_CHESTPLATE));
+			items.setEquipped(EquipmentSlot.LEGS, new ItemStack(Items.IRON_LEGGINGS));
+			items.setEquipped(EquipmentSlot.FEET, new ItemStack(Items.IRON_BOOTS));
+			for (int i = 0; i < items.size(); i++) {
+				items.setStack(i, new ItemStack(Items.DIAMOND_PICKAXE));
+			}
+			items.setStack(0, new ItemStack(Items.DIAMOND_HELMET));
+			items.setStack(1, new ItemStack(Items.DIAMOND_CHESTPLATE));
+			items.setStack(2, new ItemStack(Items.DIAMOND_LEGGINGS));
+			items.setStack(3, new ItemStack(Items.DIAMOND_BOOTS));
+			int before = ownedItemCount(items);
+			context.assertTrue(items.freeSlots() == 0, "the Squire backpack starts full");
+
+			var result = items.autoEquipBestArmor();
+			context.assertTrue(result.success(), "full-inventory swaps should be safe");
+			context.assertTrue(result.changedSlots() == 4, "all four slots choose independently");
+			context.assertTrue(items.equipped(EquipmentSlot.HEAD).isOf(Items.DIAMOND_HELMET),
+				"helmet selected");
+			context.assertTrue(items.equipped(EquipmentSlot.CHEST)
+				.isOf(Items.DIAMOND_CHESTPLATE), "chest selected");
+			context.assertTrue(items.equipped(EquipmentSlot.LEGS)
+				.isOf(Items.DIAMOND_LEGGINGS), "leggings selected");
+			context.assertTrue(items.equipped(EquipmentSlot.FEET).isOf(Items.DIAMOND_BOOTS),
+				"boots selected");
+			context.assertTrue(items.freeSlots() == 0,
+				"each old piece safely occupies the candidate's vacated slot");
+			context.assertTrue(ownedItemCount(items) == before,
+				"the atomic four-slot exchange conserves every item");
 
 			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
 			context.complete();

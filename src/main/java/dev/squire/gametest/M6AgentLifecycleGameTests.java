@@ -345,6 +345,9 @@ public final class M6AgentLifecycleGameTests implements FabricGameTest {
 			rt.persistSnapshot(avatar);
 
 			SquireAgentStateStore store = rt.agentStore();
+			store.recordOfAgent(avatar.agentId()).orElseThrow().bellTier =
+				dev.squire.server.item.BellTier.RESONANT.id();
+			store.markDeath(avatar.agentId(), 100L, 14_500L);
 			net.minecraft.nbt.NbtCompound nbt = store.writeNbt(new net.minecraft.nbt.NbtCompound());
 			SquireAgentStateStore revived =
 				SquireAgentStateStore.createFromNbtPublic(nbt);
@@ -357,6 +360,13 @@ public final class M6AgentLifecycleGameTests implements FabricGameTest {
 					.filter(s -> !s.isEmpty())
 					.mapToInt(ItemStack::getCount).sum() == 12,
 				"inventory count survives round trip");
+			context.assertTrue(record.get().deathPending
+					&& record.get().deathTick == 100L
+					&& record.get().reviveAvailableTick == 14_500L,
+				"death recall cooldown survives world NBT round trip");
+			context.assertTrue(record.get().bellTier.equals(
+				dev.squire.server.item.BellTier.RESONANT.id()),
+				"bell quality survives world NBT round trip");
 			rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS);
 			context.complete();
 		});

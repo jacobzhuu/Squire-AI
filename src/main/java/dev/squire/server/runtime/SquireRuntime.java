@@ -93,6 +93,9 @@ public final class SquireRuntime {
 	 */
 	private final dev.squire.server.profession.ProfessionConfig professionConfig =
 		dev.squire.server.profession.ProfessionConfig.load(professionConfigFile());
+	/** Server-authoritative recall health/cooldown/buff table. */
+	private final dev.squire.server.item.BellReviveConfig bellReviveConfig =
+		dev.squire.server.item.BellReviveConfig.load(recallBellConfigFile());
 	/** 职业等级 / 经验 / 晋升的记账。和熟练度一样，只有一个入账口。 */
 	private final dev.squire.server.profession.ProfessionService professions =
 		new dev.squire.server.profession.ProfessionService(professionConfig);
@@ -940,6 +943,12 @@ public final class SquireRuntime {
 		return permissions;
 	}
 
+	/** Deterministic GameTest entry; production ticks use {@link #tickScheduler()}. */
+	public void tickCooperativeHuntForTest(ServerPlayerEntity owner,
+			AvatarEntity avatar) {
+		autonomyController.tickCooperativeHuntForTest(owner, avatar);
+	}
+
 	public dev.squire.server.security.CapabilityStore capabilities() {
 		return capabilityStore;
 	}
@@ -1685,6 +1694,15 @@ public final class SquireRuntime {
 	public static java.nio.file.Path professionConfigFile() {
 		return net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir()
 			.resolve("squire").resolve("profession.json");
+	}
+
+	public static java.nio.file.Path recallBellConfigFile() {
+		return net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir()
+			.resolve("squire").resolve("recall_bell.json");
+	}
+
+	public dev.squire.server.item.BellReviveConfig bellReviveConfig() {
+		return bellReviveConfig;
 	}
 
 	public dev.squire.server.profession.ProfessionConfig professionConfig() {
@@ -2876,15 +2894,23 @@ public final class SquireRuntime {
 		if (instance == null || avatar == null || avatar.ownerId() == null) {
 			return;
 		}
-		instance.agentStore().snapshotFromEntity(avatar, false);
+		var store = instance.agentStore();
+		store.snapshotFromEntity(avatar, false);
+		var record = store.recordOfAgent(avatar.agentId()).orElse(null);
+		dev.squire.server.item.BellTier tier = record == null
+			? dev.squire.server.item.BellTier.COMMON
+			: dev.squire.server.item.BellTier.byId(record.bellTier);
+		long now = instance.currentTick();
+		long cooldown = instance.bellReviveConfig.reviveCooldown(tier);
+		store.markDeath(avatar.agentId(), now, now + cooldown);
 		instance.agents.unregister(avatar.getUuid());
 		// 死了要说清楚"东西没丢、怎么召回"。原版只会广播一句死亡消息，
 		// 玩家看到伙伴消失，既不知道背包还在不在，也不知道还能不能要回来。
 		ServerPlayerEntity owner = instance.server.getPlayerManager()
 			.getPlayer(avatar.ownerId());
 		if (owner != null) {
-			instance.feedback(owner, "[Squire] 我阵亡了。背包和装备都已经保存下来，"
-				+ "用召集铃可以把我召回，东西还在身上。");
+			instance.feedback(owner, "[Squire] 我阵亡了。背包、装备和耐久均已原样保存；"
+				+ "死亡召回将在 " + formatBellTime(cooldown) + " 后可用。");
 		}
 	}
 
@@ -4783,7 +4809,24 @@ public final class SquireRuntime {
 			return ExecutionResult.fail("feedback.no_agent",
 				"[Squire] 你还没有侍从。按 K 查看训练人偶的搭建方法。");
 		}
-		dev.squire.server.registry.SquireItems.bind(bell, owner.getUuid(), record.agentId);
+		if (nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)
+				&& !record.agentId.equals(nbt.getUuid(
+					dev.squire.server.registry.SquireItems.NBT_AGENT))) {
+			return ExecutionResult.fail("feedback.wrong_agent",
+				"[Squire] 这枚召集铃绑定的是另一名侍从。");
+		}
+		dev.squire.server.item.BellTier tier =
+			dev.squire.server.item.BellTier.byId(record.bellTier);
+		dev.squire.server.registry.SquireItems.bind(bell, owner.getUuid(),
+			record.agentId, tier);
+		syncRecallBellDisplay(bell, tier);
+		boolean deathRecall = record.deathPending;
+		long now = currentTick();
+		if (deathRecall && now < record.reviveAvailableTick) {
+			return ExecutionResult.fail("feedback.revive_cooldown",
+				"[Squire] 死亡复苏尚未准备好，还需 "
+					+ formatBellTime(record.reviveAvailableTick - now) + "。");
+		}
 		AvatarEntity existing = agents.resolveForOwnerNow(owner.getUuid()).orElse(null);
 		if (existing != null && existing.isAlive()
 				&& existing.getWorld() == owner.getWorld()
@@ -4802,6 +4845,14 @@ public final class SquireRuntime {
 			return ExecutionResult.fail("feedback.recall_failed",
 				"[Squire] 这里没有足够的空间让我回来。");
 		}
+		if (deathRecall) {
+			int level = Math.max(0, Math.min(10, record.profile.profession.level));
+			double fraction = bellReviveConfig.reviveHealth(tier, level);
+			arrived.setHealth(Math.max(1.0f,
+				(float) (arrived.getMaxHealth() * fraction)));
+			applyReviveBuff(arrived, bellReviveConfig.reviveBuff(tier, level));
+			agentStore().completeRevival(record.agentId);
+		}
 		arrived.setFollowMode(owner.getUuid());
 		persistSnapshot(arrived);
 		((ServerWorld) owner.getWorld()).spawnParticles(
@@ -4811,7 +4862,76 @@ public final class SquireRuntime {
 		((ServerWorld) owner.getWorld()).playSound(null, arrived.getBlockPos(),
 			net.minecraft.sound.SoundEvents.BLOCK_BELL_USE,
 			net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f);
-		return ExecutionResult.ok("feedback.recalled", "[Squire] 我听见铃声了。");
+		return ExecutionResult.ok(deathRecall ? "feedback.revived" : "feedback.recalled",
+			deathRecall ? "[Squire] 我从铃声中复苏了，但仍需要休整。"
+				: "[Squire] 我听见铃声了。");
+	}
+
+	/** Server-side commit for the NBT-preserving workbench recipe. */
+	public boolean commitBellUpgrade(ServerPlayerEntity crafter,
+			net.minecraft.item.ItemStack output) {
+		if (crafter == null || output == null
+				|| !output.isOf(dev.squire.server.registry.SquireItems.RECALL_BELL)
+				|| !output.hasNbt()) return false;
+		var nbt = output.getNbt();
+		if (!nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_OWNER)
+				|| !nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)
+				|| !nbt.contains(dev.squire.server.registry.SquireItems.NBT_UPGRADE_FROM)) {
+			return false;
+		}
+		UUID ownerId = nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_OWNER);
+		UUID agentId = nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_AGENT);
+		var record = agentStore().recordOfAgent(agentId).orElse(null);
+		dev.squire.server.item.BellTier from = dev.squire.server.item.BellTier.byId(
+			nbt.getString(dev.squire.server.registry.SquireItems.NBT_UPGRADE_FROM));
+		dev.squire.server.item.BellTier to = dev.squire.server.item.BellTier.byId(
+			nbt.getString(dev.squire.server.registry.SquireItems.NBT_BELL_TIER));
+		boolean valid = crafter.getUuid().equals(ownerId) && record != null
+			&& record.ownerId.equals(ownerId) && from.next() == to
+			&& agentStore().setBellTier(agentId, from, to);
+		dev.squire.server.item.BellTier canonical = record == null
+			? dev.squire.server.item.BellTier.COMMON
+			: dev.squire.server.item.BellTier.byId(record.bellTier);
+		dev.squire.server.registry.SquireItems.bind(output, ownerId, agentId, canonical);
+		syncRecallBellDisplay(output, canonical);
+		if (valid) {
+			feedback(crafter, "[Squire] 召集铃已升级为「"
+				+ net.minecraft.text.Text.translatable(to.translationKey()).getString()
+				+ "」。品质已绑定到这名侍从。 ");
+		} else {
+			feedback(crafter, "[Squire] 铃铛升级校验失败，品质没有改变。");
+		}
+		return valid;
+	}
+
+	/** Copies real server balance values for client display; gameplay never reads them. */
+	public void syncRecallBellDisplay(net.minecraft.item.ItemStack bell,
+			dev.squire.server.item.BellTier tier) {
+		dev.squire.server.registry.SquireItems.writeDisplayRule(bell,
+			bellReviveConfig.rule(tier));
+	}
+
+	private static void applyReviveBuff(AvatarEntity avatar,
+			dev.squire.server.item.BellReviveConfig.ReviveBuff buff) {
+		if (avatar == null || buff == null || buff.empty()) return;
+		for (var spec : buff.effects()) {
+			net.minecraft.util.Identifier id = net.minecraft.util.Identifier.tryParse(
+				spec.effectId());
+			if (id == null || !net.minecraft.registry.Registries.STATUS_EFFECT.containsId(id)) {
+				continue;
+			}
+			avatar.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
+				net.minecraft.registry.Registries.STATUS_EFFECT.get(id),
+				buff.durationTicks(), spec.amplifier(), false, true, true));
+		}
+	}
+
+	private static String formatBellTime(long ticks) {
+		long totalSeconds = Math.max(0L, (ticks + 19L) / 20L);
+		long minutes = totalSeconds / 60L;
+		long seconds = totalSeconds % 60L;
+		return minutes > 0L ? minutes + "分" + (seconds == 0L ? "" : seconds + "秒")
+			: seconds + "秒";
 	}
 
 	// ------------------------------------------------------------------ helpers

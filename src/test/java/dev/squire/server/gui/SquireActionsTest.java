@@ -199,7 +199,7 @@ class SquireActionsTest {
 		}
 	}
 
-	/** 旧 BUTTON_* 常量仍是公开 API；它们必须始终指向表里真实存在的按钮。 */
+	/** 仍保留的 BUTTON_* 常量必须始终指向表里真实存在的按钮。 */
 	@Test
 	void legacyButtonConstantsStayWiredToTheTable() {
 		int[] legacy = {
@@ -207,14 +207,15 @@ class SquireActionsTest {
 			SquireScreenHandler.BUTTON_PATROL,
 			SquireScreenHandler.BUTTON_HOME, SquireScreenHandler.BUTTON_GUARD_START,
 			SquireScreenHandler.BUTTON_GUARD_STOP, SquireScreenHandler.BUTTON_AID_OWNER,
-			SquireScreenHandler.BUTTON_HEAL_SELF, SquireScreenHandler.BUTTON_GIVE_16,
-			SquireScreenHandler.BUTTON_GIVE_64, SquireScreenHandler.BUTTON_GIVE_256,
-			SquireScreenHandler.BUTTON_EQUIP_IRON,
-			SquireScreenHandler.BUTTON_EQUIP_DIAMOND,
-			SquireScreenHandler.BUTTON_EQUIP_NETHERITE };
+			SquireScreenHandler.BUTTON_HEAL_SELF,
+			SquireScreenHandler.BUTTON_AUTO_EQUIP_BEST_ARMOR };
 		for (int id : legacy) {
 			assertNotNull(SquireActions.byId(id),
 				"BUTTON_* constant " + id + " no longer matches any action");
+		}
+		for (int removedId : new int[] { 11, 12, 13, 15, 16 }) {
+			assertNull(SquireActions.byId(removedId),
+				"removed give/set-generation button is still routable: " + removedId);
 		}
 	}
 

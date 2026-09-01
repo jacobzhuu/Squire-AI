@@ -65,13 +65,8 @@ public class SquireScreenHandler extends ScreenHandler {
 	public static final int BUTTON_HEAL_SELF = 8;
 	public static final int BUTTON_BUILD_WOOD = 9;
 	public static final int BUTTON_BUILD_STONE = 10;
-	/** 「照着我手上这个再来 N 个」：不用打字说物品名。 */
-	public static final int BUTTON_GIVE_16 = 11;
-	public static final int BUTTON_GIVE_64 = 12;
-	public static final int BUTTON_GIVE_256 = 13;
-	public static final int BUTTON_EQUIP_IRON = 14;
-	public static final int BUTTON_EQUIP_DIAMOND = 15;
-	public static final int BUTTON_EQUIP_NETHERITE = 16;
+	/** 仅整理 Squire 已穿戴与自身主背包中的护甲，绝不生成装备。 */
+	public static final int BUTTON_AUTO_EQUIP_BEST_ARMOR = 14;
 	public static final int BUTTON_PATROL_ADD = 17;
 	public static final int BUTTON_PATROL_CLEAR = 18;
 	/** 自主档位四个按钮，下标即 {@code AutonomyLevel.ordinal()}。 */

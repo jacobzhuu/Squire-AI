@@ -58,7 +58,7 @@ class ShortcutRoutingTest {
 	@Test
 	void aBoundShortcutCarriesNothingThatCouldBeSentToAModel() {
 		ShortcutStore store = ShortcutStore.inMemory();
-		store.bindAt(PLAYER, 0, "备战", "equip.self", "diamond");
+		store.bindAt(PLAYER, 0, "备战", "equip.self", "");
 		ShortcutStore.Shortcut saved = store.byIndex(PLAYER, 0).orElseThrow();
 		assertTrue(saved.bound());
 		assertFalse(saved.legacy());
@@ -95,7 +95,7 @@ class ShortcutRoutingTest {
 	@Test
 	void aShortcutThatFellOutOfItsProfessionIsRefusedRatherThanDeleted() {
 		ShortcutStore store = ShortcutStore.inMemory();
-		store.bindAt(PLAYER, 0, "备战", "equip.self", "netherite");
+		store.bindAt(PLAYER, 0, "备战", "equip.self", "");
 		ShortcutStore.Shortcut saved = store.byIndex(PLAYER, 0).orElseThrow();
 
 		CommandCatalog.Entry entry = CommandCatalog.byId(saved.entryId());

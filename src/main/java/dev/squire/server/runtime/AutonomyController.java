@@ -19,6 +19,8 @@ public final class AutonomyController {
 	private final SquireRuntime runtime;
 	private final Map<UUID, Long> nextAidTick = new HashMap<>();
 	private final Map<UUID, Long> nextThreatReportTick = new HashMap<>();
+	private final Map<UUID, Integer> lastOwnerAttackTime = new HashMap<>();
+	private final Map<UUID, UUID> cooperativeHuntTarget = new HashMap<>();
 
 	AutonomyController(SquireRuntime runtime) {
 		this.runtime = runtime;
@@ -35,12 +37,17 @@ public final class AutonomyController {
 			AutonomyLevel level = profile == null ? AutonomyLevel.STANDARD
 				: profile.autonomyLevel();
 			if (!level.atLeast(AutonomyLevel.STANDARD)) continue;
+			boolean idle = runtime.scheduler().current(avatar.agentId()).isEmpty();
+			if (!level.atLeast(AutonomyLevel.PROACTIVE) || !idle) {
+				cooperativeHuntTarget.remove(avatar.agentId());
+				lastOwnerAttackTime.put(avatar.agentId(), owner.getLastAttackTime());
+			}
 
 			// Rescue is a real P1 task and consumes a real remedy from the companion bag.
 			if (tick >= nextAidTick.getOrDefault(avatar.agentId(), 0L)
 					&& avatar.getWorld() == owner.getWorld()
 					&& owner.getHealth() <= owner.getMaxHealth() * 0.45f
-					&& runtime.scheduler().current(avatar.agentId()).isEmpty()
+					&& idle
 					&& OwnerAidExecutor.bestRemedy(avatar,
 						owner.getMaxHealth() - owner.getHealth()) != null) {
 				runtime.startAidOwner(owner);
@@ -49,13 +56,27 @@ public final class AutonomyController {
 			}
 
 			// Explicit work wins. Otherwise defend self first, then an attacked owner.
-			if (runtime.scheduler().current(avatar.agentId()).isEmpty()) {
-				LivingEntity threat = validThreat(avatar, avatar.getAttacker());
+			LivingEntity threat = null;
+			if (idle) {
+				threat = validThreat(avatar, avatar.getAttacker());
 				if (threat == null && avatar.getWorld() == owner.getWorld()) {
 					threat = validThreat(avatar, owner.getAttacker());
 				}
 				if (threat != null) {
 					fight(avatar, threat, CombatStyle.gatesFor(
+						profile == null ? null : profile.profession));
+				}
+			}
+
+			// PROACTIVE adds one wolf-like reaction: help with the exact non-friendly
+			// entity the owner has just struck. It never creates a profession ability;
+			// the existing CombatStyle gates still decide whether bows are usable.
+			if (level.atLeast(AutonomyLevel.PROACTIVE) && idle && threat == null
+					&& runtime.permissions().has(owner,
+						dev.squire.server.security.PermissionNodes.TASK_GUARD)) {
+				LivingEntity target = cooperativeHuntTarget(owner, avatar);
+				if (target != null) {
+					fight(avatar, target, CombatStyle.gatesFor(
 						profile == null ? null : profile.profession));
 				}
 			}
@@ -69,6 +90,65 @@ public final class AutonomyController {
 				reportThreats(tick, owner, avatar);
 			}
 		}
+	}
+
+	private LivingEntity cooperativeHuntTarget(ServerPlayerEntity owner,
+			AvatarEntity avatar) {
+		int attackTime = owner.getLastAttackTime();
+		Integer consumed = lastOwnerAttackTime.put(avatar.agentId(), attackTime);
+		if (consumed == null || consumed.intValue() != attackTime) {
+			LivingEntity struck = owner.getAttacking();
+			// getAttacking is retained briefly by vanilla. Only accept the fresh hit,
+			// never an entity the player fought before enabling PROACTIVE.
+			if (owner.age - attackTime <= 10
+					&& isCooperativeHuntTarget(owner, avatar, struck)) {
+				cooperativeHuntTarget.put(avatar.agentId(), struck.getUuid());
+			} else {
+				cooperativeHuntTarget.remove(avatar.agentId());
+			}
+		}
+		UUID targetId = cooperativeHuntTarget.get(avatar.agentId());
+		if (targetId == null || !(avatar.getWorld()
+				instanceof net.minecraft.server.world.ServerWorld world)) return null;
+		net.minecraft.entity.Entity found = world.getEntity(targetId);
+		LivingEntity target = found instanceof LivingEntity living ? living : null;
+		if (!isCooperativeHuntTarget(owner, avatar, target)) {
+			cooperativeHuntTarget.remove(avatar.agentId());
+			return null;
+		}
+		return target;
+	}
+
+	/** GameTest seam: FakePlayer is intentionally absent from PlayerManager. */
+	void tickCooperativeHuntForTest(ServerPlayerEntity owner, AvatarEntity avatar) {
+		var profile = runtime.profileOf(avatar);
+		if (profile == null || !profile.autonomyLevel().atLeast(AutonomyLevel.PROACTIVE)
+				|| runtime.scheduler().current(avatar.agentId()).isPresent()
+				|| !runtime.permissions().has(owner,
+					dev.squire.server.security.PermissionNodes.TASK_GUARD)) return;
+		LivingEntity target = cooperativeHuntTarget(owner, avatar);
+		if (target != null) {
+			fight(avatar, target, CombatStyle.gatesFor(profile.profession));
+		}
+	}
+
+	/** Pure eligibility seam for safety and regression tests. */
+	public static boolean isCooperativeHuntTarget(ServerPlayerEntity owner,
+			AvatarEntity avatar, LivingEntity target) {
+		if (owner == null || avatar == null || target == null || !target.isAlive()
+				|| target == avatar || target == owner
+				|| target instanceof net.minecraft.entity.player.PlayerEntity
+				|| target instanceof AvatarEntity
+				|| avatar.getWorld() != target.getWorld()
+				|| owner.getWorld() != target.getWorld()) return false;
+		if (owner.isTeammate(target)) return false;
+		if (target instanceof net.minecraft.entity.passive.TameableEntity tameable
+				&& (tameable.isOwner(owner)
+					|| owner.getUuid().equals(tameable.getOwnerUuid()))) return false;
+		if (target instanceof net.minecraft.entity.Ownable ownable
+				&& ownable.getOwner() == owner) return false;
+		return avatar.squaredDistanceTo(target) <= DEFENCE_RANGE_SQ
+			|| owner.squaredDistanceTo(target) <= DEFENCE_RANGE_SQ;
 	}
 
 	/**
