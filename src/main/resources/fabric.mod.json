@@ -1,0 +1,60 @@
+{
+	"schemaVersion": 1,
+	"id": "squire",
+	"version": "${version}",
+	"name": "Squire AI",
+	"description": "A server-authoritative AI companion with long-term identity: follow, guard, rescue, haul and build from blueprints - with materials that really leave its backpack.",
+	"authors": [
+		"Squire AI Project"
+	],
+	"contact": {},
+	"license": "Apache-2.0",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.squire.SquireMod"
+		],
+		"client": [
+			"dev.squire.client.SquireClientMod"
+		],
+		"squire": [
+			"dev.squire.example.ExampleSquireProvider"
+		],
+		"fabric-gametest": [
+			"dev.squire.gametest.M0SpikeGameTests",
+			"dev.squire.gametest.M1CompanionGameTests",
+			"dev.squire.gametest.M2RuntimeGameTests",
+			"dev.squire.gametest.M3SecurityGameTests",
+			"dev.squire.gametest.M4ExtensionGameTests",
+			"dev.squire.gametest.M4McpGameTests",
+			"dev.squire.gametest.M5AutomationGameTests",
+			"dev.squire.gametest.M5CbpGameTests",
+			"dev.squire.gametest.M6AgentLifecycleGameTests",
+			"dev.squire.gametest.M7LogisticsGameTests",
+			"dev.squire.gametest.M8WorldEditGameTests",
+			"dev.squire.gametest.M9AutomationLightsGameTests",
+			"dev.squire.gametest.M10CbpProjectGameTests",
+			"dev.squire.gametest.M11ExternalResultGameTests",
+			"dev.squire.gametest.M12StoreMigrationGameTests",
+			"dev.squire.gametest.M13BlueprintGameTests",
+			"dev.squire.gametest.M14ProfileGameTests",
+			"dev.squire.gametest.M15BehaviourGameTests",
+			"dev.squire.gametest.M16ProjectGameTests",
+			"dev.squire.gametest.M18ProfessionGameTests",
+			"dev.squire.gametest.M19OwnerSafetyGameTests",
+			"dev.squire.gametest.M20ProfessionUiGameTests",
+			"dev.squire.gametest.M21NewPlayerWalkthroughGameTests",
+			"dev.squire.gametest.M22ToolGateGameTests",
+			"dev.squire.gametest.M23GuardCombatBalanceGameTests",
+			"dev.squire.gametest.M24ImmersiveSummonGameTests",
+			"dev.squire.gametest.M25CombatStyleGameTests",
+			"dev.squire.gametest.M26IdentityPersonalityGameTests"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.0",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	}
+}

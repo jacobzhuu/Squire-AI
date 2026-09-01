@@ -1,0 +1,93 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+}
+
+version = "${project.mod_version}+mc${project.minecraft_version}"
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	// Loom adds the Fabric maven and Mojang libraries automatically.
+	mavenCentral()
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Pure-Java unit tests (common/ package must not depend on Minecraft).
+	testImplementation platform("org.junit:junit-bom:${junit_bom_version}")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+// The wrapper distribution is validated manually during M0; skip the network probe
+// which is unreliable behind this environment's proxy.
+tasks.named('wrapper') {
+	validateDistributionUrl = false
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 17
+	it.options.encoding = 'UTF-8'
+}
+
+tasks.test {
+	useJUnitPlatform()
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		exceptionFormat 'full'
+	}
+}
+
+processResources {
+	inputs.property 'version', project.version
+
+	filesMatching('fabric.mod.json') {
+		expand 'version': project.version
+	}
+}
+
+jar {
+	from('LICENSE') {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
+
+// GameTest runner: fabric-api's gametest api v1 executes all registered tests
+// on dedicated-server startup when this system property is present, then exits.
+loom {
+	runs {
+		gametest {
+			inherit server
+			name 'Game Test'
+			vmArg '-Dfabric-api.gametest'
+			vmArg "-Dfabric-api.gametest.report-file=${project.buildDir}/reports/gametest/report.xml"
+			runDir 'build/gametest'
+		}
+	}
+}
+
+
+// Deterministic GameTests: the gametest server persists its world between runs;
+// stale AvatarEntities would otherwise accumulate and pollute entity scans.
+afterEvaluate {
+	tasks.named('runGametest') {
+		dependsOn 'squireCleanGametestWorld'
+	}
+}
+
+tasks.register('squireCleanGametestWorld', Delete) {
+	description 'Wipes the persisted gametest world before a fresh run.'
+	delete layout.projectDir.dir('build/gametest/world')
+}

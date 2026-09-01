@@ -1,0 +1,18 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Fabric dev runtime dirs
+run/
+build/gametest/
+
+# Local secrets - never commit (spec section 64)
+config/squire/secrets.*
+secrets.*
+*.env

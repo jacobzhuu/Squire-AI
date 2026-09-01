@@ -1,0 +1,76 @@
+# Squire AI CI (spec §92 Engineering DoD).
+# Every PR and push runs: build + unit tests + GameTests, a secret scan,
+# and a license sanity check. A green pipeline is part of the v1.0 DoD.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (project target)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile + unit tests
+        run: ./gradlew test --no-daemon --stacktrace
+
+      - name: GameTests (deterministic server, 1.20.1)
+        run: ./gradlew runGametest --no-daemon --stacktrace
+
+      - name: Upload gametest report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gametest-report
+          path: build/reports/gametest/
+          if-no-files-found: ignore
+
+  secret-scan:
+    # §92: no credentials may ever enter the repository. Replay files are
+    # redacted by code; this scan is the second line of defense for the repo.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for credential-shaped strings
+        shell: bash
+        run: |
+          set -e
+          # Look for common key shapes in tracked files. Allowlist markers keep
+          # documented examples (placeholders) from failing the build.
+          if git grep -nIE \
+            '(sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
+            -- . ':!*.md' | grep -v 'REDACTED\|EXAMPLE\|<your-key>' ; then
+            echo "::error::credential-shaped string found in tracked files"
+            exit 1
+          fi
+          echo "secret scan clean"
+
+  license-check:
+    # §92: license files must be present and consistent with fabric.mod.json.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: License artifacts present and consistent
+        shell: bash
+        run: |
+          set -e
+          test -f LICENSE || { echo "::error::LICENSE missing"; exit 1; }
+          grep -q 'Apache License' LICENSE || { echo "::error::LICENSE is not Apache-2.0 text"; exit 1; }
+          grep -q '"license": *"Apache-2.0"' src/main/resources/fabric.mod.json \
+            || { echo "::error::fabric.mod.json license mismatch"; exit 1; }
+          grep -qi 'apache-2.0' README.md || { echo "::error::README must state the license"; exit 1; }
+          echo "license check ok"
