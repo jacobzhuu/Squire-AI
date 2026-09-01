@@ -376,5 +376,19 @@
   "squire.gui.shortcut.arg_label": "档位",
   "squire.gui.shortcut.no_action": "现在没有可绑定的动作。先转职或开一件工程。",
   "squire.gui.shortcut.legacy": "这是一条旧版的自然语言快捷（%s）。重新选一个动作，它就不会再走模型了。",
-  "squire.gui.shortcut.unknown_action": "这个动作已经不存在了，重新设置一下"
+  "squire.gui.shortcut.unknown_action": "这个动作已经不存在了，重新设置一下",
+  "book.squire.compact.page.1.title": "侍从之约",
+  "book.squire.compact.page.1.body": "你唤醒的不是一条没有边界的命令，而是一位会记住你、与你并肩工作，也会诚实承认能力边界的伙伴。",
+  "book.squire.compact.page.2.title": "我们的约定",
+  "book.squire.compact.page.2.body": "你的最新指令优先。\n\n用于建造的每一块材料，都真实来自侍从的背包。\n\n危险行动必须由你确认。",
+  "book.squire.compact.page.3.title": "我们不会假装",
+  "book.squire.compact.page.3.body": "语言模型只能提出计划，世界始终由服务器裁决。\n\n侍从不会谎称工作已经完成，也不会在蓝图之外破坏方块。",
+  "book.squire.compact.page.4.title": "初次召唤",
+  "book.squire.compact.page.4.body": "   雕刻南瓜\n羊毛  干草块  羊毛\n       栅栏\n\n横向朝哪边都可以；最后放上雕刻南瓜。",
+  "book.squire.compact.page.5.title": "相处方法",
+  "book.squire.compact.page.5.body": "召唤成功后，你会得到一只绑定的召集铃。\n\n右键侍从或按 K 打开面板。\n\n在公共聊天中说话时，请带上他的名字。",
+  "book.squire.compact.page.6.title": "从这里开始",
+  "book.squire.compact.page.6.body": "先让他跟随，打开面板看看背包与装备，再交给他一件简单的事。\n\n职业页会引导训练、转职与成长。等级解锁新做法，但不会凭空增加战力。",
+  "book.squire.compact.page.7.title": "重读与补领",
+  "book.squire.compact.page.7.body": "面板里的「能做啥」会列出当前真正可用的能力。\n\n若这本书遗失，将一本普通书与一个干草块放入合成格，即可取得新副本。"
 }

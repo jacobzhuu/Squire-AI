@@ -376,5 +376,19 @@
   "squire.gui.shortcut.arg_label": "Variant",
   "squire.gui.shortcut.no_action": "Nothing to bind yet. Pick a profession, or start a project.",
   "squire.gui.shortcut.legacy": "A legacy free-text shortcut (%s). Pick an action to stop it going through the model.",
-  "squire.gui.shortcut.unknown_action": "That action no longer exists; set it again"
+  "squire.gui.shortcut.unknown_action": "That action no longer exists; set it again",
+  "book.squire.compact.page.1.title": "The Squire's Compact",
+  "book.squire.compact.page.1.body": "What you awaken is not a command without limits, but a companion who remembers you, works beside you, and speaks honestly about his boundaries.",
+  "book.squire.compact.page.2.title": "Our compact",
+  "book.squire.compact.page.2.body": "Your newest instruction comes first.\n\nEvery building material truly leaves the squire's backpack.\n\nDangerous actions require your confirmation.",
+  "book.squire.compact.page.3.title": "No pretence",
+  "book.squire.compact.page.3.body": "The language model may propose a plan; the server always decides what happens in the world.\n\nA squire never claims unfinished work is done or breaks blocks outside a blueprint.",
+  "book.squire.compact.page.4.title": "First summons",
+  "book.squire.compact.page.4.body": "   Carved Pumpkin\nWool   Hay Bale   Wool\n          Fence\n\nEither horizontal direction works. Place the carved pumpkin last.",
+  "book.squire.compact.page.5.title": "Working together",
+  "book.squire.compact.page.5.body": "Your first summon gives you a bound Recall Bell.\n\nRight-click the squire or press K to open the panel.\n\nIn public chat, include his name when speaking to him.",
+  "book.squire.compact.page.6.title": "Begin here",
+  "book.squire.compact.page.6.body": "Let him follow, inspect his backpack and equipment, then give him one simple task.\n\nThe Profession tab guides training and growth. Levels unlock new methods, never free combat power.",
+  "book.squire.compact.page.7.title": "Read it again",
+  "book.squire.compact.page.7.body": "The panel's “What can you do” entry lists the abilities that truly work now.\n\nIf this book is lost, combine one ordinary Book with one Hay Bale to make another copy."
 }

@@ -49,7 +49,8 @@
 			"dev.squire.gametest.M24ImmersiveSummonGameTests",
 			"dev.squire.gametest.M25CombatStyleGameTests",
 			"dev.squire.gametest.M26IdentityPersonalityGameTests",
-			"dev.squire.gametest.M27RecallBellAndHuntGameTests"
+			"dev.squire.gametest.M27RecallBellAndHuntGameTests",
+			"dev.squire.gametest.M28SquireCompactGameTests"
 		]
 	},
 	"depends": {

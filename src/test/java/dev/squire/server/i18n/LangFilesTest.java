@@ -79,10 +79,11 @@ class LangFilesTest {
 		}
 	}
 
-	/** 聊天文案 vs 界面标签：按键/分类/面板界面标签不算聊天行，其余都会进聊天框。 */
+	/** 聊天文案 vs 客户端文本：按键、界面标签和书页不会进入聊天框。 */
 	private static boolean isChatLine(String key) {
 		return !key.startsWith("key.") && !key.startsWith("category.")
-			&& !key.startsWith("squire.gui.") && !key.startsWith("item.");
+			&& !key.startsWith("squire.gui.") && !key.startsWith("item.")
+			&& !key.startsWith("book.");
 	}
 
 	/**

@@ -28,6 +28,7 @@ public final class SquireMod implements ModInitializer {
 		dev.squire.server.registry.SquireItems.register();
 		dev.squire.server.registry.SquireScreens.register();
 		dev.squire.server.summon.SummoningService.register();
+		dev.squire.server.guide.SquireCompactService.register();
 		SquireCommands.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> SquireRuntime.init(server));
