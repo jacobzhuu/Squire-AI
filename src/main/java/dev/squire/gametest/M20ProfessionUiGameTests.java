@@ -407,4 +407,56 @@ public final class M20ProfessionUiGameTests implements FabricGameTest {
 			context.complete();
 		});
 	}
+
+	// ================================================== 管理员调试入口
+
+	/** OP can create exact profession snapshots; an ordinary player cannot see the branch. */
+	@GameTest(templateName = FLOOR, tickLimit = 200, batchId = "squire-admin-profession")
+	public void adminCanSetExactProfessionLevelsWithoutProgressionCosts(
+			TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "admin-profession-level");
+
+		context.runAtTick(5, () -> {
+			AvatarEntity avatar = summon(context, rt, owner, new BlockPos(1, 2, 1));
+			var commands = context.getWorld().getServer().getCommandManager();
+			String setGuard = "squire admin profession set guard 8";
+
+			int denied = commands.executeWithPrefix(
+				owner.getCommandSource().withLevel(0), setGuard);
+			context.assertTrue(denied == 0,
+				"a non-operator must not reach the debug profession command");
+			context.assertFalse(rt.professionOf(avatar).hasProfession(),
+				"the denied command leaves the profile untouched");
+
+			int guardResult = commands.executeWithPrefix(
+				owner.getCommandSource().withLevel(2), setGuard);
+			ProfessionData data = rt.professionOf(avatar);
+			context.assertTrue(guardResult == 1, "the OP debug command succeeds");
+			context.assertTrue(data.profession() == SquireProfession.GUARD
+				&& data.level == 8, "the command creates the exact Guard level");
+			context.assertTrue(data.xp == 0 && data.overflowXp == 0,
+				"debug snapshots start with deterministic empty XP bars");
+			var maxHealth = avatar.getAttributeInstance(
+				net.minecraft.entity.attribute.EntityAttributes.GENERIC_MAX_HEALTH);
+			context.assertTrue(maxHealth != null && Math.abs(maxHealth.getBaseValue()
+				- rt.professionConfig().guardMaxHealth(8)) < 0.01,
+				"level-derived Guard attributes refresh immediately");
+
+			int engineerResult = commands.executeWithPrefix(
+				owner.getCommandSource().withLevel(2),
+				"squire admin profession set engineer 6");
+			context.assertTrue(engineerResult == 1
+				&& data.profession() == SquireProfession.ENGINEER && data.level == 6,
+				"the same command can switch to an exact Engineer level");
+			context.assertTrue(Math.abs(maxHealth.getBaseValue() - 20.0) < 0.01,
+				"switching away from Guard removes its derived health");
+			context.assertTrue(rt.agentStore().recordOfAgent(avatar.agentId())
+				.orElseThrow().profile.profession.level == 6,
+				"the debug level is persisted in the authoritative profile");
+
+			cleanUp(rt, owner);
+			context.complete();
+		});
+	}
 }

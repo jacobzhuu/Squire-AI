@@ -1861,6 +1861,12 @@ public final class SquireRuntime {
 		return professionService.promote(sender);
 	}
 
+	/** OP command backend: bypasses progression costs to create a deterministic test state. */
+	public ExecutionResult debugSetProfession(ServerPlayerEntity sender,
+			String professionId, int level) {
+		return professionService.debugSet(sender, professionId, level);
+	}
+
 	/** 召唤时把等级效果（守卫的生命上限）落到身上。不额外回血。 */
 	void applyProfessionLevelEffects(AvatarEntity avatar) {
 		professionService.applyLevelEffects(avatar, professionOf(avatar), false);

@@ -29,6 +29,17 @@ big to fight.
 /squire design preset save 生存屋
 ```
 
+Server operators can bypass training, XP and material costs when testing level gates:
+
+```text
+/squire admin profession set guard 8
+/squire admin profession set engineer 6
+```
+
+This debug command affects the operator's currently present squire, resets its current
+XP and overflow, and immediately persists the selected profession and level. It is not
+part of ordinary survival progression and requires permission level 2.
+
 The companion page in the panel shows profession, level, the XP bar, and
 **READY FOR PROMOTION** when the bar is full.
 

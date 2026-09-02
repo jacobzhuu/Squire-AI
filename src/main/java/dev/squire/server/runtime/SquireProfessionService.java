@@ -190,6 +190,47 @@ public final class SquireProfessionService {
 			text.toString());
 	}
 
+	/**
+	 * Administrator-only command backend for testing level-gated behaviour.
+	 * Command registration owns the permission check; this method owns the atomic state change.
+	 */
+	public SquireRuntime.ExecutionResult debugSet(ServerPlayerEntity sender,
+			String professionId, int requestedLevel) {
+		Bound bound = bind(sender);
+		if (bound.failure() != null) {
+			return bound.failure();
+		}
+		SquireProfession profession = SquireProfession.byId(professionId);
+		if (profession == null) {
+			return SquireRuntime.ExecutionResult.fail("feedback.profession_unknown",
+				"[Squire][Debug] 未知职业「" + professionId
+					+ "」。可用值：guard、engineer。");
+		}
+
+		ProfessionData data = bound.data();
+		String before = data.hasProfession()
+			? data.profession().id() + " Lv" + data.level : "none Lv0";
+		data.setProfession(profession);
+		data.level = SquireProfession.clampLevel(requestedLevel);
+		data.stance = CombatStance.BALANCED.id();
+
+		// Match the ordinary first-choice convenience without overwriting an explicit role.
+		SquireProfile profile = bound.profile();
+		if (profile.roleId == null && profession.kindredRole() != null
+				&& profession.kindredRole().available()) {
+			profile.roleId = profession.kindredRole().id();
+			profile.refreshUnlocks();
+		}
+
+		applyLevelEffects(bound.avatar(), data, true);
+		bound.avatar().refreshNameplate();
+		runtime.persistSnapshot(bound.avatar());
+		return SquireRuntime.ExecutionResult.ok("feedback.admin_profession_set",
+			"[Squire][Debug] " + before + " → " + profession.id() + " Lv"
+				+ data.level + "。XP 与溢出已清零，战斗姿态和等级属性已刷新。"
+				+ "\n用 /squire profession 查看当前解锁能力。");
+	}
+
 	/** 卸掉职业。等级和经验清零，Boss 台账保留（否则改行就成了洗衰减的手段）。 */
 	public SquireRuntime.ExecutionResult forget(ServerPlayerEntity sender) {
 		Bound bound = bind(sender);

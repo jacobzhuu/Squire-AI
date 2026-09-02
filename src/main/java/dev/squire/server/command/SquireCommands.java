@@ -110,6 +110,19 @@ public final class SquireCommands {
 							.executes(SquireCommands::aliasProbe)))
 					.then(CommandManager.literal("diagnose")
 						.executes(SquireCommands::diagnose))
+					.then(CommandManager.literal("profession")
+						.then(CommandManager.literal("set")
+							.then(CommandManager.argument("id", StringArgumentType.word())
+								.suggests((ctx, builder) -> {
+									for (var profession : dev.squire.server.profession
+											.SquireProfession.values()) {
+										builder.suggest(profession.id());
+									}
+									return builder.buildFuture();
+								})
+								.then(CommandManager.argument("level",
+										IntegerArgumentType.integer(1, 10))
+									.executes(SquireCommands::adminProfessionSet)))))
 					.then(CommandManager.literal("instantacquire")
 						.then(CommandManager.literal("enable")
 							.executes(ctx -> instantAcquire(ctx, true)))
@@ -413,6 +426,14 @@ public final class SquireCommands {
 	private static int professionForget(CommandContext<ServerCommandSource> context) {
 		return withPlayer(context, player ->
 			SquireRuntime.get().forgetProfession(player));
+	}
+
+	/** OP-only deterministic profession state for testing every level gate. */
+	private static int adminProfessionSet(
+			CommandContext<ServerCommandSource> context) {
+		return withPlayer(context, player -> SquireRuntime.get().debugSetProfession(
+			player, StringArgumentType.getString(context, "id"),
+			IntegerArgumentType.getInteger(context, "level")));
 	}
 
 	private static int stanceSet(CommandContext<ServerCommandSource> context) {
