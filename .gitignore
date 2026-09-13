@@ -16,3 +16,5 @@ build/gametest/
 config/squire/secrets.*
 secrets.*
 *.env
+__pycache__/
+*.pyc
