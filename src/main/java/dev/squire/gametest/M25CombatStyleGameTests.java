@@ -30,6 +30,53 @@ import net.minecraft.util.math.BlockPos;
  * 每一条路上都成立，也包括玩家亲手把弓塞进他手里的时候——否则能力清单是在骗人。</p>
  */
 public final class M25CombatStyleGameTests implements FabricGameTest {
+	@GameTest(templateName = FLOOR, tickLimit = 80)
+	public void surroundedGuardInterruptsLockedBowAndRestoresItAfterSafety(TestContext c) {
+		var guard = avatar(c);
+		var profile = new dev.squire.server.profile.SquireProfile();
+		profile.profession.setProfession(dev.squire.server.profession.SquireProfession.GUARD);
+		profile.profession.level = 10;
+		guard.attachProfile(() -> profile);
+		guard.setAiDisabled(true);
+		var bow = new ItemStack(Items.BOW);
+		bow.setCustomName(net.minecraft.text.Text.literal("chosen bow"));
+		putInHand(guard, bow);
+		guard.items().insert(new ItemStack(Items.IRON_SWORD));
+		guard.items().insert(new ItemStack(Items.ARROW, 16));
+		var far = c.spawnEntity(EntityType.PILLAGER, TARGET_POS); far.setAiDisabled(true);
+		c.assertTrue(CombatStyle.prepare(guard, far, CombatStyle.Style.AUTO), "distant target uses locked bow");
+		guard.setCurrentHand(net.minecraft.util.Hand.MAIN_HAND);
+		var near = c.spawnEntity(EntityType.PILLAGER, AVATAR_POS.east(2)); near.setAiDisabled(true); near.setTarget(guard);
+		var second = c.spawnEntity(EntityType.VINDICATOR, AVATAR_POS.west()); second.setAiDisabled(true); second.setTarget(guard);
+		c.runAtTick(5, () -> {
+			var selected = dev.squire.server.combat.GuardSelfDefense.target(guard, far);
+			c.assertTrue(selected == near || selected == second, "local threat overrides distant objective");
+			c.assertFalse(CombatStyle.prepare(guard, selected, CombatStyle.Style.AUTO), "locked bow yields to defense");
+			c.assertTrue(holdingSword(guard) && !guard.isUsingItem(), "draw cancelled and sword equipped");
+			c.assertTrue(guard.weaponChosenByPlayer(), "manual preference retained");
+			near.discard(); second.discard();
+		});
+		c.runAtTick(10, () -> c.assertFalse(CombatStyle.prepare(guard, far, CombatStyle.Style.AUTO), "short safety hold prevents weapon flicker"));
+		c.runAtTick(50, () -> {
+			c.assertTrue(CombatStyle.prepare(guard, far, CombatStyle.Style.AUTO), "ranged preference restored");
+			c.assertTrue(guard.getMainHandStack().getName().getString().equals("chosen bow"), "same manually chosen bow restored");
+			c.assertTrue(guard.items().countOf(new net.minecraft.util.Identifier("minecraft:bow")) + guard.getMainHandStack().getCount() == 1, "no duplicated bow");
+			c.complete();
+		});
+	}
+	@GameTest(templateName = FLOOR, tickLimit = 40)
+	public void bowPreferenceStillDefendsWithoutSpareSword(TestContext c) {
+		var guard = avatar(c);
+		var profile = new dev.squire.server.profile.SquireProfile();
+		profile.profession.setProfession(dev.squire.server.profession.SquireProfession.GUARD);
+		profile.profession.level = 4; guard.attachProfile(() -> profile);
+		putInHand(guard, new ItemStack(Items.BOW));
+		guard.items().insert(new ItemStack(Items.ARROW, 8));
+		var near = c.spawnEntity(EntityType.PILLAGER, AVATAR_POS.east(2)); near.setAiDisabled(true);
+		c.assertFalse(CombatStyle.prepare(guard, near, CombatStyle.Style.RANGED), "emergency overrides explicit bow preference at level 4");
+		c.assertFalse(holdingBow(guard), "bow stowed even without melee weapon");
+		c.complete();
+	}
 
 	public static final String FLOOR = M0SpikeGameTests.FLOOR;
 

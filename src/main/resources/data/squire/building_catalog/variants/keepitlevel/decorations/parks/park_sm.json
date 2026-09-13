@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/decorations/parks/park_sm",
+  "format": "minecraft:structure_nbt",
+  "displayName": "公园 · park_sm",
+  "tier": 1,
+  "category": "DECORATION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/decorations/parks/park_sm",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/parks/park_sm.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "decorations"
+    ]
+  },
+  "sourceFrame": [
+    6,
+    15,
+    6
+  ],
+  "primaryOffset": {
+    "x": 3,
+    "y": 0,
+    "z": 3
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence",
+        "trapdoor"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:spruce_trapdoor",
+      "slot": "spruce_structure",
+      "variant": "trapdoor"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:spruce_leaves": [
+      "distance"
+    ]
+  }
+}

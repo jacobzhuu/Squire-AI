@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "format": "structurize:blueprint_v1",
+  "displayName": "学者图书馆",
+  "category": "CIVIC",
+  "tier": 4,
+  "minEngineerLevel": 7,
+  "blueprint": "squire:keepitlevel/library1",
+  "encoding": "base64-gzip",
+  "crop": "content",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "ignoredBlocks": [
+    "structurize:blocksubstitution",
+    "structurize:blocksolidsubstitution"
+  ],
+  "blockMap": {
+    "minecraft:dirt_path": { "block": "minecraft:coarse_dirt" },
+    "minecolonies:blockhutlibrary": {
+      "block": "minecraft:lectern",
+      "preserveProperties": [
+        "facing"
+      ]
+    }
+  },
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/education/library1.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel spruce medieval",
+    "description": "A multi-storey library adapted to a vanilla lectern and bookshelves.",
+    "tags": [
+      "civic",
+      "library",
+      "spruce",
+      "third-party"
+    ]
+  },
+  "materialSlots": [
+    {
+      "id": "timber",
+      "displayName": "木构梁柱",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "log"
+      ]
+    },
+    {
+      "id": "boards",
+      "displayName": "木质板材",
+      "type": "WALL",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "planks"
+      ]
+    },
+    {
+      "id": "roof",
+      "displayName": "高处屋面",
+      "type": "ROOF",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "stairs",
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_log",
+      "slot": "timber",
+      "variant": "log"
+    },
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "boards",
+      "variant": "planks"
+    },
+    {
+      "block": "minecraft:spruce_stairs",
+      "slot": "roof",
+      "variant": "stairs",
+      "from": [
+        0,
+        11,
+        0
+      ],
+      "to": [
+        255,
+        255,
+        255
+      ]
+    },
+    {
+      "block": "minecraft:spruce_slab",
+      "slot": "roof",
+      "variant": "slab",
+      "from": [
+        0,
+        11,
+        0
+      ],
+      "to": [
+        255,
+        255,
+        255
+      ]
+    }
+  ]
+}

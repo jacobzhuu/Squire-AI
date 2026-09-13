@@ -47,6 +47,11 @@ public final class ConversationOrchestrator {
 	private static final int MAX_REPLANS = 2;
 	private static final int MAX_TOOL_CALLS = 32;
 	private static final int MAX_ESTIMATED_TOKENS = 16_384;
+	private static final int MAX_ACTIVE_TURNS_PER_PLAYER = 3;
+	private static final int MAX_ACTIVE_TURNS_SERVER = 64;
+	private static final int MAX_TERMINAL_HISTORY = 512;
+	private static final int MAX_PROVIDER_CONCURRENCY = 5;
+	private static final int MAX_QUEUED_PROVIDER_REQUESTS = 16;
 	private static final int MAX_HIGH_RISK_CALLS = 1;
 	private static final long TURN_TIMEOUT_TICKS = 1200L;
 	private static final long CLARIFICATION_TIMEOUT_TICKS = 12000L;
@@ -68,6 +73,11 @@ public final class ConversationOrchestrator {
 	private final Map<UUID, LlmProvider> providersByTurn = new LinkedHashMap<>();
 	/** Accessed by provider completion threads and the server thread. */
 	private final Set<UUID> providerInFlight = java.util.concurrent.ConcurrentHashMap.newKeySet();
+	private final java.util.concurrent.ConcurrentMap<UUID, java.util.concurrent.CompletableFuture<AgentResponse>> providerFutures =
+		new java.util.concurrent.ConcurrentHashMap<>();
+	/** Server-thread FIFO; bounded independently of the persisted turn history. */
+	private final Map<UUID, LlmProvider> queuedProviders = new LinkedHashMap<>();
+	private final ProviderRequestLimiter requestLimiter = new ProviderRequestLimiter();
 	private final dev.squire.server.metrics.SquireMetrics metrics =
 		new dev.squire.server.metrics.SquireMetrics();
 
@@ -107,6 +117,16 @@ public final class ConversationOrchestrator {
 				dev.squire.server.help.CapabilityGuide.didYouMean(rawText));
 			return;
 		}
+		long activeForPlayer = turns.values().stream()
+			.filter(turn -> !turn.isTerminal() && turn.ownerId().equals(sender.getUuid())).count();
+		if (activeForPlayer >= MAX_ACTIVE_TURNS_PER_PLAYER) {
+			runtime.notifier().send(sender.getUuid(), "[Squire] 你有太多未完成的对话，请先等待或取消当前任务。");
+			return;
+		}
+		if (activeTurnCount() >= MAX_ACTIVE_TURNS_SERVER) {
+			runtime.notifier().send(sender.getUuid(), "[Squire] 当前服务器对话较多，请稍后再试。");
+			return;
+		}
 		long tick = now();
 		TurnRecord record = new TurnRecord(UUID.randomUUID(), sender.getUuid(), agentId,
 			rawText, providerOpt.get().id(), tick, tick, tick + TURN_TIMEOUT_TICKS,
@@ -114,6 +134,7 @@ public final class ConversationOrchestrator {
 			List.of(), List.of(), List.of(), false);
 		turns.put(record.turnId(), record);
 		providersByTurn.put(record.turnId(), providerOpt.get());
+		trimTerminalHistory();
 		save();
 		LOG.info("[turn] begin id={} player={} agent={} provider={}", shortId(record.turnId()),
 			shortId(sender.getUuid()), agentId, providerOpt.get().id());
@@ -151,15 +172,25 @@ public final class ConversationOrchestrator {
 				requestCurrentProviderOrFail(turn);
 			}
 		}
+		drainProviderQueue();
 		boolean removed = turns.values().removeIf(turn -> turn.isTerminal()
 			&& tick - turn.updatedTick() > TERMINAL_RETENTION_TICKS);
+		removed |= trimTerminalHistory();
 		if (removed) save();
 	}
 
 	public int load() {
+		long tick = now();
+		for (var entry : providerFutures.entrySet()) {
+			TurnRecord old = turns.get(entry.getKey());
+			if (old != null && !old.isTerminal()) old.fail("ORCHESTRATOR_RELOADED", tick);
+			entry.getValue().cancel(true);
+		}
+		providerFutures.clear();
+		providerInFlight.clear();
+		queuedProviders.clear();
 		turns.clear();
 		providersByTurn.clear();
-		long tick = now();
 		for (TurnRecord turn : store.load()) {
 			// A server cannot recover an in-process provider/MCP future. Task-backed
 			// waits remain correlated to restored task ids; call-only waits become a
@@ -180,8 +211,13 @@ public final class ConversationOrchestrator {
 					turn.fail("SERVER_RESTARTED", tick);
 				}
 			}
+			if (!turn.isTerminal() && (activeTurnCount() >= MAX_ACTIVE_TURNS_SERVER
+					|| activeTurnCountFor(turn.ownerId()) >= MAX_ACTIVE_TURNS_PER_PLAYER)) {
+				turn.fail("SERVER_RESTARTED_LIMIT", tick);
+			}
 			turns.put(turn.turnId(), turn);
 		}
+		trimTerminalHistory();
 		save();
 		return turns.size();
 	}
@@ -192,24 +228,117 @@ public final class ConversationOrchestrator {
 
 	public dev.squire.server.metrics.SquireMetrics metrics() { return metrics; }
 
+	/** Current provider I/O slots, exposed for server metrics and GameTest assertions. */
+	public int activeProviderRequestCount() { return providerInFlight.size(); }
+
+	/** Waiting provider requests; always bounded by {@value #MAX_QUEUED_PROVIDER_REQUESTS}. */
+	public int queuedProviderRequestCount() { return queuedProviders.size(); }
+
+	private long activeTurnCount() {
+		return turns.values().stream().filter(turn -> !turn.isTerminal()).count();
+	}
+
+	private long activeTurnCountFor(UUID ownerId) {
+		return turns.values().stream().filter(turn -> !turn.isTerminal()
+			&& turn.ownerId().equals(ownerId)).count();
+	}
+
+	/** Keep the full persisted dialogue set bounded, even on legacy saves. */
+	private boolean trimTerminalHistory() {
+		List<TurnRecord> terminal = turns.values().stream().filter(TurnRecord::isTerminal)
+			.sorted(java.util.Comparator.comparingLong(TurnRecord::updatedTick)).toList();
+		int excess = terminal.size() - MAX_TERMINAL_HISTORY;
+		if (excess <= 0) return false;
+		for (int i = 0; i < excess; i++) turns.remove(terminal.get(i).turnId());
+		return true;
+	}
+
 	public ShortTermConversationStateStore shortTermState() { return shortTerm; }
 
+    /** Explicit structured commands use the same validated gateway, without an LLM. */
+    public SquireRuntime.ExecutionResult executeStructured(ServerPlayerEntity sender, String tool,
+            Map<String,Object> arguments) {
+        UUID agentId=runtime.agents().resolveForOwner(sender.getUuid()).map(AvatarEntity::agentId).orElse(null);
+        if(agentId==null)return SquireRuntime.ExecutionResult.refused("The selected companion is unavailable.");
+        var definition=runtime.toolRegistry().lookup(tool).orElse(null);
+        if(definition==null || !definition.exposure().visibleToModel())
+            return SquireRuntime.ExecutionResult.refused("This tool is not exposed to companion commands.");
+        String name=runtime.agents().resolveByAgentId(agentId).map(runtime::displayNameOf).orElse("Squire");
+        gateway.newTurn();
+        var call=ToolCall.of(tool,arguments);
+        var result=dispatch(agentId,sender.getUuid(),call,CallerIdentity.model(sender.getUuid(),agentId));
+        shortTerm.observeToolResult(agentId,call,result,now());
+        String message=describe(call,result);
+        if(!result.data().isEmpty() && result.status()!=ToolResult.Status.BLOCKED) message+="\n"+GSON.toJson(result.data());
+        boolean success=result.status()==ToolResult.Status.SUCCESS || result.status()==ToolResult.Status.RUNNING;
+        return new SquireRuntime.ExecutionResult(success,"feedback.structured_command",result.errorOrNull().map(e -> e.code().wire()).orElse(null),
+            "["+name+"] "+message);
+    }
+
 	private void requestProvider(TurnRecord turn, LlmProvider provider) {
-		if (providerInFlight.contains(turn.turnId())) return;
+		if (turn.isTerminal() || providerInFlight.contains(turn.turnId())
+				|| queuedProviders.containsKey(turn.turnId())) return;
+		boolean queueNeeded = providerInFlight.size() >= MAX_PROVIDER_CONCURRENCY;
+		if (queueNeeded && queuedProviders.size() >= MAX_QUEUED_PROVIDER_REQUESTS) {
+			fail(turn, "PROVIDER_BUSY", "当前模型请求较多，请稍后重新发送。");
+			return;
+		}
+		if (!requestLimiter.tryAcquire(turn.ownerId(), now())) {
+			fail(turn, "PROVIDER_RATE_LIMIT", "模型请求已达到每分钟限额，请稍后再试。");
+			return;
+		}
+		if (queueNeeded) {
+			queuedProviders.put(turn.turnId(), provider);
+			return;
+		}
+		launchProvider(turn, provider);
+	}
+
+	private void drainProviderQueue() {
+		while (providerInFlight.size() < MAX_PROVIDER_CONCURRENCY && !queuedProviders.isEmpty()) {
+			var next = queuedProviders.entrySet().iterator().next();
+			UUID turnId = next.getKey();
+			LlmProvider provider = next.getValue();
+			queuedProviders.remove(turnId);
+			TurnRecord turn = turns.get(turnId);
+			if (turn == null || turn.isTerminal()) continue;
+			if (now() > turn.deadlineTick()) {
+				fail(turn, "TURN_TIMEOUT", "规划等待超过 60 秒，已安全停止。");
+				continue;
+			}
+			launchProvider(turn, provider);
+		}
+	}
+
+	private void launchProvider(TurnRecord turn, LlmProvider provider) {
+		if (turn.isTerminal() || !providerInFlight.add(turn.turnId())) return;
 		String message = providerMessage(turn, perception(turn),
 			shortTerm.promptContext(turn.agentId(), now()));
 		if (!turn.consumeEstimatedTokens(Math.max(1, message.length() / 4),
 				MAX_ESTIMATED_TOKENS, now())) {
+			providerInFlight.remove(turn.turnId());
 			fail(turn, "TOKEN_BUDGET_EXCEEDED", "规划上下文已超过本轮 Token 预算，已安全停止。");
+			drainProviderQueue();
 			return;
 		}
 		save();
-		if (!providerInFlight.add(turn.turnId())) return;
 		AgentRequest request = new AgentRequest(UUID.randomUUID(), turn.ownerId(),
 			turn.agentId(), message, agentName(turn));
 		metrics.inc(dev.squire.server.metrics.SquireMetrics.Key.LLM_REQUESTS);
 		long startedNanos = System.nanoTime();
-		provider.generate(request).whenComplete((response, error) -> {
+		java.util.concurrent.CompletableFuture<AgentResponse> future;
+		try {
+			future = provider.generate(request);
+			if (future == null) throw new IllegalStateException("provider returned a null future");
+		} catch (RuntimeException providerFailure) {
+			providerInFlight.remove(turn.turnId());
+			handleProviderFailure(turn, providerFailure.getMessage() == null
+				? providerFailure.getClass().getSimpleName() : providerFailure.getMessage());
+			drainProviderQueue();
+			return;
+		}
+		providerFutures.put(turn.turnId(), future);
+		future.whenComplete((response, error) -> {
 			metrics.record(dev.squire.server.metrics.SquireMetrics.Timer.LLM_LATENCY,
 				System.nanoTime() - startedNanos);
 			if (error != null) {
@@ -225,14 +354,19 @@ public final class ConversationOrchestrator {
 				// the server thread. Otherwise a tick between completion and application
 				// can submit a duplicate provider request.
 				providerInFlight.remove(turn.turnId());
-				if (response != null && !turn.consumeEstimatedTokens(
-						Math.max(1, response.text().length() / 4),
-						MAX_ESTIMATED_TOKENS, now())) {
-					fail(turn, "TOKEN_BUDGET_EXCEEDED",
-						"模型输出超过本轮 Token 预算，已安全停止。");
-					return;
+				providerFutures.remove(turn.turnId(), future);
+				try {
+					if (!turn.isTerminal() && response != null && !turn.consumeEstimatedTokens(
+							Math.max(1, response.text().length() / 4),
+							MAX_ESTIMATED_TOKENS, now())) {
+						fail(turn, "TOKEN_BUDGET_EXCEEDED",
+							"模型输出超过本轮 Token 预算，已安全停止。");
+					} else if (!turn.isTerminal()) {
+						processResponse(turn.turnId(), response, error);
+					}
+				} finally {
+					drainProviderQueue();
 				}
-				processResponse(turn.turnId(), response, error);
 			});
 		});
 	}
@@ -519,6 +653,11 @@ public final class ConversationOrchestrator {
 			}
 		}
 		if (!remainingTasks.isEmpty() || !remainingCalls.isEmpty()) {
+			if (remainingTasks.equals(turn.waitingTaskIds())
+					&& remainingCalls.equals(turn.waitingCallIds())
+					&& failed == turn.waitingFailed()) {
+				return; // no change: avoid rewriting the entire turns file every waiting tick
+			}
 			turn.waitFor(remainingTasks, remainingCalls, failed, tick);
 			save();
 			return;
@@ -637,9 +776,13 @@ public final class ConversationOrchestrator {
 			"CONVERSATION_CANCELLED");
 		turn.fail("PLAYER_CANCELLED", now());
 		providersByTurn.remove(turn.turnId());
+		queuedProviders.remove(turn.turnId());
 		providerInFlight.remove(turn.turnId());
+		java.util.concurrent.CompletableFuture<AgentResponse> future = providerFutures.remove(turn.turnId());
+		if (future != null) future.cancel(true);
 		save();
 		setActivity(turn, AvatarEntity.ActivityState.IDLE);
+		drainProviderQueue();
 	}
 
 	private TurnRecord latestClarifying(UUID ownerId, UUID agentId) {
@@ -663,9 +806,14 @@ public final class ConversationOrchestrator {
 	private void fail(TurnRecord turn, String code, String message) {
 		turn.fail(code, now());
 		providersByTurn.remove(turn.turnId());
+		queuedProviders.remove(turn.turnId());
+		providerInFlight.remove(turn.turnId());
+		java.util.concurrent.CompletableFuture<AgentResponse> future = providerFutures.remove(turn.turnId());
+		if (future != null) future.cancel(true);
 		save();
 		setActivity(turn, AvatarEntity.ActivityState.FAILED);
 		notify(turn, message);
+		drainProviderQueue();
 	}
 
 	/** 回合状态 → 伙伴头顶的可见状态。实体不在场时静默跳过。 */
@@ -788,8 +936,8 @@ public final class ConversationOrchestrator {
 			@Override public UUID requesterId() { return senderId; }
 			@Override public long tick() { return now(); }
 		};
-		ToolResult result = gateway.dispatch(call, caller,
-			ctx, runtime.capabilitiesOf(agentId));
+		ToolResult result = runtime.agents().withTarget(senderId, agentId, () -> gateway.dispatch(call, caller,
+			ctx, runtime.capabilitiesOf(agentId)));
 		if (result.status() == ToolResult.Status.BLOCKED
 				&& result.errorOrNull().map(e -> e.code()
 					== ErrorCode.CONFIRMATION_REQUIRED).orElse(false)) {
@@ -1004,7 +1152,7 @@ public final class ConversationOrchestrator {
 
 	private void notify(TurnRecord turn, String message) {
 		if (message != null && !message.isBlank())
-			runtime.notifier().send(turn.ownerId(), "[Squire] " + message);
+			runtime.notifier().send(turn.ownerId(), "[" + agentName(turn) + "] " + message);
 	}
 
 	private long now() { return server.getOverworld().getTime(); }

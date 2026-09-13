@@ -35,7 +35,37 @@ import net.minecraft.util.math.Direction;
  */
 public record Blueprint(String id, String displayName, int tier, Category category,
 		int width, int height, int depth, List<BlueprintStep> steps,
-		Set<String> requiredAbilities, List<MaterialSlot> materialSlots) {
+		Set<String> requiredAbilities, List<MaterialSlot> materialSlots,
+		Metadata metadata) {
+
+	/** Descriptive data travels with the parsed blueprint, independent of its source format. */
+	public record Metadata(String author, String source, String license, String style,
+			String description, Set<String> tags, String format, int minEngineerLevel, List<SiteRequirement> siteRequirements) {
+		public Metadata(String author, String source, String license, String style, String description,
+				Set<String> tags, String format, int minEngineerLevel) {
+			this(author, source, license, style, description, tags, format, minEngineerLevel, List.of());
+		}
+		public static final Metadata EMPTY = new Metadata("", "", "", "", "",
+			Set.of(), "squire:steps", 0);
+
+		public Metadata {
+			siteRequirements = siteRequirements == null ? List.of() : List.copyOf(siteRequirements);
+			author = clean(author);
+			source = clean(source);
+			license = clean(license);
+			style = clean(style);
+			description = clean(description);
+			tags = tags == null ? Set.of() : Set.copyOf(tags);
+			format = format == null || format.isBlank() ? "squire:steps" : format.trim();
+			if (minEngineerLevel < 0 || minEngineerLevel > 10) {
+				throw new IllegalArgumentException("minEngineerLevel must be between 0 and 10");
+			}
+		}
+
+		private static String clean(String value) {
+			return value == null ? "" : value.trim();
+		}
+	}
 
 	/** A fixed semantic role whose concrete block family is selected per placement. */
 	public record MaterialSlot(String id, String displayName, MaterialFamily.SlotType type,
@@ -54,22 +84,34 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 
 	/** 蓝图的用途分类，只用于分组展示与后续职业解锁。 */
 	public enum Category {
-		SHELTER, STORAGE, DEFENCE, MINE;
+		HOUSING, STORAGE, PRODUCTION, CIVIC, DEFENCE, INFRASTRUCTURE, DECORATION,
+		/** @deprecated source compatibility; resource descriptors parse this as HOUSING. */
+		@Deprecated SHELTER,
+		/** @deprecated source compatibility; resource descriptors parse this as PRODUCTION. */
+		@Deprecated MINE;
 
 		public static Category parse(String raw) {
 			if (raw == null) {
-				return SHELTER;
+				return HOUSING;
 			}
+			String normalized = raw.trim().toUpperCase(Locale.ROOT);
+			if ("SHELTER".equals(normalized)) normalized = "HOUSING";
+			if ("MINE".equals(normalized)) normalized = "PRODUCTION";
 			try {
-				return valueOf(raw.trim().toUpperCase(Locale.ROOT));
+				return valueOf(normalized);
 			} catch (IllegalArgumentException e) {
-				return SHELTER;
+				return HOUSING;
 			}
 		}
 	}
 
+	/** Level zero means unrestricted; bundled library entries explicitly opt into Engineer gating. */
+	public int minEngineerLevel() {
+		return metadata.minEngineerLevel();
+	}
+
 	/** 单份蓝图的规模上限：要能预览、能撤销、能在一次会话里盖完。 */
-	public static final int MAX_CELLS = 8192;
+	public static final int MAX_CELLS = 65536;
 
 	public Blueprint {
 		if (id == null || id.isBlank()) {
@@ -86,6 +128,7 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 		requiredAbilities = requiredAbilities == null ? Set.of()
 			: Set.copyOf(requiredAbilities);
 		materialSlots = materialSlots == null ? List.of() : List.copyOf(materialSlots);
+		metadata = metadata == null ? Metadata.EMPTY : metadata;
 		displayName = displayName == null || displayName.isBlank() ? id : displayName;
 		Set<String> slotIds = new java.util.HashSet<>();
 		for (MaterialSlot slot : materialSlots) {
@@ -103,7 +146,15 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 			int width, int height, int depth, List<BlueprintStep> steps,
 			Set<String> requiredAbilities) {
 		this(id, displayName, tier, category, width, height, depth, steps,
-			requiredAbilities, List.of());
+			requiredAbilities, List.of(), Metadata.EMPTY);
+	}
+
+	/** Source-compatible constructor for callers that already provide material slots. */
+	public Blueprint(String id, String displayName, int tier, Category category,
+			int width, int height, int depth, List<BlueprintStep> steps,
+			Set<String> requiredAbilities, List<MaterialSlot> materialSlots) {
+		this(id, displayName, tier, category, width, height, depth, steps,
+			requiredAbilities, materialSlots, Metadata.EMPTY);
 	}
 
 	public Map<String, String> defaultPalette() {
@@ -182,14 +233,31 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 
 	/** 一格要放的东西，连同它属于哪一步（报告用）和缺料时能不能跳过。 */
 	public record Cell(BlockPos pos, String blockId, Map<String, String> properties,
-			int stepOrder, String what, boolean optional) { }
+			int stepOrder, String what, boolean optional) {
+		public Cell { pos = pos.toImmutable(); properties = Map.copyOf(properties); }
+	}
 
 	/**
 	 * 展平结果。{@code toPlace} 自下而上（建造看起来像建造），
 	 * {@code toClear} 自上而下（先掏顶再掏底，伙伴不会把自己埋了）。
 	 */
 	public record Resolved(BoundedRegion bounds, List<Cell> toPlace,
-			List<BlockPos> toClear) {
+			List<BlockPos> toClear, ConstructionAccessPlan access, ConstructionCostPlan costPlan, List<SiteRequirement> siteRequirements) {
+		public Resolved {
+			siteRequirements = siteRequirements == null ? List.of() : List.copyOf(siteRequirements);
+			toPlace = List.copyOf(toPlace);
+			toClear = toClear.stream().map(BlockPos::toImmutable).toList();
+		}
+		public Resolved(BoundedRegion bounds, List<Cell> toPlace, List<BlockPos> toClear) {
+			this(bounds, toPlace, toClear, null, null, List.of());
+		}
+		public Resolved(BoundedRegion bounds, List<Cell> toPlace, List<BlockPos> toClear, ConstructionAccessPlan access) {
+			this(bounds, toPlace, toClear, access, null, List.of());
+		}
+		public Resolved(BoundedRegion bounds, List<Cell> toPlace, List<BlockPos> toClear, ConstructionAccessPlan access, ConstructionCostPlan plan) {
+			this(bounds, toPlace, toClear, access, plan, List.of());
+		}
+		public Resolved withCostPlan(ConstructionCostPlan plan) { return new Resolved(bounds, toPlace, toClear, access, plan, siteRequirements); }
 
 		public int cellCount() {
 			return toPlace.size() + toClear.size();
@@ -225,7 +293,7 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 					dug.put(pos, Boolean.TRUE);
 				} else {
 					winner.put(pos, new Cell(pos, resolvedBlock,
-						step.rotatedProperties(facing), step.order(), step.what(),
+						step.rotatedProperties(facing, resolvedBlock), step.order(), step.what(),
 						step.optional()));
 					dug.remove(pos);
 				}
@@ -233,13 +301,14 @@ public record Blueprint(String id, String displayName, int tier, Category catego
 		}
 		List<Cell> place = new ArrayList<>(winner.values());
 		place.sort(Comparator.comparingInt((Cell c) -> c.pos().getY())
+			.thenComparingInt(Cell::stepOrder)
 			.thenComparingInt(c -> c.pos().getX())
 			.thenComparingInt(c -> c.pos().getZ()));
 		List<BlockPos> clear = new ArrayList<>(dug.keySet());
 		clear.sort(Comparator.comparingInt(BlockPos::getY).reversed()
 			.thenComparingInt(BlockPos::getX)
 			.thenComparingInt(BlockPos::getZ));
-		return new Resolved(bounds(origin, facing), List.copyOf(place),
-			List.copyOf(clear));
+		return new Resolved(bounds(origin, facing), List.copyOf(place), List.copyOf(clear), null, null,
+			metadata.siteRequirements().stream().map(r -> new SiteRequirement(origin.add(rotate(r.pos().getX(), r.pos().getY(), r.pos().getZ(), facing, width, depth)), r.kind())).toList());
 	}
 }

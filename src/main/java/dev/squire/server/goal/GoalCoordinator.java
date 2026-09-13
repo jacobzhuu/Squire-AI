@@ -251,6 +251,20 @@ public final class GoalCoordinator {
 	public Optional<GoalRecord> goal(UUID id) { return Optional.ofNullable(goals.get(id)); }
 	public List<GoalRecord> all() { return List.copyOf(goals.values()); }
 
+	/** Stop only goals belonging to the explicitly abandoned project workflow. */
+	public void cancelForTasks(java.util.Set<UUID> taskIds, String reason) {
+		boolean changed = false;
+		for (GoalRecord goal : goals.values()) {
+			if ((goal.state() == GoalRecord.State.RUNNING || goal.state() == GoalRecord.State.REPLANNING)
+					&& goal.remainingTaskIds().stream().anyMatch(taskIds::contains)) {
+				scheduler.cancelTasks(goal.remainingTaskIds(), reason);
+				goal.finish(GoalRecord.State.CANCELLED, reason, services.currentTick());
+				changed = true;
+			}
+		}
+		if (changed) save();
+	}
+
 	private void complete(GoalRecord goal) {
 		goal.finish(GoalRecord.State.COMPLETED, null, services.currentTick());
 		if (quiet(goal)) {

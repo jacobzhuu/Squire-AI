@@ -18,6 +18,16 @@ public final class SquireClientMod implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		EntityRendererRegistry.register(SquireEntities.AVATAR, AvatarRenderer::new);
+        net.minecraft.client.item.ModelPredicateProviderRegistry.register(dev.squire.server.registry.SquireItems.RECALL_BELL,
+            new net.minecraft.util.Identifier("squire", "bell_state"), (stack,world,entity,seed) -> {
+                var nbt=stack.getNbt();
+                return dev.squire.client.render.RecallBellAppearance.state(
+                    nbt != null && nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT),
+                    nbt == null ? "" : nbt.getString("SquireDisplayProfession"));
+            });
+        net.minecraft.client.item.ModelPredicateProviderRegistry.register(dev.squire.server.registry.SquireItems.RECALL_BELL,
+            new net.minecraft.util.Identifier("squire", "bell_quality"), (stack,world,entity,seed) ->
+                dev.squire.client.render.RecallBellAppearance.quality(dev.squire.server.registry.SquireItems.tierOf(stack).ordinal()));
 		net.minecraft.client.gui.screen.ingame.HandledScreens.register(
 			dev.squire.server.registry.SquireScreens.SQUIRE,
 			dev.squire.client.gui.SquireScreen::new);
@@ -28,11 +38,18 @@ public final class SquireClientMod implements ClientModInitializer {
 				(client, handler, buf, sender) -> {
 					int syncId = buf.readVarInt();
 					var state = dev.squire.server.gui.PanelState.read(buf);
+                    if(state==dev.squire.server.gui.PanelState.EMPTY)return;
+					String terrainReview = buf.readString(128);
+                    boolean inventoryAccessible=buf.readBoolean();
+                    boolean bodyAvailable=buf.readBoolean();
 					client.execute(() -> {
 						if (client.player != null && client.player.currentScreenHandler
 							instanceof dev.squire.server.gui.SquireScreenHandler panel
 							&& panel.syncId == syncId) {
 							panel.applyState(state);
+							panel.terrainReview = terrainReview;
+                            panel.inventoryAccessible=inventoryAccessible;
+                            panel.bodyAvailable=bodyAvailable;
 						}
 					});
 				});

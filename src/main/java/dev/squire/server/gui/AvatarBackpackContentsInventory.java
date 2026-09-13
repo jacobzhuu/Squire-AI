@@ -103,13 +103,32 @@ public final class AvatarBackpackContentsInventory implements Inventory {
 
 	@Override
 	public ItemStack removeStack(int slot) {
-		return removeStack(slot, Integer.MAX_VALUE);
+		ItemStack shown = getStack(slot);
+		return removeStack(slot, shown.isEmpty() ? 0 : shown.getMaxCount());
+	}
+
+	/** Exact backing count for lossless server-side bulk transfers. */
+	public ItemStack exactStack(int slot) {
+		BackpackView view = view();
+		return view == null || slot < 0 || slot >= PAGE_SIZE
+			? ItemStack.EMPTY : view.stackAt(backpackSlot(slot));
+	}
+
+	/** Extract only after the destination accepted that exact amount. */
+	public ItemStack extractExact(int slot, int amount) {
+		return removeStack(slot, amount);
 	}
 
 	@Override
 	public void setStack(int slot, ItemStack stack) {
 		BackpackView view = view();
 		if (view == null || slot < 0 || slot >= PAGE_SIZE) {
+			return;
+		}
+		ItemStack existing = view.stackAt(backpackSlot(slot));
+		if (existing.getCount() > existing.getMaxCount()) {
+			// Vanilla screen slots can only represent one ordinary stack. Never let
+			// their truncated display copy replace or clear an expanded backing slot.
 			return;
 		}
 		view.setStack(backpackSlot(slot), stack);
@@ -134,8 +153,9 @@ public final class AvatarBackpackContentsInventory implements Inventory {
 
 	@Override
 	public void clear() {
-		for (int i = 0; i < PAGE_SIZE; i++) {
-			setStack(i, ItemStack.EMPTY);
-		}
+		BackpackView view = view();
+		if (view == null) return;
+		for (int i = 0; i < PAGE_SIZE && backpackSlot(i) < view.slotCount(); i++)
+			view.setStack(backpackSlot(i), ItemStack.EMPTY);
 	}
 }

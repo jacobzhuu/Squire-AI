@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "neighborComputedProperties": {
+    "minecraft:*_stairs": ["shape"],
+    "minecraft:*_wall": ["up", "north", "south", "east", "west"],
+    "minecraft:*_fence": ["north", "south", "east", "west"],
+    "minecraft:*glass_pane": ["north", "south", "east", "west"],
+    "minecraft:iron_bars": ["north", "south", "east", "west"],
+    "minecraft:*_leaves": ["distance"]
+  },
+  "groups": [
+    {"id":"spruce_structure","name":"云杉结构","type":"FRAME","family":"squire:spruce","blocks":{"log":"minecraft:spruce_log","planks":"minecraft:spruce_planks","fence":"minecraft:spruce_fence","trapdoor":"minecraft:spruce_trapdoor"}},
+    {"id":"spruce_roof","name":"云杉梯板","type":"ROOF","family":"squire:spruce","blocks":{"stairs":"minecraft:spruce_stairs","slab":"minecraft:spruce_slab"}},
+    {"id":"oak_structure","name":"橡木结构","type":"FRAME","family":"squire:oak","blocks":{"log":"minecraft:oak_log","planks":"minecraft:oak_planks","fence":"minecraft:oak_fence","trapdoor":"minecraft:oak_trapdoor"}},
+    {"id":"oak_roof","name":"橡木梯板","type":"ROOF","family":"squire:oak","blocks":{"stairs":"minecraft:oak_stairs","slab":"minecraft:oak_slab"}},
+    {"id":"cobblestone","name":"圆石砌体","type":"FOUNDATION","family":"squire:cobblestone","blocks":{"block":"minecraft:cobblestone","stairs":"minecraft:cobblestone_stairs","slab":"minecraft:cobblestone_slab","wall":"minecraft:cobblestone_wall"}},
+    {"id":"stone_bricks","name":"石砖砌体","type":"FOUNDATION","family":"squire:stone_bricks","blocks":{"block":"minecraft:stone_bricks","stairs":"minecraft:stone_brick_stairs","slab":"minecraft:stone_brick_slab","wall":"minecraft:stone_brick_wall"}},
+    {"id":"glass","name":"透明窗格","type":"WINDOW","family":"squire:glass","blocks":{"block":"minecraft:glass","pane":"minecraft:glass_pane"}}
+  ]
+}

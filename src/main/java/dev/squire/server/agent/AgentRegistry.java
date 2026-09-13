@@ -57,6 +57,9 @@ public final class AgentRegistry {
 	/** 上次为某个 owner / agentId 付出全量扫描的服务器 tick。 */
 	private final Map<UUID, Integer> lastScanByOwner = new HashMap<>();
 	private final Map<UUID, Integer> lastScanByAgentId = new HashMap<>();
+	/** 当前服务端调用链显式点名的永久身份；try/finally 作用域外绝不泄漏。 */
+	private final ThreadLocal<Map<UUID, UUID>> commandTargets =
+		ThreadLocal.withInitial(HashMap::new);
 
 	public AgentRegistry(MinecraftServer server) {
 		this.server = server;
@@ -158,6 +161,16 @@ public final class AgentRegistry {
 	}
 
 	private Optional<AvatarEntity> resolveForOwner(UUID ownerUuid, boolean throttled) {
+		UUID targeted = commandTargets.get().get(ownerUuid);
+		if (targeted != null) {
+			Optional<AvatarEntity> exact = resolveByAgentId(targeted, throttled);
+			return exact.filter(a -> ownerUuid.equals(a.ownerId()));
+		}
+        if (dev.squire.server.runtime.SquireRuntime.isAlive()) {
+            var selected = dev.squire.server.runtime.SquireRuntime.get().agentStore().recordOfOwner(ownerUuid);
+            if (selected.isPresent()) return resolveByAgentId(selected.get().agentId, throttled)
+                .filter(a -> ownerUuid.equals(a.ownerId()));
+        }
 		List<UUID> ids = agentEntityUuidsByOwner.get(ownerUuid);
 		if (ids != null) {
 			for (UUID id : ids) {
@@ -183,12 +196,53 @@ public final class AgentRegistry {
 		return Optional.empty();
 	}
 
+	/** 当前已加载的全部身体；顺序稳定为注册顺序。 */
+	public List<AvatarEntity> resolveAllForOwner(UUID ownerUuid) {
+		List<AvatarEntity> out = new ArrayList<>();
+		List<UUID> ids = agentEntityUuidsByOwner.get(ownerUuid);
+		if (ids != null) {
+			for (UUID id : List.copyOf(ids)) {
+				if (findEntity(id) instanceof AvatarEntity avatar && avatar.isAlive()
+						&& !avatar.isRemoved()) out.add(avatar);
+			}
+		}
+		return List.copyOf(out);
+	}
+
+	/** 让旧的 owner→单实体调用在这一条命令中解析到明确目标。 */
+    public Optional<UUID> explicitTarget(UUID ownerId) {
+        return Optional.ofNullable(commandTargets.get().get(ownerId));
+    }
+
+	public <T> T withTarget(UUID ownerId, UUID agentId,
+			java.util.function.Supplier<T> action) {
+		Map<UUID, UUID> targets = commandTargets.get();
+		UUID previous = targets.put(ownerId, agentId);
+		try {
+			return action.get();
+		} finally {
+			if (previous == null) targets.remove(ownerId);
+			else targets.put(ownerId, previous);
+		}
+	}
+
+	public void withTarget(UUID ownerId, UUID agentId, Runnable action) {
+		withTarget(ownerId, agentId, () -> {
+			action.run();
+			return null;
+		});
+	}
+
 	/**
 	 * Resolve a live avatar by its AGENT id (stable across respawns). Index-first
 	 * (方案 A1) with the same scan-heal fallback as {@link #resolveForOwner} (ADR-017),
 	 * 兜底同样按 agentId 限频。
 	 */
 	public Optional<AvatarEntity> resolveByAgentId(UUID agentId) {
+        return resolveByAgentId(agentId,true);
+    }
+
+    private Optional<AvatarEntity> resolveByAgentId(UUID agentId,boolean throttled) {
 		UUID indexed = entityUuidByAgentId.get(agentId);
 		if (indexed != null) {
 			Entity entity = findEntity(indexed);
@@ -198,7 +252,7 @@ public final class AgentRegistry {
 			}
 			entityUuidByAgentId.remove(agentId, indexed); // stale index entry
 		}
-		if (!mayFullScan(lastScanByAgentId, agentId)) {
+		if (throttled && !mayFullScan(lastScanByAgentId, agentId)) {
 			return Optional.empty();
 		}
 		for (ServerWorld world : server.getWorlds()) {

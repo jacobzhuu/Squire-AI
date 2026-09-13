@@ -26,11 +26,15 @@ public final class Project {
 		RUNNING,
 		/** 玩家按了暂停：不推进，但什么都不丢。 */
 		PAUSED,
-		DONE, FAILED, CANCELLED
+		DONE, FAILED, CANCELLED,
+		/** Explicit abandonment: retained for audit, never resumed or automatically refunded. */
+		FORCE_CANCELLED
 	}
 
 	public final UUID projectId;
 	public final UUID ownerId;
+	/** 永久绑定的施工侍从；不能按 owner 临时挑第一只，否则会读错背包。 */
+	private UUID agentId;
 	public final String name;
 	public final String blueprintId;
 	/** 这个工程要盖的那份蓝图摆放。工地位置、朝向、形状全从它来。 */
@@ -45,17 +49,45 @@ public final class Project {
 	private boolean supplyPrepared = true;
 
 	private State state = State.RUNNING;
+	private String pendingMutation = "";
+	private final java.util.Set<UUID> forceCancelledTaskIds = new java.util.LinkedHashSet<>();
+	public java.util.Set<UUID> forceCancelledTaskIds() { return java.util.Set.copyOf(forceCancelledTaskIds); }
+	public void rememberCancelledTasks(java.util.Collection<UUID> ids) { forceCancelledTaskIds.addAll(ids); }
+	private com.google.gson.JsonObject constructionProgress;
+	public String pendingMutation() { return pendingMutation; }
+	public void pendingMutation(String value) { pendingMutation = value == null ? "" : value; }
+	public com.google.gson.JsonObject constructionProgress() { return constructionProgress == null ? null : constructionProgress.deepCopy(); }
+	public void constructionProgress(com.google.gson.JsonObject value) { constructionProgress = value == null ? null : value.deepCopy(); }
 
 	public Project(UUID projectId, UUID ownerId, String name, String blueprintId,
 			UUID placementId, String dimensionId, long createdTick, List<Stage> stages) {
+		this(projectId, ownerId, null, name, blueprintId, placementId, dimensionId,
+			createdTick, stages);
+	}
+
+	public Project(UUID projectId, UUID ownerId, UUID agentId, String name,
+			String blueprintId, UUID placementId, String dimensionId, long createdTick,
+			List<Stage> stages) {
 		this.projectId = projectId;
 		this.ownerId = ownerId;
+		this.agentId = agentId;
 		this.name = name;
 		this.blueprintId = blueprintId;
 		this.placementId = placementId;
 		this.dimensionId = dimensionId;
 		this.createdTick = createdTick;
 		this.stages = new ArrayList<>(stages);
+	}
+
+	public UUID agentId() {
+		return agentId;
+	}
+
+	/** 仅供旧存档从 placement/stage 补齐；一旦存在就不允许换施工者。 */
+	public boolean bindAgentIfMissing(UUID candidate) {
+		if (agentId != null || candidate == null) return false;
+		agentId = candidate;
+		return true;
 	}
 
 	public List<Stage> stages() {
@@ -140,7 +172,10 @@ public final class Project {
 		Map<Identifier, Integer> out = new LinkedHashMap<>();
 		if (required == null) return Map.of();
 		for (var entry : required.entrySet()) {
-			int missing = entry.getValue() - reservedCount(entry.getKey());
+			int available = reservedCount(entry.getKey());
+			// A filled water bucket is the same reusable container while a fetch is in transit.
+			if (entry.getKey().equals(dev.squire.server.blueprint.ConstructionFluids.BUCKET)) available += reservedCount(dev.squire.server.blueprint.ConstructionFluids.WATER_BUCKET);
+			int missing = entry.getValue() - available;
 			if (missing > 0) out.put(entry.getKey(), missing);
 		}
 		return Map.copyOf(out);
@@ -154,6 +189,15 @@ public final class Project {
 		int left = take(agentSupply, itemId, count);
 		left = take(ownerSupply, itemId, left);
 		return left == 0;
+	}
+
+	/** One-container exchange, retaining ownership. Caller journals the associated world mutation. */
+	public synchronized boolean exchangeContainer(Identifier input, Identifier output) {
+		if (reservedCount(input) < 1) return false;
+		Map<Identifier, Integer> source = agentSupply.getOrDefault(input, 0) > 0 ? agentSupply : ownerSupply;
+		take(source, input, 1);
+		source.merge(output, 1, Math::addExact);
+		return true;
 	}
 
 	public synchronized Map<Identifier, Integer> ownerSupply() {

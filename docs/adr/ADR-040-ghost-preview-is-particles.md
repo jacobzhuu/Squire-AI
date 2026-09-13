@@ -21,10 +21,12 @@ Server-sent particles, addressed to one player.
   one player from server code. No new packet, no client code — this mod's client side is
   one `Screen` and one `Renderer`, and a preview is not a good reason to break that.
 
-`BlueprintGhost` draws the twelve edges of the bounding box every
-`INTERVAL_TICKS` (10), capped at `MAX_POINTS` (320) sampled points, only while the owner
-is online, in the same dimension, and within `VIEW_DISTANCE` (48). Drawing every cell
-turns the site into fog and hides the very shape it is meant to show.
+`BlueprintGhost` samples actual final building cells from the same
+`Blueprint.Resolved` consumed by accounting and construction, then adds the bounding
+box and negative-space markers. It draws every `INTERVAL_TICKS` (10), capped at
+`MAX_POINTS` (320), only while the owner is online, in the same dimension, and within
+`VIEW_DISTANCE` (48). Sampling preserves recognizable doors, windows and roofs without
+turning a large site into fog.
 
 Colour carries the one fact the player acts on: white when the companion's backpack is
 unknown, **red when short of materials**, **green when the bill is satisfied**. Cells
@@ -39,7 +41,8 @@ reads as "this will be filled in".
 - The tint is recomputed from the live world and the live backpack each draw, so a player
   filling the companion's backpack watches the outline turn from red to green without
   running any command. That is the phase-1 feedback loop in one glance.
-- `BlueprintGhost.outline` is a pure function of a `BoundedRegion`, so the sampling rule
-  is unit-testable even though the drawing is not.
+- `BlueprintGhost.outline` remains a pure function of a `BoundedRegion`; actual shape
+  points come from the format-neutral resolved blueprint instead of a second preview
+  parser.
 - If a future phase wants per-cell colouring (e.g. "this wall is done"), the cap has to
   move with it; the honest ceiling is the particle budget, not the API.

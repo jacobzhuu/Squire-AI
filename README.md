@@ -18,6 +18,7 @@ actually happens in the world.
 | Conversation | Chat or panel — FastPath first, resumable clarification and multi-step LLM planning only when needed |
 | Item requests | “give / gather / craft / smelt” wording compiles to bounded, registry-validated `/give` |
 | Building | typed `/fill` and `/setblock`, with permission/protection checks and confirmation for high-risk edits |
+| Engineer projects | KeepItLevel family/Tier catalog, ten-level efficiency and waste curves, pinned preview/cost plan, batch material escrow and reviewed physical access stairs with cleanup |
 | Long commands | commands over 256 characters use a temporary command block that is always restored |
 | Legacy/admin systems | automation and workspace-bound CBP projects remain available through explicit commands, not companion planning |
 | Extensions | third-party tool/sensor/task providers via the `squire` entrypoint + MCP client bridge |
@@ -40,8 +41,10 @@ These rules are enforced in code and tested; see
    an ability the companion already had.
 7. The companion never mines, chops, farms, crafts or smelts in the wild. Typed commands
    fulfil raw materials. **Hauling and building from a blueprint are the only physical
-   labour it is allowed**, the materials must really come out of its own backpack, and
-   it will not break a single block outside a placed blueprint's own footprint.
+   labour it is allowed**. Materials are real items, deposited from the player or
+   assigned squire into project escrow. Edits stay inside the reviewed blueprint
+   footprint and explicitly confirmed temporary-access area (at most six blocks
+   horizontally beyond the building); only project-owned temporary supports are reclaimed.
 
 ## Getting started (server owner)
 
@@ -49,13 +52,17 @@ These rules are enforced in code and tested; see
 # requires: Fabric Loader ≥ 0.19.0, Fabric API, Minecraft 1.20.1
 ./gradlew build          # produces build/libs/squire-*.jar
 ./gradlew test           # full unit suite
-./gradlew runGametest    # 188 deterministic GameTests
+./gradlew runGametest    # complete Minecraft server GameTest suite
 ```
 
-Drop the jar into `mods/`. Bounded item fulfilment is available to ordinary players;
+Drop the jar into the server's `mods/` directory. Every player joining the server must
+also install the same Squire version and Fabric API on their client; Squire adds a
+custom companion entity, items, screens and client rendering. Bounded item fulfilment is available to ordinary players;
 world editing, optional structured commands, automation and CBP materialization still
 require explicit operator enablement (see the [Server Guide](docs/guides/server-guide.md)). Configuration
 reference, defaults and file layout are documented there too.
+
+Building content, licenses, migration and pack authoring: [Engineer Building Catalog](docs/guides/engineer-building-catalog.md).
 
 ## For players
 
@@ -66,6 +73,9 @@ the box; UI text follows your client language (English / 简体中文).
 
 ## For developers
 
+- [Blueprint Library](docs/blueprint-library.md) — external data packs, material
+  palettes, vanilla Structure NBT and Structurize v1 imports, progression metadata
+  and redistribution rules
 - [Tool API Guide](docs/guides/tool-api-guide.md) — register tools/sensors/tasks from your mod
 - [MCP Guide](docs/guides/mcp-guide.md) — connect Model Context Protocol servers
 - [Security Model](docs/guides/security-model.md) — the full defense stack
@@ -78,3 +88,5 @@ v1.0 release candidate per `docs/IMPLEMENTATION_SPEC.md`. Known limitations are
 stated honestly in the guides (e.g. undo journals live in memory: a restart clears
 pending undo state; CBP removal refuses rather than pretend). Security policy and
 reporting: [SECURITY.md](SECURITY.md). Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Multi-companion targeting, profession dashboards, and complete command reference: [Companion Commands](docs/guides/companion-commands.md).

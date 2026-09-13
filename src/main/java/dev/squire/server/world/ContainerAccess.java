@@ -89,6 +89,18 @@ public final class ContainerAccess {
 				inventory = merged;
 			}
 		}
+		if (inventory instanceof net.minecraft.inventory.DoubleInventory doubleInventory) {
+			for (net.minecraft.util.math.Direction direction : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+				BlockEntity other = world.getBlockEntity(pos.offset(direction));
+				if (other instanceof Inventory half && half != entity && doubleInventory.isPart(half)) {
+					var otherDecision = protection.canInteract(world, pos.offset(direction), actorOwner);
+					if (!otherDecision.allowed()) {
+						return Resolved.fail("PROTECTED_REGION", (write ? "write to container denied: "
+							: "read of container denied: ") + otherDecision.reason());
+					}
+				}
+			}
+		}
 		String typeId = Registries.BLOCK_ENTITY_TYPE.getId(entity.getType()) == null
 			? entity.getType().toString()
 			: Registries.BLOCK_ENTITY_TYPE.getId(entity.getType()).toString();

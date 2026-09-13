@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/decks/deck_md5",
+  "format": "minecraft:structure_nbt",
+  "displayName": "平台 · Tier 5 · deck_md",
+  "tier": 5,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 9,
+  "structure": "squire:keepitlevel/infrastructure/decks/deck_md5",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/decks/deck_md5.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    23,
+    5,
+    11
+  ],
+  "primaryOffset": {
+    "x": 18,
+    "y": 3,
+    "z": 4
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "planks"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "spruce_structure",
+      "variant": "planks"
+    },
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {}
+}

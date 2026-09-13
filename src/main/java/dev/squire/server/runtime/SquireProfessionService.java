@@ -45,6 +45,15 @@ public final class SquireProfessionService {
 		return runtime.professionConfig();
 	}
 
+	private String engineerGrowth(int level) {
+		var curve = dev.squire.server.profession.EngineerProgression.current();
+		var variants = runtime.blueprints().registry().catalog().variants();
+		long available = variants.stream().filter(v -> v.allowed(level)).count();
+		return "Lv" + level + "：可建 " + available + " 变体，放置间隔 " + curve.placementInterval(level)
+			+ " tick，新工程" + curve.materialAdjustmentLabel(level)
+			+ (level == 10 ? "；建筑大师：完整已验证目录与材料主题" : "");
+	}
+
 	// ------------------------------------------------------------------ 查看
 
 	public SquireRuntime.ExecutionResult status(ServerPlayerEntity sender) {
@@ -77,13 +86,14 @@ public final class SquireProfessionService {
 		}
 
 		text.append("\n已经会的：");
-		for (ProfessionAbility ability : ProfessionAbility.of(profession)) {
+		for (ProfessionAbility ability : ProfessionAbility.playerVisible(profession)) {
 			if (data.can(ability)) {
 				text.append("\n  ✓ ").append(ability.displayName()).append(" —— ")
 					.append(ability.summary());
 			}
 		}
-		ProfessionAbility next = ProfessionAbility.nextAfter(profession, data.level);
+		if (profession == SquireProfession.ENGINEER) text.append("\n").append(engineerGrowth(data.level));
+		ProfessionAbility next = ProfessionAbility.nextPlayerVisibleAfter(profession, data.level);
 		if (next != null) {
 			text.append("\n下一个（Lv").append(next.unlockLevel()).append("）：")
 				.append(next.displayName()).append(" —— ").append(next.summary());
@@ -113,7 +123,10 @@ public final class SquireProfessionService {
 		for (SquireProfession profession : SquireProfession.values()) {
 			text.append("\n\n").append(profession.id()).append(" —— ")
 				.append(profession.displayName()).append("：");
-			for (ProfessionAbility ability : ProfessionAbility.of(profession)) {
+			if (profession == SquireProfession.ENGINEER) {
+				for (int level = 1; level <= 10; level++) text.append("\n  ").append(engineerGrowth(level));
+			}
+			for (ProfessionAbility ability : ProfessionAbility.playerVisible(profession)) {
 				text.append("\n  Lv").append(ability.unlockLevel()).append(" ")
 					.append(ability.displayName())
 					.append(ability.available() ? "" : "（未开放）")
@@ -133,7 +146,8 @@ public final class SquireProfessionService {
 		if (bound.failure() != null) {
 			return bound.failure();
 		}
-		SquireProfession profession = SquireProfession.byId(professionId);
+		if (bound.avatar().oathActive()) return SquireRuntime.ExecutionResult.refused("[Squire] 不灭誓约期间无法转职。");
+        SquireProfession profession = SquireProfession.byId(professionId);
 		if (profession == null) {
 			return SquireRuntime.ExecutionResult.fail("feedback.profession_unknown",
 				"[Squire] 没有叫「" + professionId + "」的职业。现在有：guard（守卫）、"
@@ -144,6 +158,14 @@ public final class SquireProfessionService {
 			return SquireRuntime.ExecutionResult.ok("feedback.profession_unchanged",
 				"[Squire] 我已经是" + profession.displayName() + " Lv" + data.level
 					+ " 了。");
+		}
+		boolean occupiedByOther = runtime.agentStore().recordsOfOwner(sender.getUuid())
+			.stream().anyMatch(record -> !record.agentId.equals(bound.avatar().agentId())
+				&& record.profile.profession.profession() == profession);
+		if (occupiedByOther) {
+			return SquireRuntime.ExecutionResult.fail("feedback.profession_taken",
+				"[Squire] 你的另一名侍从已经是" + profession.displayName()
+					+ "了；每个职业只能有一名。");
 		}
 		// 面板按钮和这条命令走<b>同一个</b>判断（训练够不够、是不是已经有职业了）。
 		// 两处各写一遍，迟早出现「按钮灰着但命令能过」这种玩家没法理解的状态。
@@ -172,12 +194,12 @@ public final class SquireProfessionService {
 		StringBuilder text = new StringBuilder("[Squire] 好，我现在是")
 			.append(profession.displayName()).append(" Lv1。");
 		text.append("\n现在会的：");
-		for (ProfessionAbility ability : ProfessionAbility.of(profession)) {
+		for (ProfessionAbility ability : ProfessionAbility.playerVisible(profession)) {
 			if (ability.unlockLevel() == 1) {
 				text.append(ability.displayName()).append(" ");
 			}
 		}
-		ProfessionAbility next = ProfessionAbility.nextAfter(profession, 1);
+		ProfessionAbility next = ProfessionAbility.nextPlayerVisibleAfter(profession, 1);
 		if (next != null) {
 			text.append("\n练到 Lv").append(next.unlockLevel()).append(" 解锁「")
 				.append(next.displayName()).append("」：").append(next.summary());
@@ -200,13 +222,17 @@ public final class SquireProfessionService {
 		if (bound.failure() != null) {
 			return bound.failure();
 		}
-		SquireProfession profession = SquireProfession.byId(professionId);
+		if (bound.avatar().oathActive()) return SquireRuntime.ExecutionResult.refused("[Squire] 不灭誓约期间无法转职。");
+        SquireProfession profession = SquireProfession.byId(professionId);
 		if (profession == null) {
 			return SquireRuntime.ExecutionResult.fail("feedback.profession_unknown",
 				"[Squire][Debug] 未知职业「" + professionId
 					+ "」。可用值：guard、engineer。");
 		}
 
+        if(runtime.agentStore().recordsOfOwner(sender.getUuid()).stream().anyMatch(record ->
+            !record.agentId.equals(bound.avatar().agentId()) && record.profile.profession.profession()==profession))
+            return SquireRuntime.ExecutionResult.refused("Another companion already has this profession.");
 		ProfessionData data = bound.data();
 		String before = data.hasProfession()
 			? data.profession().id() + " Lv" + data.level : "none Lv0";
@@ -244,7 +270,8 @@ public final class SquireProfessionService {
 				"[Squire] 我本来就没有职业。可以在职业页挑一个。");
 		}
 		int lostLevel = data.level;
-		data.forgetProfession();
+		if (bound.avatar().oathActive()) return SquireRuntime.ExecutionResult.refused("[Squire] 不灭誓约期间无法遗忘职业。");
+        data.forgetProfession();
 		// 生命上限是等级派生的，改行就得跟着回去——否则一个卸任的守卫会一直留着 15 颗心。
 		applyLevelEffects(bound.avatar(), data, false);
 		bound.avatar().refreshNameplate();
@@ -294,6 +321,7 @@ public final class SquireProfessionService {
 			.append(outcome.levelBefore()).append(" → Lv").append(outcome.levelAfter())
 			.append("。");
 		for (ProfessionAbility ability : outcome.unlocked()) {
+			if (dev.squire.server.blueprint.BuildingContentPolicy.current().retiredAbilities().contains(ability.id())) continue;
 			text.append("\n新学会「").append(ability.displayName()).append("」：")
 				.append(ability.summary());
 		}

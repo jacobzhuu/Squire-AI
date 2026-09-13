@@ -32,7 +32,7 @@ public final class SquireActions {
 		/** 状态条按下「更多」之后换上来的低频动作：回家 / 设家 / 遣散。 */
 		MORE,
 		ITEMS, COMMAND, PERMISSION, PROFILE, PROFESSION, PROJECT, MATERIAL,
-		DESIGN, SHORTCUT
+		DESIGN, SHORTCUT, TERRAIN
 	}
 
 	/**
@@ -192,6 +192,10 @@ public final class SquireActions {
 
 	private static List<Action> buildAll() {
 		List<Action> all = new ArrayList<>();
+        all.add(new Action(SquireScreenHandler.BUTTON_GUARD_ATTACK,"squire.gui.button.attack_target",Page.PROFESSION,3,0,2,false,null,
+            (p,a) -> report(p,SquireRuntime.get().attackTarget(p,null,"nearby"))));
+        all.add(new Action(SquireScreenHandler.BUTTON_TASK_STOP,"squire.gui.button.task_stop",Page.PROFESSION,3,1,2,false,null,
+            (p,a) -> report(p,SquireRuntime.get().executeControl(p,SquireRuntime.ControlIntent.STOP))));
 
 		// —— 顶部状态条：任何页都能点，摆在标题下面那条横带上。
 		// 只留三个<b>高频档位</b>。回家/设家/遣散是低频动作，收进「更多」——
@@ -370,8 +374,22 @@ public final class SquireActions {
 		all.add(new Action(SquireScreenHandler.BUTTON_DESIGN_PRESET_LOAD,
 			"squire.gui.button.design_preset_load", Page.DESIGN, 7, 1, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().designPresetLoadNext(p))));
+		for (var template : dev.squire.server.blueprint.ProjectSpec.Template.values()) {
+			final var selected = template;
+			all.add(new Action(SquireScreenHandler.BUTTON_DESIGN_TEMPLATE_BASE
+					+ template.ordinal(), "squire.gui.template." + template.id(),
+				Page.PROJECT, 9 + template.ordinal() / 2, template.ordinal() % 2, 2,
+				false, null,
+				(p, a) -> report(p, SquireRuntime.get().design(p, selected.id()))));
+		}
 
 		// —— 工程页：选择 → 参数 → 幽灵调整 → 确认 → 进度控制，全程不必打字。
+		for (var terrainAction : dev.squire.server.runtime.TerrainLevelingService.Action.values()) {
+			all.add(new Action(SquireScreenHandler.BUTTON_TERRAIN_BASE + terrainAction.ordinal(),
+				"squire.gui.terrain." + terrainAction.name().toLowerCase(java.util.Locale.ROOT),
+				Page.TERRAIN, terrainAction.ordinal() / 2, terrainAction.ordinal() % 2, 2, false, null,
+				(p, a) -> reportIfAny(p, dev.squire.server.runtime.TerrainLevelingService.act(p, a, terrainAction))));
+		}
 		all.add(new Action(SquireScreenHandler.BUTTON_PROJECT_HOUSE_WOOD,
 			"squire.gui.button.project_house_wood", Page.PROJECT, 0, 0, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().projectStart(p,
@@ -407,6 +425,12 @@ public final class SquireActions {
 		all.add(new Action(SquireScreenHandler.BUTTON_PROJECT_CONFIRM,
 			"squire.gui.button.project_confirm", Page.PROJECT, 5, 0, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().projectConfirm(p))));
+		all.add(new Action(SquireScreenHandler.BUTTON_WATER_MODE, "squire.gui.button.water_mode", Page.PROJECT, 8, 0, 3, false, null,
+			(p, a) -> report(p, dev.squire.server.runtime.EngineerWaterSettings.configure(p, "toggle"))));
+		all.add(new Action(SquireScreenHandler.BUTTON_WATER_SOURCE, "squire.gui.button.water_source", Page.PROJECT, 8, 1, 3, false, null,
+			(p, a) -> report(p, dev.squire.server.runtime.EngineerWaterSettings.configure(p, "source"))));
+		all.add(new Action(SquireScreenHandler.BUTTON_WATER_SUPPLIED, "squire.gui.button.water_supplied", Page.PROJECT, 8, 2, 3, false, null,
+			(p, a) -> report(p, dev.squire.server.runtime.EngineerWaterSettings.configure(p, "supplied"))));
 		all.add(new Action(SquireScreenHandler.BUTTON_PROJECT_TRANSFER,
 			"squire.gui.button.project_transfer", Page.PROJECT, 5, 1, 2, false, null,
 			(p, a) -> report(p, SquireRuntime.get().blueprintTransferMissing(p))));
@@ -419,6 +443,9 @@ public final class SquireActions {
 		all.add(new Action(SquireScreenHandler.BUTTON_PROJECT_CANCEL,
 			"squire.gui.button.project_cancel", Page.PROJECT, 7, 2, 3, false, null,
 			(p, a) -> report(p, SquireRuntime.get().blueprintCancel(p))));
+		all.add(new Action(SquireScreenHandler.BUTTON_PROJECT_FORCE_CANCEL,
+			"squire.gui.button.project_force_cancel", Page.PROJECT, 9, 0, 1, false, null,
+			(p, a) -> report(p, SquireRuntime.get().projectForceCancel(p))));
 		for (int i = 0; i < 6; i++) {
 			final int slot = i;
 			all.add(new Action(SquireScreenHandler.BUTTON_MATERIAL_PREVIOUS_BASE + i,
@@ -487,10 +514,11 @@ public final class SquireActions {
 	private static void toggleNode(ServerPlayerEntity player, String node) {
 		var runtime = SquireRuntime.get();
 		boolean had = runtime.permissions().has(player, node);
-		if (had) {
-			runtime.permissions().revoke(player.getUuid(), node);
-		} else {
-			runtime.permissions().grant(player.getUuid(), node);
+		boolean changed = runtime.permissions().setPlayerEnabled(player.getUuid(), node, !had,
+			player.hasPermissionLevel(2));
+		if (!changed) {
+			say(player, "服务器策略不允许你开启该权限：" + node);
+			return;
 		}
 		say(player, (had ? "已收回权限：" : "已授予权限：") + node);
 	}
@@ -511,13 +539,13 @@ public final class SquireActions {
 	}
 
 	static void say(ServerPlayerEntity player, String message) {
-		player.sendMessage(net.minecraft.text.Text.literal("[Squire] " + message), false);
+		player.sendMessage(net.minecraft.text.Text.literal(SquireRuntime.get().namedMessage(player.getUuid(),"[Squire] " + message)), false);
 	}
 
 	/** 把运行时的执行结果原样转给玩家——和在聊天栏说同一句话得到的回执完全一致。 */
 	static void report(ServerPlayerEntity player,
 			SquireRuntime.ExecutionResult result) {
-		player.sendMessage(net.minecraft.text.Text.literal(result.message()), false);
+		player.sendMessage(net.minecraft.text.Text.literal(SquireRuntime.get().namedMessage(player.getUuid(),result.message())), false);
 	}
 
 	/**

@@ -43,7 +43,33 @@ import net.minecraft.world.World;
  * a mode commands it (FOLLOW / requested move). Idle look goals are cosmetic.</p>
  */
 public class AvatarEntity extends PathAwareEntity implements AgentBody {
-	private static final String NBT_AGENT_ID = "SquireAgentId";
+	private long oathDeadline;
+    private Vec3d oathAnchor;
+    private int nextMeleeAttackTick;
+    private Vec3d selfDefenceOrigin;
+    public Vec3d selfDefenceOrigin() { return selfDefenceOrigin == null ? getPos() : selfDefenceOrigin; }
+    public boolean oathActive() { return oathDeadline > 0; }
+    public long oathDeadline() { return oathDeadline; }
+    public Vec3d oathAnchor() { return oathAnchor == null ? getPos() : oathAnchor; }
+    public void beginOath(long deadline) {
+        oathDeadline = deadline;
+        oathAnchor = getPos();
+        cancelDraw();
+        getNavigation().stop();
+        setAiDisabled(true);
+    }
+    public void endOath() { oathDeadline = 0; setAiDisabled(false); }
+
+    @Override
+    public boolean tryAttack(net.minecraft.entity.Entity target) {
+        if (getWorld().isClient || !isAlive() || target == null || !target.isAlive() || isOwner(target)
+                || squaredDistanceTo(target) > MELEE_REACH_SQ || age < nextMeleeAttackTick) return false;
+        nextMeleeAttackTick = age + dev.squire.server.combat.ProfessionCombatRules.attackInterval(this);
+        swingHand(net.minecraft.util.Hand.MAIN_HAND);
+        return super.tryAttack(target);
+    }
+
+    private static final String NBT_AGENT_ID = "SquireAgentId";
 	private static final String NBT_OWNER = "SquireOwner";
 	private static final String NBT_HOME = "SquireHome";
 	/** 背包槽。老存档没有这个键，读出来就是空的——不需要迁移代码。 */
@@ -174,6 +200,44 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 			AvatarEntity.class,
 			net.minecraft.entity.data.TrackedDataHandlerRegistry.ITEM_STACK);
 
+	private static final net.minecraft.entity.data.TrackedData<String> TRACKED_PROFESSION =
+		net.minecraft.entity.data.DataTracker.registerData(AvatarEntity.class,
+			net.minecraft.entity.data.TrackedDataHandlerRegistry.STRING);
+
+	private static final net.minecraft.entity.data.TrackedData<Integer> TRACKED_REPOSITION =
+		net.minecraft.entity.data.DataTracker.registerData(AvatarEntity.class,
+			net.minecraft.entity.data.TrackedDataHandlerRegistry.INTEGER);
+	private final dev.squire.common.animation.LocomotionGait locomotionGait =
+		new dev.squire.common.animation.LocomotionGait();
+
+	public dev.squire.common.animation.LocomotionGait locomotionGait() { return locomotionGait; }
+	public int repositionRevision() { return dataTracker.get(TRACKED_REPOSITION); }
+
+	/** A position correction is not walking, even when shorter than a normal stride. */
+	public void repositionForConstruction(double x, double y, double z) {
+		if (!getWorld().isClient && squaredDistanceTo(x, y, z) > 1.0e-8)
+			dataTracker.set(TRACKED_REPOSITION, repositionRevision() + 1);
+		refreshPositionAndAngles(x, y, z, getYaw(), getPitch());
+	}
+
+	public boolean usesGroundGait() {
+		return (getPose() == net.minecraft.entity.EntityPose.STANDING || getPose() == net.minecraft.entity.EntityPose.CROUCHING)
+			&& isAlive() && isOnGround() && !hasVehicle() && !isTouchingWater() && !isInLava()
+			&& !isClimbing() && !isFallFlying() && !isSleeping() && !isInSwimmingPose()
+			&& getLeaningPitch(1) == 0;
+	}
+
+	/** Per-entity profession for client appearance; never inferred from the owner. */
+	public String syncedProfession() {
+		return this.dataTracker.get(TRACKED_PROFESSION);
+	}
+
+	private void syncProfessionToClients() {
+		var current = profile();
+		var profession = current == null ? null : current.profession.profession();
+		this.dataTracker.set(TRACKED_PROFESSION, profession == null ? "" : profession.id());
+	}
+
 	private UUID agentId;
 	private UUID ownerUuid;
 	private BlockPos homePos;
@@ -247,6 +311,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	 * <p>脱战后还留一小段冷却：怪刚死那一拍就把他弹回来，看起来同样突兀。</p>
 	 */
 	public boolean inCombat() {
+        if (oathActive()) return true;
 		if (getTarget() != null && getTarget().isAlive()) {
 			combatGraceUntil = age + COMBAT_GRACE_TICKS;
 			return true;
@@ -260,6 +325,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 
 	/** 任务正在接管身体吗。为真时，所有移动 Goal 让位，但长期命令不丢。 */
 	public boolean taskDriven() {
+        if (oathActive()) return true;
 		// 两种接管都算：调度器里有任务在跑（施工那种「走一段→放几格→再走」，
 		// 中间几拍没有句柄），或者运行时直接发起了一段移动（比如回家）。
 		// 只看其中一种都会漏：前者漏掉直接移动，后者漏掉施工的间隙。
@@ -294,6 +360,8 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 		super.initDataTracker();
 		this.dataTracker.startTracking(TRACKED_OWNER, java.util.Optional.empty());
 		this.dataTracker.startTracking(TRACKED_BACKPACK, net.minecraft.item.ItemStack.EMPTY);
+		this.dataTracker.startTracking(TRACKED_PROFESSION, "");
+		this.dataTracker.startTracking(TRACKED_REPOSITION, 0);
 	}
 
 	public static DefaultAttributeContainer.Builder createAttributes() {
@@ -314,19 +382,35 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 		this.goalSelector.add(3, new StayAreaGoal());
 		this.goalSelector.add(4, new PatrolGoal());
 		this.goalSelector.add(5, new HomeRoutineGoal());
-		this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f));
-		this.goalSelector.add(8, new LookAroundGoal(this));
+		this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 8.0f) {
+			@Override public boolean canStart() { return idleLookAllowed() && super.canStart(); }
+			@Override public boolean shouldContinue() { return idleLookAllowed() && super.shouldContinue(); }
+		});
+		this.goalSelector.add(8, new LookAroundGoal(this) {
+			@Override public boolean canStart() { return idleLookAllowed() && super.canStart(); }
+			@Override public boolean shouldContinue() { return idleLookAllowed() && super.shouldContinue(); }
+		});
 		// deliberately NO wander goal: the body moves only under runtime control
 	}
 
 	// ------------------------------------------------------------------ tick: stuck detection
+	private boolean idleLookAllowed() { return !taskDriven() && !inCombat() && getNavigation().isIdle(); }
 
 	@Override
 	public void tick() {
-		super.tick();
+        if (dev.squire.server.combat.GuardRescue.expireOath(this)) return;
+        super.tick();
+        if (getWorld().isClient)
+            locomotionGait.tick(getX(), getY(), getZ(), usesGroundGait(), repositionRevision());
+        if (oathActive()) {
+            dev.squire.server.combat.GuardRescue.tickOath(this);
+            tickBowDraw();
+            return;
+        }
 		if (getWorld().isClient) {
 			return;
 		}
+		syncProfessionToClients();
 		// spec section 34: expected movement vs actual displacement while a handle runs
 		if (activeHandle != null && activeHandle.state() == MoveHandle.State.MOVING
 				&& ++stuckCheckAge >= STUCK_CHECK_INTERVAL) {
@@ -703,9 +787,20 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 				.getBlock() instanceof net.minecraft.block.LeavesBlock) {
 			return false;
 		}
-		BlockPos delta = pos.subtract(getBlockPos());
+		Vec3d delta = Vec3d.ofBottomCenter(pos).subtract(getPos());
 		return getWorld().isSpaceEmpty(this,
-			getBoundingBox().offset(delta.getX(), delta.getY(), delta.getZ()));
+			getBoundingBox().offset(delta));
+	}
+
+	/** A pathfinding-compatible dry standing cell for short-lived work stations. */
+	public boolean isSafeWorkPosition(BlockPos pos) {
+		if (pos != null && (dev.squire.server.blueprint.ConstructionScaffolding.scaffold(getWorld(), pos.down())
+				|| dev.squire.server.blueprint.ConstructionScaffolding.scaffold(getWorld(), pos))
+				&& dev.squire.server.blueprint.ConstructionScaffolding.floor(getWorld(), pos.down())
+				&& dev.squire.server.blueprint.ConstructionScaffolding.passable(getWorld(), pos)
+				&& dev.squire.server.blueprint.ConstructionScaffolding.passable(getWorld(), pos.up()))
+			return new dev.squire.server.blueprint.ConstructionBlockView(getWorld(), java.util.Map.of()).safeStanding(pos, false);
+		return pos != null && isSafeStandingCell(pos, false);
 	}
 
 	/**
@@ -737,6 +832,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 
 	/** 玩家亲手换了主手武器（面板拖拽，或者「用弓打」这类明确命令）。 */
 	public void markWeaponChosenByPlayer() {
+		dev.squire.server.combat.GuardSelfDefense.reset(this);
 		this.weaponChosenByPlayer = true;
 	}
 
@@ -933,6 +1029,15 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 		// 拿着命名牌右键 = 改名，不是开面板。以前这一句无条件开面板，于是命名牌
 		// 完全用不了——玩家拿着它戳半天，只会一次次弹出同一个界面。
 		net.minecraft.item.ItemStack held = player.getStackInHand(hand);
+		if (held.isOf(dev.squire.server.registry.SquireItems.RECALL_BELL)
+				&& (!held.hasNbt() || !held.getNbt().containsUuid(
+					dev.squire.server.registry.SquireItems.NBT_AGENT))) {
+			var result = dev.squire.server.runtime.SquireRuntime.get()
+				.bindRecallBell(server, this, held);
+			player.sendMessage(net.minecraft.text.Text.literal(result.message()), false);
+			return result.success() ? net.minecraft.util.ActionResult.CONSUME
+				: net.minecraft.util.ActionResult.FAIL;
+		}
 		if (held.isOf(net.minecraft.item.Items.NAME_TAG) && held.hasCustomName()) {
 			var runtime = dev.squire.server.runtime.SquireRuntime.get();
 			var result = runtime.renameAgent(server, this,
@@ -951,7 +1056,8 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	public void onDeath(net.minecraft.entity.damage.DamageSource damageSource) {
 		// Capture the authoritative inventory/equipment before vanilla removal. The
 		// world-level record lets the same companion identity be summoned again.
-		dev.squire.server.runtime.SquireRuntime.onAvatarDeath(this);
+		endOath();
+        dev.squire.server.runtime.SquireRuntime.onAvatarDeath(this);
 		super.onDeath(damageSource);
 	}
 
@@ -977,8 +1083,12 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	/** Damage telemetry stays exact; personality no longer inserts a damage multiplier. */
 	@Override
 	public boolean damage(net.minecraft.entity.damage.DamageSource source, float amount) {
+        if (oathActive() && !source.isIn(net.minecraft.registry.tag.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
 		float poolBefore = getHealth() + getAbsorptionAmount();
-		boolean accepted = super.damage(source, amount);
+		Vec3d hitPosition = getPos();
+        boolean accepted = super.damage(source, amount);
+        if (accepted && source.getAttacker() instanceof net.minecraft.entity.LivingEntity attacker
+                && !isOwner(attacker) && !isTeammate(attacker)) selfDefenceOrigin = hitPosition;
 		float actual = Math.max(0f,
 			poolBefore - getHealth() - getAbsorptionAmount());
 		dev.squire.server.combat.CombatBalanceTelemetry.recordDamageTaken(
@@ -1029,6 +1139,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 
 	/** 重新拼一次名牌。职业等级变了、档案刚接上来时调用。 */
 	public void refreshNameplate() {
+		if (!getWorld().isClient) syncProfessionToClients();
 		applyActivityName();
 	}
 
@@ -1170,6 +1281,11 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 
 	@Override
 	public MoveHandle moveTo(TargetPosition target, MoveOptions options) {
+        if (oathActive()) {
+            AvatarMoveHandle refused = new AvatarMoveHandle();
+            refused.markFailed("OATH_STATIONARY");
+            return refused;
+        }
 		if (!target.dimension().equals(getWorld().getRegistryKey().getValue().toString())) {
 			AvatarMoveHandle failed = new AvatarMoveHandle();
 			failed.markFailed("UNREACHABLE");
@@ -1211,6 +1327,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 
 	@Override
 	public void stopMoving() {
+		setSneaking(false);
 		getNavigation().stop();
 		if (activeHandle != null && activeHandle.state() == MoveHandle.State.MOVING) {
 			activeHandle.markFailed("CANCELLED");
@@ -1301,7 +1418,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	}
 
 	/** Melee reach in blocks, squared (player-like 3-block reach). */
-	private static final double MELEE_REACH_SQ = 9.0;
+	public static final double MELEE_REACH_SQ = 9.0;
 	/**
 	 * 近战追击的重寻路间隔。香草近战 Goal 也不会每 tick 重新建路；那样会让
 	 * MoveControl 不断收到一条“新路径”，表现成一步一顿。
@@ -1333,6 +1450,7 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 		cancelDraw();
 		getLookControl().lookAt(target);
 		if (squaredDistanceTo(target) > MELEE_REACH_SQ) {
+            if (oathActive()) return InteractionResult.fail("OATH_STATIONARY", "Standing at the rescue point");
 			boolean newTarget = !targetEntityId.equals(combatPathTargetId);
 			boolean targetMoved = combatPathTargetPos == null
 				|| target.squaredDistanceTo(combatPathTargetPos) > 2.25;
@@ -1592,6 +1710,10 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	 * 而不只是名字好听。</p>
 	 */
 	public dev.squire.api.body.InteractionResult shoot(UUID targetEntityId) {
+        if (!dev.squire.server.combat.CombatStyle.gatesFor(profile() == null ? null : profile().profession).bow()) {
+            cancelDraw();
+            return InteractionResult.fail("BOW_LOCKED", "This profession has not unlocked bows");
+        }
 		if (!(getWorld() instanceof ServerWorld serverWorld)) {
 			return InteractionResult.fail("SERVER_ONLY", "shots resolve server-side");
 		}
@@ -2366,6 +2488,12 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	@Override
 	public void writeCustomDataToNbt(NbtCompound nbt) {
 		super.writeCustomDataToNbt(nbt);
+        nbt.putLong("SquireOathDeadline", oathDeadline);
+        if (oathAnchor != null) {
+            nbt.putDouble("SquireOathX", oathAnchor.x);
+            nbt.putDouble("SquireOathY", oathAnchor.y);
+            nbt.putDouble("SquireOathZ", oathAnchor.z);
+        }
 		nbt.putUuid(NBT_AGENT_ID, agentId());
 		if (ownerUuid != null) {
 			nbt.putUuid(NBT_OWNER, ownerUuid);
@@ -2389,6 +2517,11 @@ public class AvatarEntity extends PathAwareEntity implements AgentBody {
 	@Override
 	public void readCustomDataFromNbt(NbtCompound nbt) {
 		super.readCustomDataFromNbt(nbt);
+        oathDeadline = Math.max(0, nbt.getLong("SquireOathDeadline"));
+        if (oathActive()) {
+            oathAnchor = new Vec3d(nbt.getDouble("SquireOathX"), nbt.getDouble("SquireOathY"), nbt.getDouble("SquireOathZ"));
+            setAiDisabled(true);
+        }
 		if (nbt.containsUuid(NBT_AGENT_ID)) {
 			this.agentId = nbt.getUuid(NBT_AGENT_ID);
 		}

@@ -20,6 +20,7 @@ import dev.squire.server.task.TaskStateStore;
 import dev.squire.server.world.UndoJournal;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -76,6 +77,12 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 	}
 
 	private final RuntimeServices services;
+	private final java.util.Map<Task, Long> movingSince = new java.util.WeakHashMap<>();
+	private final java.util.Set<Task> assisted = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+	private dev.squire.server.project.Project project(Task task) {
+		Object id = task.parameters().get(BlueprintBuildExecutor.PARAM_PROJECT_ID);
+		return id == null ? null : services.project(UUID.fromString(id.toString()));
+	}
 
 	public ExcavateExecutor(RuntimeServices services) {
 		this.services = services;
@@ -142,6 +149,11 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 			return finish(task, progress, StepOutcome.WORK_DONE);
 		}
 		BlockPos next = progress.cells().get(progress.cursor());
+		if (world.isAir(next)) { task.setExecutionState(new Progress(progress.placementId(), Phase.NAVIGATE, null,
+			progress.cells(), progress.cursor() + 1, progress.operationId(), progress.dug(), progress.skipped(), progress.inventoryFull())); return StepOutcome.CONTINUE; }
+		if (project(task) != null && !project(task).pendingMutation().isEmpty()) {
+			task.setLastErrorCode("CONSTRUCTION_RECOVERY_REQUIRED"); return finish(task, progress, StepOutcome.FAILED);
+		}
 		if (progress.phase() == Phase.NAVIGATE) {
 			StepOutcome nav = navigate(task, avatar, progress, next);
 			if (nav != null) {
@@ -161,13 +173,18 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 			return null;
 		}
 		MoveHandle handle = progress.handle();
+		if (project(task) != null && (assisted.contains(task) || handle != null && (handle.state() == MoveHandle.State.FAILED
+				|| handle.state() == MoveHandle.State.CANCELLED || services.currentTick() - movingSince.getOrDefault(task, services.currentTick()) >= ConstructionRecovery.STALL_TICKS))) {
+			assisted.add(task); avatar.stopMoving(); task.setExecutionState(withPhase(progress, Phase.DIG, null)); return null;
+		}
 		if (handle == null) {
+			movingSince.put(task, services.currentTick());
 			// 埋在地里的目标没有可站的邻居；先走到它正上方的井口去。
 			BlockPos target = GatherBlockExecutor.approachPoint(avatar, next);
 			handle = avatar.moveTo(new TargetPosition(
 				avatar.getWorld().getRegistryKey().getValue().toString(),
 				target.getX() + 0.5, target.getY(), target.getZ() + 0.5),
-				MoveOptions.WALK);
+				EngineerMovement.options(avatar.profile()));
 			task.setExecutionState(withPhase(progress, Phase.NAVIGATE, handle));
 			return StepOutcome.CONTINUE;
 		}
@@ -187,6 +204,8 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 	/** 这一 tick 挖几格。「深掘」翻倍，「勤勉」再加一点；成本不变，只是节奏。 */
 	static int blocksPerTick(dev.squire.server.profile.SquireProfile profile) {
 		int budget = BLOCKS_PER_TICK;
+        if (profile != null && profile.profession.profession() == dev.squire.server.profession.SquireProfession.ENGINEER)
+            budget = (int) Math.ceil(budget * dev.squire.server.profession.EngineerProgression.current().efficiency(profile.profession.level));
 		if (profile != null
 				&& profile.can(dev.squire.server.profile.Ability.EXCAVATE_DEEP)) {
 			budget *= 2;
@@ -218,9 +237,29 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 				continue;
 			}
 			BlockState state = world.getBlockState(pos);
+			var terrainPlacement = services.blueprints().placement(progress.placementId()).orElse(null);
+			if (terrainPlacement != null && dev.squire.server.blueprint.TerrainLeveling.parse(terrainPlacement.blueprintId).isPresent()
+					&& (!dev.squire.server.blueprint.TerrainLeveling.obstacle(world, pos).isEmpty()
+					|| !services.protection().canBreak(world, pos, avatar.ownerId()).allowed())) {
+				task.setLastErrorCode("TERRAIN_SITE_UNSAFE");
+				return finish(task, progress, StepOutcome.FAILED);
+			}
 			if (state.isAir()) {
 				cursor++;
 				continue;
+			}
+			var project = project(task);
+			if (project != null && assisted.contains(task)) {
+				var resolved = blueprints().resolve(placementOf(task)).orElseThrow();
+				var changes = java.util.Map.of(pos, Blocks.AIR.getDefaultState());
+				if (!dev.squire.server.blueprint.ConstructionAccessPlan.diggable(world, pos)
+						|| ConstructionRecovery.occupied(world, avatar, changes)) {
+					task.setLastErrorCode("ACCESS_DIG_UNSAFE"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				if (ConstructionRecovery.prepare(avatar, ConstructionRecovery.bounds(resolved, avatar), pos, changes) == null) {
+					task.setLastErrorCode("CONSTRUCTION_NO_SAFE_ANCHOR"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				avatar.setActivityDetail("辅助清场");
 			}
 			if (state.getHardness(world, pos) < 0) {
 				skipped++;
@@ -229,7 +268,25 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 			}
 			var decision = services.protection().canBreak(world, pos, avatar.ownerId());
 			if (!decision.allowed()) {
+				if (project != null) { task.setLastErrorCode("PROTECTED"); return finish(task, progress, StepOutcome.FAILED); }
 				skipped++;
+				cursor++;
+				continue;
+			}
+			// World.removeBlock deliberately restores a fluid block from its own
+			// FluidState.  Treating water/lava like an ordinary mined block therefore
+			// reports success while leaving the source in place, and verification retries
+			// forever.  Drain managed fluids explicitly; they have no drops or tool cost.
+			if (!state.getFluidState().isEmpty()) {
+				if (project != null && !services.beginProjectMutation(project.projectId, "clear-fluid:" + pos.asLong())) {
+					task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				recordUndo(progress.operationId(), task.taskId(), world, pos, state);
+				world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+				if (project != null && !services.completeProjectMutation(project.projectId)) {
+					task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				dug++;
 				cursor++;
 				continue;
 			}
@@ -239,7 +296,8 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 				// 没有能真正挖动它的工具。以前这里把每一格都当「跳过」，
 				// 于是一个没带镐的伙伴会“顺利”跑完整个挖除任务、一格都没动，
 				// 然后卡在验证里直到超时——玩家看到的就是「他突然不干活了」。
-				task.setLastErrorCode("PRECONDITION_FAILED");
+				task.setLastErrorCode("HARVEST_TOOL_MISSING:" + net.minecraft.registry.Registries.BLOCK.getId(state.getBlock()));
+				avatar.setActivityDetail(FakePlayerInteractionProxy.missingHarvestToolMessage(state));
 				LOG.info("[excavate] {} has no tool that can break {}", task.taskId(),
 					state.getBlock());
 				return finish(task, new Progress(progress.placementId(), Phase.DIG, null,
@@ -247,10 +305,14 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 					progress.inventoryFull()), StepOutcome.FAILED);
 			}
 			recordUndo(progress.operationId(), task.taskId(), world, pos, state);
+			if (project != null && !services.beginProjectMutation(project.projectId, "clear:" + pos.asLong())) {
+				task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
+			}
 			FakePlayerInteractionProxy.BreakResult result =
 				FakePlayerInteractionProxy.breakAndCollect(world, pos, tool, used -> { });
 			items.writeBackTool(toolSlot, tool);
 			if (!result.broken()) {
+				if (project != null) services.completeProjectMutation(project.projectId);
 				skipped++;
 				cursor++;
 				continue;
@@ -263,6 +325,9 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 					Block.dropStack(world, pos, remainder);
 					full = true;
 				}
+			}
+			if (project != null && !services.completeProjectMutation(project.projectId)) {
+				task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
 			}
 			dug++;
 			cursor++;
@@ -417,6 +482,8 @@ public final class ExcavateExecutor implements dev.squire.server.task.TaskExecut
 	 * 里共用——「悬空的火把会被相邻更新打掉」这种坑只该被修一次。</p>
 	 */
 	private void lightUp(Task task, Progress progress) {
+		var placement = services.blueprints().placement(progress.placementId()).orElse(null);
+		if (placement != null && dev.squire.server.blueprint.TerrainLeveling.parse(placement.blueprintId).isPresent()) return;
 		AvatarEntity avatar = services.avatar(task.agentId());
 		if (avatar == null || !(avatar.getWorld() instanceof ServerWorld world)) {
 			return;

@@ -1,0 +1,373 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/craftsmanship/luxury/cookery3",
+  "format": "minecraft:structure_nbt",
+  "displayName": "食品工坊 · Tier 3 · 标准",
+  "tier": 3,
+  "category": "PRODUCTION",
+  "minEngineerLevel": 5,
+  "structure": "squire:keepitlevel/craftsmanship/luxury/cookery3",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": -1,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/craftsmanship/luxury/cookery3.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "workshops"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    46,
+    11
+  ],
+  "primaryOffset": {
+    "x": 4,
+    "y": 1,
+    "z": 5
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_roof",
+      "displayName": "云杉梯板",
+      "type": "ROOF",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "stairs"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "stairs",
+        "wall"
+      ]
+    },
+    {
+      "id": "glass",
+      "displayName": "透明窗格",
+      "type": "WINDOW",
+      "defaultFamily": "squire:glass",
+      "requiredVariants": [
+        "pane"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_stairs",
+      "slot": "spruce_roof",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_stairs",
+      "slot": "stone_bricks",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_brick_wall",
+      "slot": "stone_bricks",
+      "variant": "wall"
+    },
+    {
+      "block": "minecraft:glass_pane",
+      "slot": "glass",
+      "variant": "pane"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:spruce_stairs": [
+      "shape"
+    ],
+    "minecraft:stone_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:stone_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:glass_pane": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

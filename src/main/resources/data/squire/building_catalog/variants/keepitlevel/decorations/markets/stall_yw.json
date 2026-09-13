@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/decorations/markets/stall_yw",
+  "format": "minecraft:structure_nbt",
+  "displayName": "市场摊位 · stall_yw",
+  "tier": 1,
+  "category": "DECORATION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/decorations/markets/stall_yw",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/markets/stall_yw.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "decorations"
+    ]
+  },
+  "sourceFrame": [
+    5,
+    10,
+    3
+  ],
+  "primaryOffset": {
+    "x": 2,
+    "y": 0,
+    "z": 1
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        0,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "trapdoor"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "slab",
+        "stairs"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_trapdoor",
+      "slot": "spruce_structure",
+      "variant": "trapdoor"
+    },
+    {
+      "block": "minecraft:stone_brick_stairs",
+      "slot": "stone_bricks",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_brick_stairs": [
+      "shape"
+    ]
+  }
+}

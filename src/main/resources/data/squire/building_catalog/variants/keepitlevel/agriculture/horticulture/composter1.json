@@ -1,0 +1,1004 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/agriculture/horticulture/composter1",
+  "format": "minecraft:structure_nbt",
+  "displayName": "堆肥工坊 · Tier 1 · 标准",
+  "tier": 1,
+  "category": "PRODUCTION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/agriculture/horticulture/composter1",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": -1,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/agriculture/horticulture/composter1.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "agriculture"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    46,
+    11
+  ],
+  "primaryOffset": {
+    "x": 6,
+    "y": 2,
+    "z": 5
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        0,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence",
+        "log",
+        "planks"
+      ]
+    },
+    {
+      "id": "spruce_roof",
+      "displayName": "云杉梯板",
+      "type": "ROOF",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "slab",
+        "stairs"
+      ]
+    },
+    {
+      "id": "cobblestone",
+      "displayName": "圆石砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:cobblestone",
+      "requiredVariants": [
+        "block"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_log",
+      "slot": "spruce_structure",
+      "variant": "log"
+    },
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "spruce_structure",
+      "variant": "planks"
+    },
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:spruce_stairs",
+      "slot": "spruce_roof",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:spruce_slab",
+      "slot": "spruce_roof",
+      "variant": "slab"
+    },
+    {
+      "block": "minecraft:cobblestone",
+      "slot": "cobblestone",
+      "variant": "block"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:spruce_stairs": [
+      "shape"
+    ],
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:spruce_leaves": [
+      "distance"
+    ]
+  }
+}

@@ -56,7 +56,7 @@ public final class ProfessionConfig {
 	/** 经验条满了但还没晋升时，最多能存下一级需求的这个比例。 */
 	public final double overflowXpRatio;
 
-	/** 转职门槛：新手训练经验要攒到这个数。默认正好是五项训练的总和。 */
+	/** 转职门槛：默认是四项基础训练的总和，旧配置自动限制到可达的经验上限。 */
 	public final int trainingXpRequired;
 
 	/** 目标等级 → 晋升材料。Lv.10 见 {@link #masterPromotionItems}。 */
@@ -126,6 +126,13 @@ public final class ProfessionConfig {
 
 	/** 两次主动使用消耗品之间的最短间隔（tick）。 */
 	public final int guardConsumableCooldownTicks;
+    public final double engineerWeaponDamageFactor;
+    public final double engineerAttackIntervalFactor;
+    public final double engineerSelfDefenceRadius;
+    public final double guardRescueRadius;
+    public final double guardOathTauntRadius;
+    public final int guardOathDurationTicks;
+
 
 	/** 姿态 → 追击上限系数（乘在护卫半径上）。 */
 	public final Map<CombatStance, Double> guardChaseFactorByStance;
@@ -188,7 +195,8 @@ public final class ProfessionConfig {
 	private ProfessionConfig(Builder b) {
 		this.xpRequiredPerLevel = b.xpRequiredPerLevel.clone();
 		this.overflowXpRatio = b.overflowXpRatio;
-		this.trainingXpRequired = b.trainingXpRequired;
+		// Clamp legacy configurations (previously 100) to attainable basic training XP.
+		this.trainingXpRequired = Math.min(b.trainingXpRequired, TrainingMilestone.totalXp());
 		this.promotionItems = Map.copyOf(b.promotionItems);
 		this.masterPromotionItems = Map.copyOf(b.masterPromotionItems);
 		this.guardHpPerLevel = b.guardHpPerLevel.clone();
@@ -207,6 +215,13 @@ public final class ProfessionConfig {
 		this.guardPotionHealThreshold = b.guardPotionHealThreshold;
 		this.guardRetreatThreshold = b.guardRetreatThreshold;
 		this.guardConsumableCooldownTicks = b.guardConsumableCooldownTicks;
+        this.engineerWeaponDamageFactor = b.engineerWeaponDamageFactor;
+        this.engineerAttackIntervalFactor = b.engineerAttackIntervalFactor;
+        this.engineerSelfDefenceRadius = b.engineerSelfDefenceRadius;
+        this.guardRescueRadius = b.guardRescueRadius;
+        this.guardOathTauntRadius = b.guardOathTauntRadius;
+        this.guardOathDurationTicks = b.guardOathDurationTicks;
+
 		this.guardChaseFactorByStance = Map.copyOf(b.guardChaseFactorByStance);
 		this.guardShieldHoldTicks = b.guardShieldHoldTicks;
 		this.guardHighThreatMobs = java.util.Set.copyOf(b.guardHighThreatMobs);
@@ -357,6 +372,10 @@ public final class ProfessionConfig {
 		return engineerProjectBaseXp[index];
 	}
 
+    private static double finiteRange(double value, double min, double max, double fallback) {
+        return Double.isFinite(value) && value >= min && value <= max ? value : fallback;
+    }
+
 	// ------------------------------------------------------------------ 默认值
 
 	private static final ProfessionConfig DEFAULTS = new Builder().build();
@@ -392,6 +411,14 @@ public final class ProfessionConfig {
 	/** 覆盖式解析：只有真的写了的键才盖掉默认值。 */
 	public static ProfessionConfig fromJson(JsonObject root) {
 		Builder b = new Builder();
+        JsonObject combat = obj(root, "combat");
+        b.engineerWeaponDamageFactor = finiteRange(number(combat, "engineerWeaponDamageFactor", b.engineerWeaponDamageFactor), 0, 1, b.engineerWeaponDamageFactor);
+        b.engineerAttackIntervalFactor = finiteRange(number(combat, "engineerAttackIntervalFactor", b.engineerAttackIntervalFactor), 1, 10, b.engineerAttackIntervalFactor);
+        b.engineerSelfDefenceRadius = finiteRange(number(combat, "engineerSelfDefenceRadius", b.engineerSelfDefenceRadius), 1, 64, b.engineerSelfDefenceRadius);
+        b.guardRescueRadius = finiteRange(number(combat, "guardRescueRadius", b.guardRescueRadius), 1, 64, b.guardRescueRadius);
+        b.guardOathTauntRadius = finiteRange(number(combat, "guardOathTauntRadius", b.guardOathTauntRadius), 1, 64, b.guardOathTauntRadius);
+        b.guardOathDurationTicks = (int) finiteRange(number(combat, "guardOathDurationTicks", b.guardOathDurationTicks), 1, 1200, b.guardOathDurationTicks);
+
 		JsonObject general = obj(root, "general");
 		b.xpRequiredPerLevel = intArray(general, "xpRequiredPerLevel", b.xpRequiredPerLevel);
 		b.overflowXpRatio = clamp01(number(general, "overflowXpRatio", b.overflowXpRatio));
@@ -701,6 +728,13 @@ public final class ProfessionConfig {
 		double guardPotionHealThreshold = 0.35;
 		double guardRetreatThreshold = 0.20;
 		int guardConsumableCooldownTicks = 60;
+        double engineerWeaponDamageFactor = 0.45;
+        double engineerAttackIntervalFactor = 1.5;
+        double engineerSelfDefenceRadius = 4.0;
+        double guardRescueRadius = 16.0;
+        double guardOathTauntRadius = 16.0;
+        int guardOathDurationTicks = 300;
+
 		Map<CombatStance, Double> guardChaseFactorByStance = defaultChaseFactors();
 		int guardShieldHoldTicks = 20;
 		java.util.Set<String> guardHighThreatMobs = new java.util.LinkedHashSet<>(List.of(

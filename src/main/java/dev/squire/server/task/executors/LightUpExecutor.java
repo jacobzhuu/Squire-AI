@@ -38,7 +38,9 @@ public final class LightUpExecutor implements dev.squire.server.task.TaskExecuto
 	/** 每隔几格一根。 */
 	private static final int SPACING = Torchlight.PROJECT_SPACING;
 
-	public record Progress(UUID placementId, int placed, UUID operationId) { }
+	public record Progress(UUID placementId, int placed, UUID operationId, long lastPlacementTick) {
+		public Progress(UUID placementId, int placed, UUID operationId) { this(placementId, placed, operationId, 0); }
+	}
 
 	private final RuntimeServices services;
 
@@ -73,29 +75,54 @@ public final class LightUpExecutor implements dev.squire.server.task.TaskExecuto
 			task.setLastErrorCode("PRECONDITION_FAILED");
 			return StepOutcome.FAILED;
 		}
+		if (Torchlight.brightEnough(world, spots)) return StepOutcome.WORK_DONE;
 		UndoJournal journal = journal();
 		UUID operationId = journal == null ? null
 			: journal.begin(task.taskId(), task.requesterId(),
 				world.getRegistryKey().getValue().toString(), "torch up",
 				services.currentTick());
 		UUID projectId = projectIdOf(task);
+		if (projectId != null && !services.beginProjectMutation(projectId, "lighting:" + operationId)) {
+			task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return StepOutcome.FAILED;
+		}
 		int placed = projectId == null
 			? Torchlight.lightUp(world, avatar, spots, SPACING, MAX_TORCHES,
 				journal, operationId, tick)
-			: Torchlight.lightUp(world, spots, SPACING, MAX_TORCHES, journal,
+			: Torchlight.lightUpPlanned(world, projectSpots(world, placementIdOf(task)).stream()
+				.filter(p -> services.protection().canPlace(world, p, avatar.ownerId()).allowed()).toList(),
+				MAX_TORCHES, journal,
 				operationId, tick, () -> services.consumeProjectMaterial(projectId,
 					Torchlight.TORCH, 1));
 		if (journal != null && operationId != null) {
 			journal.close(operationId);
 		}
-		task.setExecutionState(new Progress(placementIdOf(task), placed, operationId));
+		if (projectId != null && !services.completeProjectMutation(projectId)) {
+			task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return StepOutcome.FAILED;
+		}
+		int previouslyPlaced = task.executionState() instanceof Progress progress
+			? progress.placed() : 0;
+		long lastPlacement = placed > 0 ? tick : task.executionState() instanceof Progress p ? p.lastPlacementTick() : tick;
+		task.setExecutionState(new Progress(placementIdOf(task), previouslyPlaced + placed, operationId, lastPlacement));
 		if (placed == 0 && !Torchlight.brightEnough(world, spots)) {
-			// 一根都没插上，而且确实还暗着：他身上没有火把。如实说。
-			task.setLastErrorCode("INSUFFICIENT_ITEM");
+			if (tick - lastPlacement <= 40) return StepOutcome.CONTINUE;
+			LOG.warn("Lighting blocked dark={} planned={}", spots.stream().filter(p -> Torchlight.suitable(world, p)).limit(8).map(p -> p + ":" + world.getLightLevel(net.minecraft.world.LightType.BLOCK, p)).toList(),
+				projectSpots(world, placementIdOf(task)).stream().limit(12).map(p -> p + ":" + world.getBlockState(p) + ":" + world.getLightLevel(net.minecraft.world.LightType.BLOCK, p)).toList());
+			// An obstructed/outdated lighting position is not a material shortage.
+			boolean empty = projectId == null ? avatar.items().countOf(Torchlight.TORCH) <= 0
+				: services.projectMaterialCount(projectId, Torchlight.TORCH) <= 0;
+			task.setLastErrorCode(empty ? "INSUFFICIENT_ITEM" : "LIGHTING_OBSTRUCTED");
 			return StepOutcome.FAILED;
 		}
 		LOG.info("[light] {} placed {} torch(es)", task.taskId(), placed);
-		return StepOutcome.WORK_DONE;
+		// Light propagation settles on subsequent server ticks. Large projects take
+		// multiple bounded passes, without mistaking the per-pass cap for missing stock.
+		return placed > 0 ? StepOutcome.CONTINUE : StepOutcome.WORK_DONE;
+	}
+
+	private List<BlockPos> projectSpots(ServerWorld world, UUID placementId) {
+		return services.blueprints().placement(placementId)
+			.flatMap(services.blueprints()::resolve)
+			.map(resolved -> Torchlight.projectSpots(world, resolved)).orElse(List.of());
 	}
 
 	@Override

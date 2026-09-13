@@ -7,6 +7,7 @@ import com.mojang.authlib.GameProfile;
 import dev.squire.server.body.avatar.AvatarEntity;
 import dev.squire.server.gui.SquireActions;
 import dev.squire.server.gui.SquireScreenHandler;
+import dev.squire.server.gui.AvatarEquipmentInventory;
 import dev.squire.server.profession.ProfessionAbility;
 import dev.squire.server.profession.ProfessionData;
 import dev.squire.server.profession.SquireProfession;
@@ -323,9 +324,12 @@ public final class M20ProfessionUiGameTests implements FabricGameTest {
 			press(SquireScreenHandler.BUTTON_PROFESSION_CHOOSE_BASE
 				+ SquireProfession.ENGINEER.ordinal(), owner, avatar);
 
-			// Lv1 摆一份基础模板出来。
+			// Retired player content stays retired even at master level; generic factories remain testable separately.
 			var placed = rt.design(owner, "house");
-			context.assertTrue(placed.success(), placed.message());
+			context.assertFalse(placed.success(), "retired parametric template cannot create a project");
+			data.level = 10;
+			context.assertFalse(rt.design(owner, "house").success(), "master does not resurrect retired player templates");
+			context.assertTrue(rt.projectStart(owner, "keepitlevel_residence").success(), "catalog preview remains available");
 			var before = rt.blueprints().activeOf(owner.getUuid()).orElseThrow()
 				.blueprintId;
 
@@ -350,9 +354,53 @@ public final class M20ProfessionUiGameTests implements FabricGameTest {
 			press(SquireScreenHandler.BUTTON_DESIGN_FLOORS, owner, avatar);
 			String multi = rt.blueprints().activeOf(owner.getUuid()).orElseThrow()
 				.blueprintId;
-			context.assertFalse(before.equals(multi),
-				"Lv6 之后多层该改得动了，实际还是 " + multi);
+			context.assertTrue(before.equals(multi), "legacy designer buttons cannot reshape fixed catalog blueprints");
 
+			cleanUp(rt, owner);
+			context.complete();
+		});
+	}
+
+	/** Resource catalog buttons and the server-side level gate share the same metadata. */
+	@GameTest(templateName = FLOOR, tickLimit = 250, batchId = "squire-ui-blueprint-library")
+	public void blueprintLibraryButtonsRespectEngineerLevels(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "ui-blueprint-library");
+		context.runAtTick(5, () -> {
+			AvatarEntity avatar = summon(context, rt, owner, new BlockPos(1, 2, 1));
+			finishTraining(rt, avatar);
+			rt.setProfession(owner, SquireProfession.ENGINEER.id());
+			ProfessionData data = rt.professionOf(avatar);
+			var definition = rt.blueprints().registry().catalog().variant("keepitlevel_warehouse").orElseThrow();
+			SquireScreenHandler panel = new SquireScreenHandler(77, owner.getInventory(),
+				avatar.items().mainInventory(), new AvatarEquipmentInventory(avatar,
+					SquireScreenHandler.EQUIPMENT_ORDER), avatar.backpackSlotInventory(), avatar);
+			panel.syncState(owner);
+			context.assertTrue(panel.state().profession().catalog().stream().allMatch(e -> e.kind().equals("family")), "root groups families, not 750 variants");
+			panel.selectBlueprint(owner, definition.family(), panel.state().profession().catalogVersion());
+			context.assertTrue(panel.state().profession().catalog().stream().anyMatch(e -> e.id().equals(definition.id())), "family drilldown includes warehouse");
+			panel.selectBlueprint(owner, definition.id(), panel.state().profession().catalogVersion());
+			context.assertTrue(rt.blueprints().activeOf(owner.getUuid()).isEmpty(),
+				"Lv1 bypassed the metadata warehouse lock");
+
+			data.level = definition.requiredEngineerLevel();
+			panel.selectBlueprint(owner, "keepitlevel_warehouse", panel.state().profession().catalogVersion());
+			context.assertTrue(rt.blueprints().activeOf(owner.getUuid()).isEmpty(), "stale catalog revision must be refused even after promotion");
+			panel.syncState(owner);
+			panel.selectBlueprint(owner, definition.id(), panel.state().profession().catalogVersion());
+			context.assertTrue("keepitlevel_warehouse".equals(rt.blueprints()
+				.activeOf(owner.getUuid()).orElseThrow().blueprintId),
+				"metadata level did not unlock the warehouse through the UI path");
+			var placement = rt.blueprints().activeOf(owner.getUuid()).orElseThrow();
+			data.level = 4;
+			context.assertTrue(rt.blueprintCycleMaterial(owner, 0, 1).success(), "basic theme starts at configured level");
+			var basicPalette = placement.materials();
+			context.assertFalse(rt.blueprintCycleMaterial(owner, 1, 1).success(), "full palette is a master ability");
+			context.assertTrue(placement.materials().equals(basicPalette), "locked slot must not mutate the preview");
+			data.level = 10;
+			context.assertTrue(rt.blueprintCycleMaterial(owner, 1, 1).success(), "master edits the second region");
+			context.assertFalse(rt.design(owner, "house").success(), "old designer cannot overwrite a catalog ghost");
+			context.assertTrue(placement.blueprintId.equals("keepitlevel_warehouse"), "retired reshape preserves the active catalog ID");
 			cleanUp(rt, owner);
 			context.complete();
 		});

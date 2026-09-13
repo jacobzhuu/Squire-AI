@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "format": "structurize:blueprint_v1",
+  "displayName": "村庄小喷泉",
+  "category": "DECORATION",
+  "tier": 1,
+  "minEngineerLevel": 2,
+  "blueprint": "squire:keepitlevel/fountain_small",
+  "encoding": "base64-gzip",
+  "crop": "content",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "ignoredBlocks": [
+    "structurize:blocksubstitution",
+    "structurize:blocksolidsubstitution"
+  ],
+  "blockMap": {
+    "minecraft:water": {
+      "block": "minecraft:blue_stained_glass"
+    }
+  },
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/statues/fountain_small.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel village decoration",
+    "description": "A compact fountain; source water is represented by blue glass for item-based construction.",
+    "tags": [
+      "decoration",
+      "fountain",
+      "village",
+      "third-party"
+    ]
+  },
+  "materialSlots": [
+    {
+      "id": "stonework",
+      "displayName": "喷泉石沿",
+      "type": "ROOF",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stonework",
+      "variant": "slab"
+    }
+  ]
+}

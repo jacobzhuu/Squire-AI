@@ -2,6 +2,8 @@ package dev.squire.server.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 import dev.squire.server.profile.Ability;
 import dev.squire.server.profile.AutonomyLevel;
@@ -33,10 +35,91 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 		List<String> materialChoices, List<String> siteIssues, boolean siteExecutable,
 		List<String> shortcutSpecs, String agentName,
 		int backpackSlots, int backpackPage, int amethystShards,
-		ProfessionView profession) {
+		ProfessionView profession, List<String> roster) {
+
+	/**
+	 * Material-choice fields travel inside one wire string so adding the material editor
+	 * did not add another five parallel lists to this already-wide record.  Keep the
+	 * separator and parser here: spelling the six-character text {@code \\u001f} at
+	 * one end and the real U+001F character at the other silently makes every row
+	 * unparsable.
+	 */
+	private static final String MATERIAL_CHOICE_SEPARATOR = "\u001f";
+	private static final String ROSTER_SEPARATOR = "\u001f";
+
+	/** One decoded row in the construction material editor. */
+	public record MaterialChoice(String slotId, String slotName, String familyId,
+			String familyName, String representativeItemId) { }
+	public record RosterEntry(String agentId, String name, String professionId,
+			boolean active, boolean primary, boolean current) { }
+
+	/** Source-compatible constructor used by older tests and call sites. */
+	public PanelState(int mode, int permissions, int health, int maxHealth,
+			String roleId, int level, int slots, long trackTotal, long trackRemaining,
+			List<String> equipped, List<String> traits, String autonomy,
+			String projectName, String projectState, List<String> stages,
+			String blockedReason, int followTeleport, List<String> shortcuts,
+			int combatMode, String blockerCode, String placementName,
+			String placementState, String placementBlueprintId, List<String> materialLines,
+			List<String> materialChoices, List<String> siteIssues, boolean siteExecutable,
+			List<String> shortcutSpecs, String agentName, int backpackSlots,
+			int backpackPage, int amethystShards, ProfessionView profession) {
+		this(mode, permissions, health, maxHealth, roleId, level, slots, trackTotal,
+			trackRemaining, equipped, traits, autonomy, projectName, projectState, stages,
+			blockedReason, followTeleport, shortcuts, combatMode, blockerCode,
+			placementName, placementState, placementBlueprintId, materialLines,
+			materialChoices, siteIssues, siteExecutable, shortcutSpecs, agentName,
+			backpackSlots, backpackPage, amethystShards, profession, List.of());
+	}
+
+	public static String encodeRosterEntry(String agentId, String name,
+			String professionId, boolean active, boolean primary, boolean current) {
+		return cleanRoster(agentId) + ROSTER_SEPARATOR + cleanRoster(name)
+			+ ROSTER_SEPARATOR + cleanRoster(professionId) + ROSTER_SEPARATOR
+			+ active + ROSTER_SEPARATOR + primary + ROSTER_SEPARATOR + current;
+	}
+
+	public static Optional<RosterEntry> decodeRosterEntry(String encoded) {
+		if (encoded == null) return Optional.empty();
+		String[] fields = encoded.split(Pattern.quote(ROSTER_SEPARATOR), -1);
+		if (fields.length != 6 || fields[0].isBlank()) return Optional.empty();
+		return Optional.of(new RosterEntry(fields[0], fields[1], fields[2],
+			Boolean.parseBoolean(fields[3]), Boolean.parseBoolean(fields[4]),
+			Boolean.parseBoolean(fields[5])));
+	}
+
+	private static String cleanRoster(String value) {
+		return value == null ? "" : value.replace(ROSTER_SEPARATOR, " ");
+	}
+
+	public static String encodeMaterialChoice(String slotId, String slotName,
+			String familyId, String familyName, String representativeItemId) {
+		return cleanMaterialField(slotId) + MATERIAL_CHOICE_SEPARATOR
+			+ cleanMaterialField(slotName) + MATERIAL_CHOICE_SEPARATOR
+			+ cleanMaterialField(familyId) + MATERIAL_CHOICE_SEPARATOR
+			+ cleanMaterialField(familyName) + MATERIAL_CHOICE_SEPARATOR
+			+ cleanMaterialField(representativeItemId);
+	}
+
+	public static Optional<MaterialChoice> decodeMaterialChoice(String encoded) {
+		if (encoded == null || encoded.isEmpty()) {
+			return Optional.empty();
+		}
+		String[] fields = encoded.split(Pattern.quote(MATERIAL_CHOICE_SEPARATOR), -1);
+		if (fields.length != 5 || fields[0].isEmpty() || fields[2].isEmpty()
+				|| fields[4].isEmpty()) {
+			return Optional.empty();
+		}
+		return Optional.of(new MaterialChoice(fields[0], fields[1], fields[2],
+			fields[3], fields[4]));
+	}
+
+	private static String cleanMaterialField(String value) {
+		return value == null ? "" : value.replace(MATERIAL_CHOICE_SEPARATOR, " ");
+	}
 
 	/** 状态包版本。字段一变就 +1。 */
-	public static final int VERSION = 16;
+	public static final int VERSION = 23;
 
 	/** 一次也没同步到的面板显示这个，而不是显示一堆 0。 */
 	public static final PanelState EMPTY = new PanelState(0, 0, 0, 20, "", 0,
@@ -68,6 +151,7 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 		agentName = agentName == null ? "" : agentName;
 		maxHealth = Math.max(1, maxHealth);
 		profession = profession == null ? ProfessionView.EMPTY : profession;
+		roster = roster == null ? List.of() : List.copyOf(roster);
 	}
 
 	/** 有职业吗。没有就是「通用随从」，面板据此换一套说明文字。 */
@@ -151,7 +235,7 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 			stageLines, reason, followTeleport, shortcuts, combatMode, blockerCode,
 			placementName, placementState, placementBlueprintId, materialLines,
 			materialChoices, siteIssues, siteExecutable, shortcutSpecs, agentName,
-			backpackSlots, backpackPage, amethystShards, profession);
+			backpackSlots, backpackPage, amethystShards, profession, roster);
 	}
 
 	/** 背囊的格数与当前页；面板据此决定要不要画翻页按钮、写第几页。 */
@@ -161,7 +245,7 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 			projectState, stages, blockedReason, followTeleport, shortcuts, combatMode,
 			blockerCode, placementName, placementState, placementBlueprintId, materialLines,
 			materialChoices, siteIssues, siteExecutable, shortcutSpecs, agentName,
-			Math.max(0, slots), Math.max(0, page), amethystShards, profession);
+			Math.max(0, slots), Math.max(0, page), amethystShards, profession, roster);
 	}
 
 	public PanelState withConstruction(String nextBlockerCode, String nextPlacementName,
@@ -183,7 +267,16 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 			nextBlockerCode, nextPlacementName, nextPlacementState, nextBlueprintId,
 			nextMaterialLines, nextMaterialChoices, nextSiteIssues, nextSiteExecutable,
 			shortcutSpecs, agentName, backpackSlots, backpackPage, amethystShards,
-			profession);
+			profession, roster);
+	}
+
+	public PanelState withRoster(List<String> entries) {
+		return new PanelState(mode, permissions, health, maxHealth, roleId, level, slots,
+			trackTotal, trackRemaining, equipped, traits, autonomy, projectName,
+			projectState, stages, blockedReason, followTeleport, shortcuts, combatMode,
+			blockerCode, placementName, placementState, placementBlueprintId, materialLines,
+			materialChoices, siteIssues, siteExecutable, shortcutSpecs, agentName,
+			backpackSlots, backpackPage, amethystShards, profession, entries);
 	}
 
 	/** 服务端侧：从真实档案取一份快照。 */
@@ -273,9 +366,9 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 		buf.writeString(placementName, MAX_ENTRY_LENGTH);
 		buf.writeString(placementState, 32);
 		buf.writeString(placementBlueprintId, 128);
-		writeStrings(buf, materialLines);
+		writeMaterialLines(buf, materialLines);
 		writeLongStrings(buf, materialChoices);
-		writeStrings(buf, siteIssues);
+		writeSiteIssues(buf, siteIssues);
 		buf.writeBoolean(siteExecutable);
 		// 快捷指令的绑定和名字一一对应。面板要能<b>就地编辑</b>已存的那一条，
 		// 也要判得出它现在是不是锁着的——只发名字的话两件事都做不到。
@@ -288,6 +381,7 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 		buf.writeVarInt(Math.max(0, amethystShards));
 		// 职业页整块。顺序只在 ProfessionView 里出现一次，肉眼对得齐。
 		profession.write(buf);
+		writeLongStrings(buf, roster);
 	}
 
 	/** 版本不匹配时返回 {@link #EMPTY}，绝不把后面的字节按错位解释出来。 */
@@ -303,10 +397,9 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 			readStrings(buf), buf.readString(MAX_REASON_LENGTH), buf.readVarInt(),
 			readStrings(buf), buf.readVarInt(), buf.readString(48),
 			buf.readString(MAX_ENTRY_LENGTH), buf.readString(32), buf.readString(128),
-			readStrings(buf), readLongStrings(buf), readStrings(buf), buf.readBoolean(),
+			readMaterialLines(buf), readLongStrings(buf), readSiteIssues(buf), buf.readBoolean(),
 			readPhrases(buf), buf.readString(48), buf.readVarInt(), buf.readVarInt(),
-			buf.readVarInt(),
-			ProfessionView.read(buf));
+			buf.readVarInt(), ProfessionView.read(buf), readLongStrings(buf));
 	}
 
 	/** 单个字段最多这么长，整段最多这么多条——网络输入永远有上界。 */
@@ -314,6 +407,32 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 	private static final int MAX_ENTRY_LENGTH = 48;
 	/** 阻塞原因是一段人话（可能列着缺料），比其它字段长得多。 */
 	private static final int MAX_REASON_LENGTH = 512;
+
+	// Site diagnostics are prose, not short IDs. Bound display text at the wire
+	// boundary so a longer diagnostic cannot crash the server during player ticks.
+	private static void writeSiteIssues(PacketByteBuf buf, List<String> values) {
+		int count = Math.min(values.size(), MAX_ENTRIES);
+		buf.writeVarInt(count);
+		for (int i = 0; i < count; i++) {
+			String value = values.get(i);
+			if (value.length() > MAX_REASON_LENGTH) {
+				int end = MAX_REASON_LENGTH - 1;
+				if (Character.isHighSurrogate(value.charAt(end - 1))) end--;
+				value = value.substring(0, end) + "\u2026";
+			}
+			buf.writeString(value, MAX_REASON_LENGTH);
+		}
+	}
+
+	private static List<String> readSiteIssues(PacketByteBuf buf) {
+		int count = buf.readVarInt();
+		if (count < 0 || count > MAX_ENTRIES) {
+			throw new IllegalArgumentException("invalid site issue count");
+		}
+		List<String> out = new ArrayList<>(count);
+		for (int i = 0; i < count; i++) out.add(buf.readString(MAX_REASON_LENGTH));
+		return List.copyOf(out);
+	}
 
 	private static void writeStrings(PacketByteBuf buf, List<String> values) {
 		int count = Math.min(values.size(), MAX_ENTRIES);
@@ -333,6 +452,17 @@ public record PanelState(int mode, int permissions, int health, int maxHealth,
 	}
 
 	private static final int MAX_LONG_ENTRY_LENGTH = 192;
+	private static void writeMaterialLines(PacketByteBuf buf, List<String> values) {
+		int count = Math.min(values.size(), 256); buf.writeVarInt(count);
+		for (int i = 0; i < count; i++) buf.writeString(values.get(i), 128);
+	}
+	private static List<String> readMaterialLines(PacketByteBuf buf) {
+		int count = buf.readVarInt();
+		if (count < 0 || count > 256) throw new IllegalArgumentException("invalid material count");
+		List<String> out = new ArrayList<>();
+		for (int i = 0; i < count; i++) out.add(buf.readString(128));
+		return List.copyOf(out);
+	}
 
 	private static void writeLongStrings(PacketByteBuf buf, List<String> values) {
 		int count = Math.min(values.size(), MAX_ENTRIES);

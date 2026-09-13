@@ -27,10 +27,11 @@ public final class BlueprintPlacementStore {
 
 	private static final org.slf4j.Logger LOG =
 		org.slf4j.LoggerFactory.getLogger(BlueprintPlacementStore.class);
-	private static final int VERSION = 2;
+	private static final int VERSION = 9;
 
 	private final java.util.function.Supplier<Path> fileSupplier;
 	private boolean writable = true;
+	private final java.util.Map<Blueprint.Resolved, String> geometryCache = new java.util.IdentityHashMap<>();
 
 	public BlueprintPlacementStore(java.util.function.Supplier<Path> fileSupplier) {
 		this.fileSupplier = fileSupplier;
@@ -40,33 +41,58 @@ public final class BlueprintPlacementStore {
 		return writable;
 	}
 
-	public synchronized void save(Collection<BlueprintPlacement> placements) {
+	public synchronized boolean save(Collection<BlueprintPlacement> placements) {
 		if (!writable) {
-			return;
+			return false;
 		}
 		try {
 			Path file = fileSupplier.get();
 			if (file == null) {
-				return;
+				return false;
 			}
 			Files.createDirectories(file.getParent());
 			JsonObject root = new JsonObject();
 			root.addProperty("version", VERSION);
 			JsonArray array = new JsonArray();
 			for (BlueprintPlacement placement : placements) {
-				array.add(write(placement));
+				JsonObject row = write(placement, false);
+				if (placement.committed() && placement.snapshot() != null) {
+					var snapshot = placement.snapshot();
+					String hash = geometryCache.get(snapshot);
+					if (hash == null) {
+						byte[] bytes = ConstructionSnapshotCodec.writeGeometry(snapshot).toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+						hash = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+						Path directory = file.getParent().resolve("blueprint_snapshots"); Files.createDirectories(directory);
+						Path target = directory.resolve(hash + ".json.gz");
+						if (!Files.exists(target)) {
+							Path draft = directory.resolve(hash + ".tmp");
+							try (var out = new java.util.zip.GZIPOutputStream(Files.newOutputStream(draft))) { out.write(bytes); }
+							Files.move(draft, target, StandardCopyOption.REPLACE_EXISTING);
+						}
+						geometryCache.put(snapshot, hash);
+					}
+					row.addProperty("snapshotRef", hash);
+					row.add("progress", ConstructionSnapshotCodec.writeProgress(snapshot));
+				}
+				array.add(row);
 			}
+			var live = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Blueprint.Resolved, Boolean>());
+			placements.forEach(p -> { if (p.snapshot() != null) live.add(p.snapshot()); }); geometryCache.keySet().retainAll(live);
 			root.add("placements", array);
 			Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
-			Files.writeString(tmp, root.toString());
-			try {
-				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
-					StandardCopyOption.ATOMIC_MOVE);
-			} catch (java.nio.file.AtomicMoveNotSupportedException e) {
-				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
-			}
+			dev.squire.server.project.ProjectStore.retryAccessDenied(() -> {
+				Files.writeString(tmp, root.toString());
+				try {
+					Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
+						StandardCopyOption.ATOMIC_MOVE);
+				} catch (java.nio.file.AtomicMoveNotSupportedException e) {
+					Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+				}
+			});
+			return true;
 		} catch (Exception e) {
 			LOG.warn("[blueprint] save failed: {}", e.toString());
+			return false;
 		}
 	}
 
@@ -81,6 +107,10 @@ public final class BlueprintPlacementStore {
 				.getAsJsonObject();
 			int version = root.has("version") ? root.get("version").getAsInt() : 1;
 			if (version < VERSION) {
+				Path backup = file.resolveSibling(file.getFileName() + ".pre-v" + VERSION + ".bak");
+				if (!Files.exists(backup)) Files.copy(file, backup);
+			}
+			if (version < 2) {
 				LOG.warn("[blueprint] legacy placement schema {} is incompatible with fixed-layout templates; active sites were not restored", version);
 				return out;
 			}
@@ -96,13 +126,28 @@ public final class BlueprintPlacementStore {
 			}
 			for (JsonElement element : array) {
 				try {
-					out.add(read(element.getAsJsonObject()));
-				} catch (RuntimeException bad) {
+					JsonObject row = element.getAsJsonObject();
+					if (row.has("snapshotRef")) {
+						String hash = row.get("snapshotRef").getAsString();
+						if (!hash.matches("[0-9a-f]{64}")) throw new IllegalArgumentException("invalid snapshot reference");
+						byte[] bytes;
+						try (var input = new java.util.zip.GZIPInputStream(Files.newInputStream(file.getParent().resolve("blueprint_snapshots").resolve(hash + ".json.gz")))) {
+							bytes = input.readNBytes(128 * 1024 * 1024 + 1);
+						}
+						if (bytes.length > 128 * 1024 * 1024 || !hash.equals(java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes))))
+							throw new IllegalArgumentException("snapshot integrity failure");
+						JsonObject geometry = JsonParser.parseString(new String(bytes, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+						ConstructionSnapshotCodec.mergeProgress(geometry, row.getAsJsonObject("progress")); row.add("snapshot", geometry);
+					}
+					out.add(read(row));
+				} catch (Exception bad) {
+					writable = false; // Do not overwrite a damaged row and lose its real-material ledger.
 					LOG.warn("[blueprint] skipped corrupt row: {}", bad.toString());
 				}
 			}
 		} catch (Exception e) {
 			LOG.warn("[blueprint] load failed: {}", e.toString());
+			writable = false;
 		}
 		return out;
 	}
@@ -110,6 +155,9 @@ public final class BlueprintPlacementStore {
 	// ------------------------------------------------------------------ rows
 
 	static JsonObject write(BlueprintPlacement p) {
+		return write(p, true);
+	}
+	private static JsonObject write(BlueprintPlacement p, boolean includeSnapshot) {
 		JsonObject o = new JsonObject();
 		o.addProperty("placementId", p.placementId.toString());
 		o.addProperty("ownerId", p.ownerId.toString());
@@ -127,6 +175,11 @@ public final class BlueprintPlacementStore {
 		JsonObject materials = new JsonObject();
 		for (var entry : p.materials().entrySet()) materials.addProperty(entry.getKey(), entry.getValue());
 		o.add("materials", materials);
+		o.addProperty("authorizedLevel", p.authorizedLevel());
+		o.addProperty("legacyFullPrice", p.legacyFullPrice());
+		o.addProperty("artificialWater", p.artificialWater());
+		if (p.waterSource() != null) o.add("waterSource", ConstructionSnapshotCodec.pos(p.waterSource()));
+		if (includeSnapshot && p.committed() && p.snapshot() != null) o.add("snapshot", ConstructionSnapshotCodec.write(p.snapshot()));
 		return o;
 	}
 
@@ -154,6 +207,10 @@ public final class BlueprintPlacementStore {
 				p.setState(BlueprintPlacement.State.GHOST);
 			}
 		}
+		p.configureWater(o.has("artificialWater") && o.get("artificialWater").getAsBoolean(), o.has("waterSource") ? ConstructionSnapshotCodec.pos(o.get("waterSource")) : null);
+		if (o.has("snapshot")) p.snapshot(ConstructionSnapshotCodec.read(o.getAsJsonObject("snapshot")), true);
+		if (o.has("authorizedLevel")) p.authorizeLevel(o.get("authorizedLevel").getAsInt());
+		if (o.has("legacyFullPrice") && o.get("legacyFullPrice").getAsBoolean()) p.markLegacyFullPrice();
 		return p;
 	}
 

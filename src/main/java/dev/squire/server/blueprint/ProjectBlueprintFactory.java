@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.util.math.Direction;
+
 /**
  * 把一份 {@link ProjectSpec} 编译成普通蓝图。
  *
@@ -120,8 +122,7 @@ public final class ProjectBlueprintFactory {
 			// 楼梯口必须在<b>楼板铺完之后</b>再掏：步骤顺序即覆盖顺序，先掏后铺
 			// 等于白掏一次，楼梯会顶死在天花板上。
 			if (floor > 0) {
-				b.dig(ox + 1, y, oz + 1, ox + 2, y, oz + 2, label + "楼梯口");
-				stairs(b, spec, ox, oz, y - h - 1, label);
+				stairs(b, spec, ox, oz, y - h - 1, y, label);
 			}
 			// 四面墙：先砌整圈实心，再掏空内部——展平之后就是一层壳，材料账目照旧。
 			b.material(ox, y + 1, oz, ox + w - 1, y + h, oz + d - 1, SLOT_WALL, "block",
@@ -206,15 +207,58 @@ public final class ProjectBlueprintFactory {
 		b.dig(ox + x, base + 1, oz + d - 1, ox + x, base + 2, oz + d - 1, label + "门洞");
 	}
 
-	/** 层间楼梯：贴着西北角一级级往上，占地最小且不会挡住门。 */
+	/**
+	 * 层间楼梯。
+	 *
+	 * <p>长边放得下时走直梯；小建筑使用 3×3 蛇形梯。路径总会额外保留一个
+	 * 上层落脚格，因此最后一级不会顶在楼板下面，也不会出现旧实现把多级楼梯
+	 * 叠在同一列、出口却开在另一处的问题。</p>
+	 */
 	private static void stairs(Builder b, ProjectSpec spec, int ox, int oz, int floorY,
-			String label) {
+			int upperFloorY, String label) {
 		int h = spec.wallHeight();
-		for (int step = 0; step <= h; step++) {
-			int x = 1 + Math.min(step, spec.width() - 3);
-			b.material(ox + x, floorY + 1 + step, oz + 1, ox + x, floorY + 1 + step,
-				oz + 1, SLOT_ROOF, "stairs", label + "楼梯", false);
+		List<int[]> path = stairPath(spec, h + 2); // h+1 级 + 一个上层落脚格
+		int last = h;
+		// 倒数第二级需要头部净空，最后一级本身占据楼板洞口。
+		for (int index = Math.max(0, last - 1); index <= last; index++) {
+			int[] cell = path.get(index);
+			b.dig(ox + cell[0], upperFloorY, oz + cell[1],
+				ox + cell[0], upperFloorY, oz + cell[1], label + "楼梯口");
 		}
+		for (int step = 0; step <= h; step++) {
+			int[] cell = path.get(step);
+			int[] next = path.get(step + 1);
+			Direction facing = horizontalDirection(next[0] - cell[0], next[1] - cell[1]);
+			b.materialState(ox + cell[0], floorY + 1 + step, oz + cell[1],
+				ox + cell[0], floorY + 1 + step, oz + cell[1], SLOT_ROOF,
+				"stairs", label + "楼梯", false, Map.of("facing", facing.asString()));
+		}
+	}
+
+	/** 返回相邻格组成的楼梯路径；最后一格只作为上层出口，不放楼梯。 */
+	private static List<int[]> stairPath(ProjectSpec spec, int cells) {
+		List<int[]> out = new ArrayList<>(cells);
+		if (spec.width() - 2 >= cells) {
+			for (int i = 0; i < cells; i++) out.add(new int[] {1 + i, 1});
+			return out;
+		}
+		if (spec.depth() - 2 >= cells) {
+			for (int i = 0; i < cells; i++) out.add(new int[] {1, 1 + i});
+			return out;
+		}
+		int[][] compact = {
+			{1, 1}, {2, 1}, {3, 1}, {3, 2}, {2, 2},
+			{1, 2}, {1, 3}, {2, 3}, {3, 3}
+		};
+		for (int i = 0; i < cells; i++) out.add(compact[i]);
+		return out;
+	}
+
+	private static Direction horizontalDirection(int dx, int dz) {
+		if (dx > 0) return Direction.EAST;
+		if (dx < 0) return Direction.WEST;
+		if (dz > 0) return Direction.SOUTH;
+		return Direction.NORTH;
 	}
 
 	/** 屋顶。三种变体都由代码生成，绝不让模型自由摆方块。 */
@@ -222,16 +266,27 @@ public final class ProjectBlueprintFactory {
 			String label) {
 		int w = spec.width();
 		int d = spec.depth();
+		// 装饰坡面不是连续方块，不能兼当天花板。先铺满一层密封板，避免
+		// 雨雪、光照和寻路把楼内判成露天；坡面整体上移一格。
+		b.material(ox, top + 1, oz, ox + w - 1, top + 1, oz + d - 1,
+			SLOT_ROOF, "block", label + "屋顶密封层", false);
 		switch (spec.roof()) {
-			case FLAT -> b.material(ox, top + 1, oz, ox + w - 1, top + 1, oz + d - 1,
-				SLOT_ROOF, "slab", label + "平屋顶", false);
+			case FLAT -> { }
 			case GABLE -> {
 				int ridge = w / 2;
 				for (int x = 0; x < w; x++) {
 					int rise = Math.min(x, w - 1 - x);
-					b.material(ox + x, top + 1 + rise, oz, ox + x, top + 1 + rise,
-						oz + d - 1, SLOT_ROOF, x == ridge ? "block" : "stairs",
-						label + (x == ridge ? "屋脊" : "斜屋顶"), false);
+					if (x == ridge) {
+						b.material(ox + x, top + 2 + rise, oz, ox + x,
+							top + 2 + rise, oz + d - 1, SLOT_ROOF, "block",
+							label + "屋脊", false);
+					} else {
+						Direction slope = x < ridge ? Direction.EAST : Direction.WEST;
+						b.materialState(ox + x, top + 2 + rise, oz, ox + x,
+							top + 2 + rise, oz + d - 1, SLOT_ROOF, "stairs",
+							label + "斜屋顶", false,
+							Map.of("facing", slope.asString()));
+					}
 				}
 			}
 			case HIP -> {
@@ -245,12 +300,12 @@ public final class ProjectBlueprintFactory {
 					if (x1 > x2 || z1 > z2) {
 						break;
 					}
-					b.material(x1, top + 1 + ring, z1, x2, top + 1 + ring, z2,
+					b.material(x1, top + 2 + ring, z1, x2, top + 2 + ring, z2,
 						SLOT_ROOF, ring == rings ? "block" : "slab",
 						label + (ring == rings ? "屋脊" : "四坡屋面"), false);
 					if (ring < rings) {
 						// 只留一圈边，中间交给下一层——不然会砌成一座实心金字塔。
-						b.dig(x1 + 1, top + 1 + ring, z1 + 1, x2 - 1, top + 1 + ring,
+						b.dig(x1 + 1, top + 2 + ring, z1 + 1, x2 - 1, top + 2 + ring,
 							z2 - 1, label + "屋面内圈");
 					}
 				}
@@ -374,9 +429,16 @@ public final class ProjectBlueprintFactory {
 
 		void material(int x1, int y1, int z1, int x2, int y2, int z2, String slot,
 				String variant, String what, boolean optional) {
-			steps.add(BlueprintStep.material(steps.size(), Math.min(x1, x2),
+			materialState(x1, y1, z1, x2, y2, z2, slot, variant, what, optional,
+				Map.of());
+		}
+
+		void materialState(int x1, int y1, int z1, int x2, int y2, int z2,
+				String slot, String variant, String what, boolean optional,
+				Map<String, String> properties) {
+			steps.add(BlueprintStep.materialState(steps.size(), Math.min(x1, x2),
 				Math.min(y1, y2), Math.min(z1, z2), Math.max(x1, x2), Math.max(y1, y2),
-				Math.max(z1, z2), slot, variant, what, optional));
+				Math.max(z1, z2), slot, variant, what, optional, properties));
 		}
 
 		void dig(int x1, int y1, int z1, int x2, int y2, int z2, String what) {
@@ -406,9 +468,26 @@ public final class ProjectBlueprintFactory {
 				out.add(new BlueprintStep(step.order(), x1, step.y1(), z1, x2,
 					step.y2(), z2, step.blockId(), step.what(), step.optional(),
 					step.negative(), step.materialSlot(), step.materialVariant(),
-					step.properties()));
+					mirroredProperties(step.properties(), spec.mirrorX(), spec.mirrorZ())));
 			}
 			return List.copyOf(out);
+		}
+
+		private static Map<String, String> mirroredProperties(Map<String, String> source,
+				boolean mirrorX, boolean mirrorZ) {
+			if (source.isEmpty() || (!mirrorX && !mirrorZ)) return source;
+			Map<String, String> out = new LinkedHashMap<>(source);
+			Direction facing = Direction.byName(out.get("facing"));
+			if (facing != null && facing.getAxis().isHorizontal()) {
+				if (mirrorX && (facing == Direction.EAST || facing == Direction.WEST)) {
+					facing = facing.getOpposite();
+				}
+				if (mirrorZ && (facing == Direction.NORTH || facing == Direction.SOUTH)) {
+					facing = facing.getOpposite();
+				}
+				out.put("facing", facing.asString());
+			}
+			return Map.copyOf(out);
 		}
 	}
 

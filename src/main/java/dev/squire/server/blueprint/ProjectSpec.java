@@ -41,9 +41,9 @@ public record ProjectSpec(Template template, int width, int depth, int wallHeigh
 	public enum Template {
 		SHED("shed", "棚屋", Blueprint.Category.STORAGE, 5, 5, 3, false),
 		SMALL_STORAGE("small_storage", "小仓库", Blueprint.Category.STORAGE, 7, 5, 3, false),
-		SMALL_HOUSE("small_house", "小屋", Blueprint.Category.SHELTER, 7, 7, 4, false),
-		HOUSE("house", "房屋", Blueprint.Category.SHELTER, 9, 9, 4, false),
-		LARGE_HOUSE("large_house", "大宅", Blueprint.Category.SHELTER, 13, 11, 5, false),
+		SMALL_HOUSE("small_house", "小屋", Blueprint.Category.HOUSING, 7, 7, 4, false),
+		HOUSE("house", "房屋", Blueprint.Category.HOUSING, 9, 9, 4, false),
+		LARGE_HOUSE("large_house", "大宅", Blueprint.Category.HOUSING, 13, 11, 5, false),
 		WAREHOUSE("warehouse", "仓库", Blueprint.Category.STORAGE, 15, 11, 5, false),
 		WATCHTOWER("watchtower", "哨塔", Blueprint.Category.DEFENCE, 7, 7, 5, false),
 		/** 复合蓝图：一次盖主屋 + 仓库 + 哨塔 + 围栏 + 大门。 */

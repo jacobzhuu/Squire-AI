@@ -57,9 +57,14 @@ Everything lives under two roots:
 | `<world>/squire/cbp-projects.json` | placed CBP project registry. |
 | `<world>/squire/automations.json` | persisted automation graphs. |
 | `<world>/squire/turns.json` | versioned structured dialogue goals/plans/clarifications; no raw transcript history. |
+| `<world>/squire/permissions.json` | server policy overrides and each player's permission toggles. |
 
 Persistence files are independently versioned (`turns.json` is version 2). Legacy
 turn version 1 is migrated on read; future versions fail closed and are never overwritten.
+Permission data uses schema version 2. On upgrade from version 1, old grants are
+discarded because they may have come from the formerly player-controlled toggle;
+server revocations remain in force. Reapply intended grants with
+`/squire admin permission <player_uuid> <node> grant`.
 
 ### Environment / LLM provider
 
@@ -181,14 +186,21 @@ by construction).
 - Commands over 256 characters use a protection-checked temporary command block;
   the previous cell is restored in a `finally` path even when execution fails.
 - LLM/MCP I/O runs off-thread; results settle back onto the server thread.
+- Conversation load is bounded: up to 3 active turns per player and 64 server-wide,
+  5 simultaneous provider calls, 16 queued calls, and 10 provider requests per player
+  (40 total) in a rolling 60-second tick window. Retries and replans count toward the
+  request budget. The server retains at most 512 terminal turn summaries.
 - Automation ticking is bounded per tick; low-priority work yields.
 
 ## Compatibility
 
-- Works server-side; the client entrypoint exists but has no required client mod.
-- Region-protection mods: Squire consults its ProtectionAdapter seam; vanilla spawn
-  protection radius is honored where meaningful. Dedicated servers wanting deep
-  integration should provide an adapter (see tool-api guide).
+- Every joining client must install the same Squire jar and compatible Fabric API as
+  the server. Custom companion rendering, items and screens require the client entrypoint.
+- The core follows vanilla dedicated-server spawn protection in the Overworld. Other
+  protection mods need a matching adapter registered through the `squire_protection`
+  entrypoint; the interface alone does not make an unadapted claim or locked-chest mod
+  compatible. See [Protection adapters](protection-adapters.md) before enabling world
+  editing or logistics alongside a protection mod.
 - Known limitation: undo journals are in-memory; restart clears pending undo state
   (CBP removal then refuses honestly rather than half-restoring).
 

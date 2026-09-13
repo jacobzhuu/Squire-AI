@@ -129,7 +129,7 @@ public sealed interface FastPathIntent
 
 	/** Durable project controls are deterministic and never delegated to the LLM. */
 	record ProjectControl(Kind kind) implements FastPathIntent {
-		public enum Kind { PAUSE, RESUME }
+		public enum Kind { CONFIRM, PAUSE, RESUME }
 	}
 
 	/** “你能做什么”：列出全部能力和例句。玩家最需要、却最容易被忽略的一条。 */

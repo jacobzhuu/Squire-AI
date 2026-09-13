@@ -1,5 +1,9 @@
 # Blueprint Guide
 
+> Current player content and level rules are documented in the
+> [Engineer Building Catalog](engineer-building-catalog.md). The older procedural
+> examples below describe retained backend/legacy capabilities, not enabled player templates.
+
 Your squire can build — but only from a blueprint, and only with materials that are
 really in its backpack. Nothing is conjured. If you take the planks away halfway
 through, it stops and tells you what it is short of.
@@ -95,16 +99,36 @@ It becomes six stages:
 
 | Stage | Who is working |
 |---|---|
-| **备料** | he fulfils the missing materials **into his own backpack** |
-| **交料** | nothing to do — unless you set autonomy to 保守 (see below) |
+| **备料** | the persistent project pool waits for and records real material batches |
+| **交料** | already covered by the pool, so this compatibility stage is skipped |
 | **掘进** | he digs out the negative space |
 | **施工** | he lays the blocks |
-| **点灯** | he plants torches from his own backpack |
+| **点灯** | he plants torches from the same reserved project pool |
 | **验收** | the server re-reads the world: standing, and not dark |
 
-He fetches his own materials by default. If you would rather be the supply line —
-materials come to **you**, and 交料 waits until you hand them over and lists exactly what
-is still missing — set autonomy to **保守**.
+Confirming the preview creates the project even when the entire bill does not fit in one
+inventory load. Everything currently available in your main inventory and the assigned
+Engineer's inventory/backpack is moved into a durable project pool. The project waits
+without changing the world, lists the remaining bill, and the panel's **存入本批材料**
+button accepts each later batch. The final batch automatically starts construction.
+
+The missing-material list is the **remaining** construction bill (including automatic
+foundations and planned lighting), minus the project pool, your main inventory/hotbar,
+and the assigned Engineer's inventory/backpack. Chat, preview and the project panel use
+the same calculation. Giving items to the Engineer immediately updates the list; click
+**存入本批材料** (or `/squire project resume`) to commit them and continue a paused
+project. The existing handover/build commands also resume the active project. Completed
+blocks and previously deposited batches are never charged again.
+
+Optional decoration uses spare carried items only, never supplies reserved for required
+construction or lighting. Lighting is planned against the finished geometry before
+excavation; reservation and placement use those same positions, including separate
+rooms/floors and jobs needing more than one 24-torch pass. Torches need valid vanilla
+support (a bottom slab is not enough). Unused lighting allowance is returned on completion.
+
+Cancelling returns every unspent batch to its original holder. The project pool and its
+material blocker survive server restarts; it never generates missing materials and does
+not automatically pull from unrelated chests.
 
 A stage waiting on you shows `[!]` and says what it needs. A stage that fails **pauses**
 the project; fix the problem and `/squire project resume`. Nothing is lost, including

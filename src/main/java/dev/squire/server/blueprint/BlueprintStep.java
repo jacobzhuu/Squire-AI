@@ -4,6 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import dev.squire.server.world.BoundedRegion;
+import net.minecraft.Bootstrap;
+import net.minecraft.block.BlockState;
+import net.minecraft.registry.Registries;
+import net.minecraft.state.property.Property;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
@@ -92,7 +98,51 @@ public record BlueprintStep(int order, int x1, int y1, int z1, int x2, int y2, i
 		return !materialSlot.isEmpty();
 	}
 
-	/** Rotate authored horizontal state properties together with their coordinates. */
+	/**
+	 * Rotate authored block state together with its coordinates. Minecraft owns the
+	 * rotation vocabulary here, so rails, wall/fence connections and future directional
+	 * properties are handled in addition to the familiar facing and axis fields.
+	 */
+	public Map<String, String> rotatedProperties(Direction facing, String resolvedBlockId) {
+		if (properties.isEmpty() || facing == null || facing == Direction.NORTH) {
+			return properties;
+		}
+		// Plain JVM unit tests deliberately do not bootstrap Minecraft registries. Keep
+		// the small legacy transform there; a live Fabric server always takes the native
+		// state-rotation path below.
+		try {
+			Bootstrap.ensureBootstrapped(() -> "rotate blueprint block state");
+		} catch (IllegalArgumentException notBootstrapped) {
+			return rotatedProperties(facing);
+		}
+		Identifier id = Identifier.tryParse(resolvedBlockId);
+		if (id == null || !Registries.BLOCK.containsId(id)) {
+			throw new IllegalArgumentException("unknown block " + resolvedBlockId);
+		}
+		BlockState state = Registries.BLOCK.get(id).getDefaultState();
+		for (var entry : properties.entrySet()) {
+			Property<?> property = state.getProperties().stream()
+				.filter(candidate -> candidate.getName().equals(entry.getKey()))
+				.findFirst().orElseThrow(() -> new IllegalArgumentException(
+					resolvedBlockId + " has no property " + entry.getKey()));
+			state = withProperty(state, property, entry.getValue());
+		}
+		state = state.rotate(switch (facing) {
+			case EAST -> BlockRotation.CLOCKWISE_90;
+			case SOUTH -> BlockRotation.CLOCKWISE_180;
+			case WEST -> BlockRotation.COUNTERCLOCKWISE_90;
+			default -> BlockRotation.NONE;
+		});
+		Map<String, String> out = new LinkedHashMap<>();
+		for (Property<?> property : state.getProperties()) {
+			if (properties.containsKey(property.getName())) {
+				out.put(property.getName(), propertyName(state, property));
+			}
+		}
+		return Map.copyOf(out);
+	}
+
+	/** Legacy helper retained for source compatibility with callers/tests. */
 	public Map<String, String> rotatedProperties(Direction facing) {
 		if (properties.isEmpty() || facing == null || facing == Direction.NORTH) {
 			return properties;
@@ -115,6 +165,18 @@ public record BlueprintStep(int order, int x1, int y1, int z1, int x2, int y2, i
 			out.put("axis", "x".equals(out.get("axis")) ? "z" : "x");
 		}
 		return Map.copyOf(out);
+	}
+
+	private static <T extends Comparable<T>> BlockState withProperty(BlockState state,
+			Property<T> property, String value) {
+		T parsed = property.parse(value).orElseThrow(() -> new IllegalArgumentException(
+			"invalid " + property.getName() + "=" + value));
+		return state.with(property, parsed);
+	}
+
+	private static <T extends Comparable<T>> String propertyName(BlockState state,
+			Property<T> property) {
+		return property.name(state.get(property));
 	}
 
 	/** 这一步在世界里覆盖的真实区域。 */

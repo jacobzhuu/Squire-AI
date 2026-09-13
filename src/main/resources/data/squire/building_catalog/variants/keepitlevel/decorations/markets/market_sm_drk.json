@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/decorations/markets/market_sm_drk",
+  "format": "minecraft:structure_nbt",
+  "displayName": "集市 · market_sm_drk",
+  "tier": 1,
+  "category": "DECORATION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/decorations/markets/market_sm_drk",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/markets/market_sm_drk.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "decorations"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    15,
+    11
+  ],
+  "primaryOffset": {
+    "x": 5,
+    "y": 0,
+    "z": 5
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence",
+        "trapdoor"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:spruce_trapdoor",
+      "slot": "spruce_structure",
+      "variant": "trapdoor"
+    },
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:deepslate_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:deepslate_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

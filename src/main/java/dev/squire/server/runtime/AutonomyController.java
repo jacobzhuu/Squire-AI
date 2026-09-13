@@ -17,7 +17,10 @@ public final class AutonomyController {
 
 	private static final double DEFENCE_RANGE_SQ = 24.0 * 24.0;
 	private final SquireRuntime runtime;
-	private final Map<UUID, Long> nextAidTick = new HashMap<>();
+	private final Map<UUID, net.minecraft.util.math.Vec3d> defenceAnchors = new HashMap<>();
+    private final Map<UUID, Integer> defenceAttackTimes = new HashMap<>();
+    private final Map<UUID, Boolean> defenceAbandoned = new HashMap<>();
+    private final Map<UUID, Long> nextAidTick = new HashMap<>();
 	private final Map<UUID, Long> nextThreatReportTick = new HashMap<>();
 	private final Map<UUID, Integer> lastOwnerAttackTime = new HashMap<>();
 	private final Map<UUID, UUID> cooperativeHuntTarget = new HashMap<>();
@@ -28,23 +31,29 @@ public final class AutonomyController {
 
 	void tick(long tick) {
 		for (UUID ownerId : runtime.agents().knownOwners()) {
-			AvatarEntity avatar = runtime.agents().resolveForOwner(ownerId).orElse(null);
 			ServerPlayerEntity owner = runtime.server.getPlayerManager().getPlayer(ownerId);
-			if (avatar == null || owner == null || !avatar.isAlive() || !owner.isAlive()) {
+			if (owner == null || !owner.isAlive()) {
 				continue;
 			}
+			for (AvatarEntity avatar : runtime.agents().resolveAllForOwner(ownerId)) {
+			if (!avatar.isAlive() || avatar.oathActive()) continue;
 			var profile = runtime.profileOf(avatar);
+			boolean engineer = profile != null && profile.profession.profession()
+				== dev.squire.server.profession.SquireProfession.ENGINEER;
+			// Untrained companions retain the legacy generalist behavior.  Choosing
+			// ENGINEER is the point where proactive guard duties are removed.
+			boolean guard = !engineer;
 			AutonomyLevel level = profile == null ? AutonomyLevel.STANDARD
 				: profile.autonomyLevel();
 			if (!level.atLeast(AutonomyLevel.STANDARD)) continue;
 			boolean idle = runtime.scheduler().current(avatar.agentId()).isEmpty();
-			if (!level.atLeast(AutonomyLevel.PROACTIVE) || !idle) {
+			if (!canHunt(profile) || !level.atLeast(AutonomyLevel.PROACTIVE) || !idle) {
 				cooperativeHuntTarget.remove(avatar.agentId());
 				lastOwnerAttackTime.put(avatar.agentId(), owner.getLastAttackTime());
 			}
 
 			// Rescue is a real P1 task and consumes a real remedy from the companion bag.
-			if (tick >= nextAidTick.getOrDefault(avatar.agentId(), 0L)
+			if (guard && tick >= nextAidTick.getOrDefault(avatar.agentId(), 0L)
 					&& avatar.getWorld() == owner.getWorld()
 					&& owner.getHealth() <= owner.getMaxHealth() * 0.45f
 					&& idle
@@ -58,8 +67,8 @@ public final class AutonomyController {
 			// Explicit work wins. Otherwise defend self first, then an attacked owner.
 			LivingEntity threat = null;
 			if (idle) {
-				threat = validThreat(avatar, avatar.getAttacker());
-				if (threat == null && avatar.getWorld() == owner.getWorld()) {
+				threat = engineer ? engineerThreat(avatar) : validThreat(avatar, avatar.getAttacker());
+				if (!engineer && threat == null && avatar.getWorld() == owner.getWorld()) {
 					threat = validThreat(avatar, owner.getAttacker());
 				}
 				if (threat != null) {
@@ -68,10 +77,9 @@ public final class AutonomyController {
 				}
 			}
 
-			// PROACTIVE adds one wolf-like reaction: help with the exact non-friendly
-			// entity the owner has just struck. It never creates a profession ability;
-			// the existing CombatStyle gates still decide whether bows are usable.
-			if (level.atLeast(AutonomyLevel.PROACTIVE) && idle && threat == null
+			// Cooperative hunting is a Lv3 Guard ability, enabled by PROACTIVE.
+            // The shared weapon gate still controls bow proficiency.
+			if (canHunt(profile) && level.atLeast(AutonomyLevel.PROACTIVE) && idle && threat == null
 					&& runtime.permissions().has(owner,
 						dev.squire.server.security.PermissionNodes.TASK_GUARD)) {
 				LivingEntity target = cooperativeHuntTarget(owner, avatar);
@@ -86,13 +94,19 @@ public final class AutonomyController {
 				avatar.setAttacker(null);
 			}
 
-			if (level.atLeast(AutonomyLevel.PROACTIVE) && tick % 100 == 0) {
+			if (guard && level.atLeast(AutonomyLevel.PROACTIVE) && tick % 100 == 0) {
 				reportThreats(tick, owner, avatar);
+			}
 			}
 		}
 	}
 
-	private LivingEntity cooperativeHuntTarget(ServerPlayerEntity owner,
+	public static boolean canHunt(dev.squire.server.profile.SquireProfile profile) {
+        return profile != null && profile.profession.can(
+            dev.squire.server.profession.ProfessionAbility.GUARD_COOPERATIVE_HUNT);
+    }
+
+    private LivingEntity cooperativeHuntTarget(ServerPlayerEntity owner,
 			AvatarEntity avatar) {
 		int attackTime = owner.getLastAttackTime();
 		Integer consumed = lastOwnerAttackTime.put(avatar.agentId(), attackTime);
@@ -122,7 +136,7 @@ public final class AutonomyController {
 	/** GameTest seam: FakePlayer is intentionally absent from PlayerManager. */
 	void tickCooperativeHuntForTest(ServerPlayerEntity owner, AvatarEntity avatar) {
 		var profile = runtime.profileOf(avatar);
-		if (profile == null || !profile.autonomyLevel().atLeast(AutonomyLevel.PROACTIVE)
+		if (!canHunt(profile) || avatar.oathActive() || !profile.autonomyLevel().atLeast(AutonomyLevel.PROACTIVE)
 				|| runtime.scheduler().current(avatar.agentId()).isPresent()
 				|| !runtime.permissions().has(owner,
 					dev.squire.server.security.PermissionNodes.TASK_GUARD)) return;
@@ -163,11 +177,47 @@ public final class AutonomyController {
 	 * 多人服上那是刷屏级的纠纷，单人里那是一次谁也没要求过的意外。要打谁，
 	 * 玩家会明说（{@code /squire 打那只…}），那条路走的是任务执行器，不是这里。</p>
 	 */
-	private static LivingEntity validThreat(AvatarEntity avatar, LivingEntity target) {
+	private LivingEntity engineerThreat(AvatarEntity avatar) {
+        UUID id = avatar.agentId();
+        int hitTime = avatar.getLastAttackedTime();
+        Integer previous = defenceAttackTimes.put(id, hitTime);
+        if (previous == null || previous != hitTime) {
+            defenceAnchors.put(id, avatar.selfDefenceOrigin());
+            defenceAbandoned.put(id, false);
+        }
+        var threat = validThreat(avatar, avatar.getAttacker(), true);
+        var anchor = defenceAnchors.get(id);
+        if (!engineerCanPursue(avatar, threat, anchor)) {
+            if (!defenceAbandoned.getOrDefault(id, true)) avatar.getNavigation().stop();
+            defenceAbandoned.put(id, true);
+            return null;
+        }
+        return defenceAbandoned.getOrDefault(id, false) ? null : threat;
+    }
+
+    /** Self-defence stays tethered to the actual hit position, not the moving target. */
+    public static boolean engineerCanPursue(AvatarEntity avatar, LivingEntity target,
+            net.minecraft.util.math.Vec3d origin) {
+        double radius = dev.squire.server.combat.ProfessionCombatRules.config().engineerSelfDefenceRadius;
+        return origin != null && validThreat(avatar, target, true) != null
+            && avatar.squaredDistanceTo(origin) <= radius * radius
+            && target.squaredDistanceTo(origin) <= radius * radius;
+    }
+
+    private static LivingEntity validThreat(AvatarEntity avatar, LivingEntity target) {
+		return validThreat(avatar, target, false);
+	}
+
+	private static LivingEntity validThreat(AvatarEntity avatar, LivingEntity target,
+			boolean engineer) {
 		return target != null && target.isAlive() && target != avatar
+            && !(target instanceof AvatarEntity) && !avatar.isTeammate(target)
+            && !(target instanceof net.minecraft.entity.passive.TameableEntity tameable
+                && avatar.ownerId() != null && avatar.ownerId().equals(tameable.getOwnerUuid()))
 			&& !(target instanceof net.minecraft.entity.player.PlayerEntity)
 			&& avatar.getWorld() == target.getWorld()
-			&& avatar.squaredDistanceTo(target) <= DEFENCE_RANGE_SQ ? target : null;
+			&& avatar.squaredDistanceTo(target) <= (engineer ? Math.pow(dev.squire.server.combat.ProfessionCombatRules.config().engineerSelfDefenceRadius, 2) : DEFENCE_RANGE_SQ)
+			? target : null;
 	}
 
 	/**
@@ -190,6 +240,7 @@ public final class AutonomyController {
 	 */
 	private static void fight(AvatarEntity avatar, LivingEntity target,
 			CombatStyle.Gates gates) {
+		target = dev.squire.server.combat.GuardSelfDefense.target(avatar, target);
 		boolean ranged = CombatStyle.prepare(avatar, target, avatar.combatStyle(),
 			gates);
 		if (ranged) {

@@ -1,0 +1,5307 @@
+{
+  "sourceCount": 750,
+  "familyCount": 72,
+  "statusCounts": {
+    "UNSUPPORTED": 211,
+    "ADAPTED": 538,
+    "INTERNAL": 1
+  },
+  "resources": [
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_lg1",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_lg1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_lg2",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_lg2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_lg3",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_lg3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_md1",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_md1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 11
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_md2",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_md2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_md3",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_md3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_sm1",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_sm1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_sm2",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_sm2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 18
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_nice/n_field_sm3",
+      "sourcePath": "agriculture/fields/farm_nice/n_field_sm3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 18
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_lg1",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_lg1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_lg2",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_lg2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_lg3",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_lg3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_md1",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_md1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 11
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_md2",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_md2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_md3",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_md3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_sm1",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_sm1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_sm2",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_sm2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 18
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/farm_simple/s_field_sm3",
+      "sourcePath": "agriculture/fields/farm_simple/s_field_sm3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:blockhutfield"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 18
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/bamboo_field",
+      "sourcePath": "agriculture/fields/plantation/bamboo_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/cactus_field",
+      "sourcePath": "agriculture/fields/plantation/cactus_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/cocoa_field",
+      "sourcePath": "agriculture/fields/plantation/cocoa_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/glowb_field",
+      "sourcePath": "agriculture/fields/plantation/glowb_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/jungle_field",
+      "sourcePath": "agriculture/fields/plantation/jungle_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/kelp_field",
+      "sourcePath": "agriculture/fields/plantation/kelp_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 79
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/seagrass_field",
+      "sourcePath": "agriculture/fields/plantation/seagrass_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/sugar_field",
+      "sourcePath": "agriculture/fields/plantation/sugar_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/plantation/vine_field",
+      "sourcePath": "agriculture/fields/plantation/vine_field.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_lg",
+      "sourcePath": "agriculture/fields/trees/spruce_farm_lg.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_md",
+      "sourcePath": "agriculture/fields/trees/spruce_farm_md.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_sm",
+      "sourcePath": "agriculture/fields/trees/spruce_farm_sm.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter1",
+      "sourcePath": "agriculture/horticulture/composter1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter2",
+      "sourcePath": "agriculture/horticulture/composter2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter3",
+      "sourcePath": "agriculture/horticulture/composter3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter4",
+      "sourcePath": "agriculture/horticulture/composter4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 128
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter5",
+      "sourcePath": "agriculture/horticulture/composter5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 129
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter_d1",
+      "sourcePath": "agriculture/horticulture/composter_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter_d2",
+      "sourcePath": "agriculture/horticulture/composter_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter_d3",
+      "sourcePath": "agriculture/horticulture/composter_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter_d4",
+      "sourcePath": "agriculture/horticulture/composter_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 128
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/composter_d5",
+      "sourcePath": "agriculture/horticulture/composter_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 129
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer1",
+      "sourcePath": "agriculture/horticulture/farmer1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer2",
+      "sourcePath": "agriculture/horticulture/farmer2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 236
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer3",
+      "sourcePath": "agriculture/horticulture/farmer3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 264
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer4",
+      "sourcePath": "agriculture/horticulture/farmer4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 262
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer5",
+      "sourcePath": "agriculture/horticulture/farmer5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 264
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer_d1",
+      "sourcePath": "agriculture/horticulture/farmer_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer_d2",
+      "sourcePath": "agriculture/horticulture/farmer_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 236
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer_d3",
+      "sourcePath": "agriculture/horticulture/farmer_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 264
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer_d4",
+      "sourcePath": "agriculture/horticulture/farmer_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 262
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/farmer_d5",
+      "sourcePath": "agriculture/horticulture/farmer_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 264
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist1",
+      "sourcePath": "agriculture/horticulture/florist1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 15
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist2",
+      "sourcePath": "agriculture/horticulture/florist2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist3",
+      "sourcePath": "agriculture/horticulture/florist3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 209
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist4",
+      "sourcePath": "agriculture/horticulture/florist4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 214
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist5",
+      "sourcePath": "agriculture/horticulture/florist5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 215
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist_d1",
+      "sourcePath": "agriculture/horticulture/florist_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 15
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist_d2",
+      "sourcePath": "agriculture/horticulture/florist_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist_d3",
+      "sourcePath": "agriculture/horticulture/florist_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 209
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist_d4",
+      "sourcePath": "agriculture/horticulture/florist_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 214
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/florist_d5",
+      "sourcePath": "agriculture/horticulture/florist_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 215
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation1",
+      "sourcePath": "agriculture/horticulture/plantation1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 216
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation2",
+      "sourcePath": "agriculture/horticulture/plantation2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 169
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation3",
+      "sourcePath": "agriculture/horticulture/plantation3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 193
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation4",
+      "sourcePath": "agriculture/horticulture/plantation4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 183
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation5",
+      "sourcePath": "agriculture/horticulture/plantation5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 185
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation_d1",
+      "sourcePath": "agriculture/horticulture/plantation_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 216
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation_d2",
+      "sourcePath": "agriculture/horticulture/plantation_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 169
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation_d3",
+      "sourcePath": "agriculture/horticulture/plantation_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 193
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation_d4",
+      "sourcePath": "agriculture/horticulture/plantation_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 183
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/horticulture/plantation_d5",
+      "sourcePath": "agriculture/horticulture/plantation_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 185
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper1",
+      "sourcePath": "agriculture/husbandry/beekeeper1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 71
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper2",
+      "sourcePath": "agriculture/husbandry/beekeeper2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper3",
+      "sourcePath": "agriculture/husbandry/beekeeper3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 93
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper4",
+      "sourcePath": "agriculture/husbandry/beekeeper4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 98
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper5",
+      "sourcePath": "agriculture/husbandry/beekeeper5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 104
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper_d1",
+      "sourcePath": "agriculture/husbandry/beekeeper_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 71
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper_d2",
+      "sourcePath": "agriculture/husbandry/beekeeper_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper_d3",
+      "sourcePath": "agriculture/husbandry/beekeeper_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 93
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper_d4",
+      "sourcePath": "agriculture/husbandry/beekeeper_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 98
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/beekeeper_d5",
+      "sourcePath": "agriculture/husbandry/beekeeper_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 104
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder1",
+      "sourcePath": "agriculture/husbandry/chickenherder1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder2",
+      "sourcePath": "agriculture/husbandry/chickenherder2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 59
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder3",
+      "sourcePath": "agriculture/husbandry/chickenherder3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 60
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder4",
+      "sourcePath": "agriculture/husbandry/chickenherder4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 69
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder5",
+      "sourcePath": "agriculture/husbandry/chickenherder5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 70
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder_d1",
+      "sourcePath": "agriculture/husbandry/chickenherder_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder_d2",
+      "sourcePath": "agriculture/husbandry/chickenherder_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 59
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder_d3",
+      "sourcePath": "agriculture/husbandry/chickenherder_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 60
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder_d4",
+      "sourcePath": "agriculture/husbandry/chickenherder_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 69
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/chickenherder_d5",
+      "sourcePath": "agriculture/husbandry/chickenherder_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 70
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy1",
+      "sourcePath": "agriculture/husbandry/cowboy1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy2",
+      "sourcePath": "agriculture/husbandry/cowboy2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy3",
+      "sourcePath": "agriculture/husbandry/cowboy3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 65
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy4",
+      "sourcePath": "agriculture/husbandry/cowboy4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 78
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy5",
+      "sourcePath": "agriculture/husbandry/cowboy5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 78
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy_d1",
+      "sourcePath": "agriculture/husbandry/cowboy_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy_d2",
+      "sourcePath": "agriculture/husbandry/cowboy_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy_d3",
+      "sourcePath": "agriculture/husbandry/cowboy_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 65
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy_d4",
+      "sourcePath": "agriculture/husbandry/cowboy_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 78
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/cowboy_d5",
+      "sourcePath": "agriculture/husbandry/cowboy_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 78
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman1",
+      "sourcePath": "agriculture/husbandry/fisherman1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman2",
+      "sourcePath": "agriculture/husbandry/fisherman2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman3",
+      "sourcePath": "agriculture/husbandry/fisherman3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 71
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman4",
+      "sourcePath": "agriculture/husbandry/fisherman4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman5",
+      "sourcePath": "agriculture/husbandry/fisherman5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman_d1",
+      "sourcePath": "agriculture/husbandry/fisherman_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman_d2",
+      "sourcePath": "agriculture/husbandry/fisherman_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman_d3",
+      "sourcePath": "agriculture/husbandry/fisherman_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 71
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman_d4",
+      "sourcePath": "agriculture/husbandry/fisherman_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/fisherman_d5",
+      "sourcePath": "agriculture/husbandry/fisherman_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch1",
+      "sourcePath": "agriculture/husbandry/rabbithutch1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch2",
+      "sourcePath": "agriculture/husbandry/rabbithutch2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch3",
+      "sourcePath": "agriculture/husbandry/rabbithutch3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch4",
+      "sourcePath": "agriculture/husbandry/rabbithutch4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch5",
+      "sourcePath": "agriculture/husbandry/rabbithutch5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 123
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch_d1",
+      "sourcePath": "agriculture/husbandry/rabbithutch_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch_d2",
+      "sourcePath": "agriculture/husbandry/rabbithutch_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch_d3",
+      "sourcePath": "agriculture/husbandry/rabbithutch_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch_d4",
+      "sourcePath": "agriculture/husbandry/rabbithutch_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/rabbithutch_d5",
+      "sourcePath": "agriculture/husbandry/rabbithutch_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 123
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd1",
+      "sourcePath": "agriculture/husbandry/shepherd1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd2",
+      "sourcePath": "agriculture/husbandry/shepherd2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd3",
+      "sourcePath": "agriculture/husbandry/shepherd3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 89
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd4",
+      "sourcePath": "agriculture/husbandry/shepherd4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 114
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd5",
+      "sourcePath": "agriculture/husbandry/shepherd5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 114
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd_d1",
+      "sourcePath": "agriculture/husbandry/shepherd_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd_d2",
+      "sourcePath": "agriculture/husbandry/shepherd_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 49
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd_d3",
+      "sourcePath": "agriculture/husbandry/shepherd_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 89
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd_d4",
+      "sourcePath": "agriculture/husbandry/shepherd_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 114
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/shepherd_d5",
+      "sourcePath": "agriculture/husbandry/shepherd_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 114
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder1",
+      "sourcePath": "agriculture/husbandry/swineherder1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder2",
+      "sourcePath": "agriculture/husbandry/swineherder2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder3",
+      "sourcePath": "agriculture/husbandry/swineherder3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 144
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder4",
+      "sourcePath": "agriculture/husbandry/swineherder4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 152
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder5",
+      "sourcePath": "agriculture/husbandry/swineherder5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 158
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder_d1",
+      "sourcePath": "agriculture/husbandry/swineherder_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder_d2",
+      "sourcePath": "agriculture/husbandry/swineherder_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder_d3",
+      "sourcePath": "agriculture/husbandry/swineherder_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 144
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder_d4",
+      "sourcePath": "agriculture/husbandry/swineherder_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 152
+    },
+    {
+      "id": "squire:keepitlevel/agriculture/husbandry/swineherder_d5",
+      "sourcePath": "agriculture/husbandry/swineherder_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 158
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher1",
+      "sourcePath": "craftsmanship/carpentry/fletcher1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 115
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher2",
+      "sourcePath": "craftsmanship/carpentry/fletcher2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 145
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher3",
+      "sourcePath": "craftsmanship/carpentry/fletcher3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 149
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher4",
+      "sourcePath": "craftsmanship/carpentry/fletcher4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher5",
+      "sourcePath": "craftsmanship/carpentry/fletcher5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 156
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher_d1",
+      "sourcePath": "craftsmanship/carpentry/fletcher_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 115
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher_d2",
+      "sourcePath": "craftsmanship/carpentry/fletcher_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 145
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher_d3",
+      "sourcePath": "craftsmanship/carpentry/fletcher_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 149
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher_d4",
+      "sourcePath": "craftsmanship/carpentry/fletcher_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/fletcher_d5",
+      "sourcePath": "craftsmanship/carpentry/fletcher_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 156
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill1",
+      "sourcePath": "craftsmanship/carpentry/sawmill1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill2",
+      "sourcePath": "craftsmanship/carpentry/sawmill2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill3",
+      "sourcePath": "craftsmanship/carpentry/sawmill3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 121
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill4",
+      "sourcePath": "craftsmanship/carpentry/sawmill4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 138
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill5",
+      "sourcePath": "craftsmanship/carpentry/sawmill5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 140
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill_d1",
+      "sourcePath": "craftsmanship/carpentry/sawmill_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill_d2",
+      "sourcePath": "craftsmanship/carpentry/sawmill_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill_d3",
+      "sourcePath": "craftsmanship/carpentry/sawmill_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 121
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill_d4",
+      "sourcePath": "craftsmanship/carpentry/sawmill_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 138
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/carpentry/sawmill_d5",
+      "sourcePath": "craftsmanship/carpentry/sawmill_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 140
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist1",
+      "sourcePath": "craftsmanship/luxury/alchemist1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 141
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist2",
+      "sourcePath": "craftsmanship/luxury/alchemist2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 171
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist3",
+      "sourcePath": "craftsmanship/luxury/alchemist3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 206
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist4",
+      "sourcePath": "craftsmanship/luxury/alchemist4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 209
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist5",
+      "sourcePath": "craftsmanship/luxury/alchemist5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 212
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist_d1",
+      "sourcePath": "craftsmanship/luxury/alchemist_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 141
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist_d2",
+      "sourcePath": "craftsmanship/luxury/alchemist_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 171
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist_d3",
+      "sourcePath": "craftsmanship/luxury/alchemist_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 206
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist_d4",
+      "sourcePath": "craftsmanship/luxury/alchemist_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 209
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/alchemist_d5",
+      "sourcePath": "craftsmanship/luxury/alchemist_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 212
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker1",
+      "sourcePath": "craftsmanship/luxury/baker1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker2",
+      "sourcePath": "craftsmanship/luxury/baker2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker3",
+      "sourcePath": "craftsmanship/luxury/baker3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 82
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker4",
+      "sourcePath": "craftsmanship/luxury/baker4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker5",
+      "sourcePath": "craftsmanship/luxury/baker5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker_d1",
+      "sourcePath": "craftsmanship/luxury/baker_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker_d2",
+      "sourcePath": "craftsmanship/luxury/baker_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker_d3",
+      "sourcePath": "craftsmanship/luxury/baker_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 82
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker_d4",
+      "sourcePath": "craftsmanship/luxury/baker_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/baker_d5",
+      "sourcePath": "craftsmanship/luxury/baker_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer1",
+      "sourcePath": "craftsmanship/luxury/concretemixer1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 12
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer2",
+      "sourcePath": "craftsmanship/luxury/concretemixer2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 154
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer3",
+      "sourcePath": "craftsmanship/luxury/concretemixer3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 161
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer4",
+      "sourcePath": "craftsmanship/luxury/concretemixer4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 162
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer5",
+      "sourcePath": "craftsmanship/luxury/concretemixer5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 164
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer_d1",
+      "sourcePath": "craftsmanship/luxury/concretemixer_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 12
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer_d2",
+      "sourcePath": "craftsmanship/luxury/concretemixer_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 154
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer_d3",
+      "sourcePath": "craftsmanship/luxury/concretemixer_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 161
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer_d4",
+      "sourcePath": "craftsmanship/luxury/concretemixer_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 162
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/concretemixer_d5",
+      "sourcePath": "craftsmanship/luxury/concretemixer_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 164
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery1",
+      "sourcePath": "craftsmanship/luxury/cookery1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery2",
+      "sourcePath": "craftsmanship/luxury/cookery2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 28
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery3",
+      "sourcePath": "craftsmanship/luxury/cookery3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 131
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery4",
+      "sourcePath": "craftsmanship/luxury/cookery4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 134
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery5",
+      "sourcePath": "craftsmanship/luxury/cookery5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 137
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery_d1",
+      "sourcePath": "craftsmanship/luxury/cookery_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery_d2",
+      "sourcePath": "craftsmanship/luxury/cookery_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 28
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery_d3",
+      "sourcePath": "craftsmanship/luxury/cookery_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 131
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery_d4",
+      "sourcePath": "craftsmanship/luxury/cookery_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 134
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/cookery_d5",
+      "sourcePath": "craftsmanship/luxury/cookery_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 137
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer1",
+      "sourcePath": "craftsmanship/luxury/dyer1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer2",
+      "sourcePath": "craftsmanship/luxury/dyer2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 87
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer3",
+      "sourcePath": "craftsmanship/luxury/dyer3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer4",
+      "sourcePath": "craftsmanship/luxury/dyer4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer5",
+      "sourcePath": "craftsmanship/luxury/dyer5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 148
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer_d1",
+      "sourcePath": "craftsmanship/luxury/dyer_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer_d2",
+      "sourcePath": "craftsmanship/luxury/dyer_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 87
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer_d3",
+      "sourcePath": "craftsmanship/luxury/dyer_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer_d4",
+      "sourcePath": "craftsmanship/luxury/dyer_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/dyer_d5",
+      "sourcePath": "craftsmanship/luxury/dyer_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 148
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower1",
+      "sourcePath": "craftsmanship/luxury/glassblower1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 29
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower2",
+      "sourcePath": "craftsmanship/luxury/glassblower2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower3",
+      "sourcePath": "craftsmanship/luxury/glassblower3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 241
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower4",
+      "sourcePath": "craftsmanship/luxury/glassblower4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 269
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower5",
+      "sourcePath": "craftsmanship/luxury/glassblower5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 270
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower_d1",
+      "sourcePath": "craftsmanship/luxury/glassblower_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 29
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower_d2",
+      "sourcePath": "craftsmanship/luxury/glassblower_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower_d3",
+      "sourcePath": "craftsmanship/luxury/glassblower_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 241
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower_d4",
+      "sourcePath": "craftsmanship/luxury/glassblower_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 269
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/luxury/glassblower_d5",
+      "sourcePath": "craftsmanship/luxury/glassblower_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 270
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher1",
+      "sourcePath": "craftsmanship/masonry/crusher1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 77
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher2",
+      "sourcePath": "craftsmanship/masonry/crusher2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 188
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher3",
+      "sourcePath": "craftsmanship/masonry/crusher3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 192
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher4",
+      "sourcePath": "craftsmanship/masonry/crusher4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 203
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher5",
+      "sourcePath": "craftsmanship/masonry/crusher5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 205
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher_d1",
+      "sourcePath": "craftsmanship/masonry/crusher_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 77
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher_d2",
+      "sourcePath": "craftsmanship/masonry/crusher_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 188
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher_d3",
+      "sourcePath": "craftsmanship/masonry/crusher_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 192
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher_d4",
+      "sourcePath": "craftsmanship/masonry/crusher_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 203
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/crusher_d5",
+      "sourcePath": "craftsmanship/masonry/crusher_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 205
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter1",
+      "sourcePath": "craftsmanship/masonry/sifter1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 8
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter2",
+      "sourcePath": "craftsmanship/masonry/sifter2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 92
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter3",
+      "sourcePath": "craftsmanship/masonry/sifter3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 153
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter4",
+      "sourcePath": "craftsmanship/masonry/sifter4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 154
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter5",
+      "sourcePath": "craftsmanship/masonry/sifter5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter_d1",
+      "sourcePath": "craftsmanship/masonry/sifter_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 8
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter_d2",
+      "sourcePath": "craftsmanship/masonry/sifter_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 92
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter_d3",
+      "sourcePath": "craftsmanship/masonry/sifter_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 153
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter_d4",
+      "sourcePath": "craftsmanship/masonry/sifter_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 154
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/sifter_d5",
+      "sourcePath": "craftsmanship/masonry/sifter_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason1",
+      "sourcePath": "craftsmanship/masonry/stonemason1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason2",
+      "sourcePath": "craftsmanship/masonry/stonemason2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason3",
+      "sourcePath": "craftsmanship/masonry/stonemason3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason4",
+      "sourcePath": "craftsmanship/masonry/stonemason4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason5",
+      "sourcePath": "craftsmanship/masonry/stonemason5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 128
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason_d1",
+      "sourcePath": "craftsmanship/masonry/stonemason_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason_d2",
+      "sourcePath": "craftsmanship/masonry/stonemason_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason_d3",
+      "sourcePath": "craftsmanship/masonry/stonemason_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason_d4",
+      "sourcePath": "craftsmanship/masonry/stonemason_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 127
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonemason_d5",
+      "sourcePath": "craftsmanship/masonry/stonemason_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 128
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery1",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery2",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 76
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery3",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 156
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery4",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 189
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery5",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 191
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery_d1",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 7
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery_d2",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 76
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery_d3",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 156
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery_d4",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 189
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/masonry/stonesmeltery_d5",
+      "sourcePath": "craftsmanship/masonry/stonesmeltery_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 191
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith1",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith2",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 143
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith3",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 215
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith4",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 216
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith5",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 217
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith_d1",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith_d2",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 143
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith_d3",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 215
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith_d4",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 216
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/blacksmith_d5",
+      "sourcePath": "craftsmanship/metallurgy/blacksmith_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 217
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic1",
+      "sourcePath": "craftsmanship/metallurgy/mechanic1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic2",
+      "sourcePath": "craftsmanship/metallurgy/mechanic2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 81
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic3",
+      "sourcePath": "craftsmanship/metallurgy/mechanic3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 123
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic4",
+      "sourcePath": "craftsmanship/metallurgy/mechanic4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 124
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic5",
+      "sourcePath": "craftsmanship/metallurgy/mechanic5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 125
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic_d1",
+      "sourcePath": "craftsmanship/metallurgy/mechanic_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic_d2",
+      "sourcePath": "craftsmanship/metallurgy/mechanic_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 81
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic_d3",
+      "sourcePath": "craftsmanship/metallurgy/mechanic_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 123
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic_d4",
+      "sourcePath": "craftsmanship/metallurgy/mechanic_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 124
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/mechanic_d5",
+      "sourcePath": "craftsmanship/metallurgy/mechanic_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 125
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery1",
+      "sourcePath": "craftsmanship/metallurgy/smeltery1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery2",
+      "sourcePath": "craftsmanship/metallurgy/smeltery2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 121
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery3",
+      "sourcePath": "craftsmanship/metallurgy/smeltery3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 171
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery4",
+      "sourcePath": "craftsmanship/metallurgy/smeltery4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery5",
+      "sourcePath": "craftsmanship/metallurgy/smeltery5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 177
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery_d1",
+      "sourcePath": "craftsmanship/metallurgy/smeltery_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery_d2",
+      "sourcePath": "craftsmanship/metallurgy/smeltery_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 121
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery_d3",
+      "sourcePath": "craftsmanship/metallurgy/smeltery_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 171
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery_d4",
+      "sourcePath": "craftsmanship/metallurgy/smeltery_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/metallurgy/smeltery_d5",
+      "sourcePath": "craftsmanship/metallurgy/smeltery_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 177
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman1",
+      "sourcePath": "craftsmanship/storage/deliveryman1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman2",
+      "sourcePath": "craftsmanship/storage/deliveryman2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman3",
+      "sourcePath": "craftsmanship/storage/deliveryman3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman4",
+      "sourcePath": "craftsmanship/storage/deliveryman4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 90
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman5",
+      "sourcePath": "craftsmanship/storage/deliveryman5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman_d1",
+      "sourcePath": "craftsmanship/storage/deliveryman_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman_d2",
+      "sourcePath": "craftsmanship/storage/deliveryman_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman_d3",
+      "sourcePath": "craftsmanship/storage/deliveryman_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman_d4",
+      "sourcePath": "craftsmanship/storage/deliveryman_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 90
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/deliveryman_d5",
+      "sourcePath": "craftsmanship/storage/deliveryman_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "keepitlevel_warehouse",
+      "sourcePath": "craftsmanship/storage/warehouse1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse2",
+      "sourcePath": "craftsmanship/storage/warehouse2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 37
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse3",
+      "sourcePath": "craftsmanship/storage/warehouse3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 177
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse4",
+      "sourcePath": "craftsmanship/storage/warehouse4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 213
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse5",
+      "sourcePath": "craftsmanship/storage/warehouse5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 229
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse_d1",
+      "sourcePath": "craftsmanship/storage/warehouse_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse_d2",
+      "sourcePath": "craftsmanship/storage/warehouse_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 37
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse_d3",
+      "sourcePath": "craftsmanship/storage/warehouse_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 177
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse_d4",
+      "sourcePath": "craftsmanship/storage/warehouse_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 213
+    },
+    {
+      "id": "squire:keepitlevel/craftsmanship/storage/warehouse_d5",
+      "sourcePath": "craftsmanship/storage/warehouse_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 229
+    },
+    {
+      "id": "squire:keepitlevel/decorations/housing/mayors_house1",
+      "sourcePath": "decorations/housing/mayors_house1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 714
+    },
+    {
+      "id": "squire:keepitlevel/decorations/housing/mayors_house2",
+      "sourcePath": "decorations/housing/mayors_house2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 870
+    },
+    {
+      "id": "squire:keepitlevel/decorations/housing/mayors_house3",
+      "sourcePath": "decorations/housing/mayors_house3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1069
+    },
+    {
+      "id": "squire:keepitlevel/decorations/housing/mayors_house4",
+      "sourcePath": "decorations/housing/mayors_house4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1213
+    },
+    {
+      "id": "squire:keepitlevel/decorations/housing/mayors_house5",
+      "sourcePath": "decorations/housing/mayors_house5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1219
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/market_sm",
+      "sourcePath": "decorations/markets/market_sm.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 76
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/market_sm_drk",
+      "sourcePath": "decorations/markets/market_sm_drk.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 76
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_bl",
+      "sourcePath": "decorations/markets/stall_bl.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_br",
+      "sourcePath": "decorations/markets/stall_br.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_cy",
+      "sourcePath": "decorations/markets/stall_cy.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_gn",
+      "sourcePath": "decorations/markets/stall_gn.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_or",
+      "sourcePath": "decorations/markets/stall_or.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_pr",
+      "sourcePath": "decorations/markets/stall_pr.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_rd",
+      "sourcePath": "decorations/markets/stall_rd.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/markets/stall_yw",
+      "sourcePath": "decorations/markets/stall_yw.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 32
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/datapacktestone1",
+      "sourcePath": "decorations/misc/datapacktestone1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/shed_or",
+      "sourcePath": "decorations/misc/shed_or.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 28
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/spruce_tree",
+      "sourcePath": "decorations/misc/spruce_tree.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/spruce_tree_small",
+      "sourcePath": "decorations/misc/spruce_tree_small.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/spruce_tree_tall",
+      "sourcePath": "decorations/misc/spruce_tree_tall.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/decorations/misc/spruce_tree_thic",
+      "sourcePath": "decorations/misc/spruce_tree_thic.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/decorations/parks/garden_md",
+      "sourcePath": "decorations/parks/garden_md.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 24
+    },
+    {
+      "id": "squire:keepitlevel/decorations/parks/garden_sm",
+      "sourcePath": "decorations/parks/garden_sm.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/decorations/parks/park_md",
+      "sourcePath": "decorations/parks/park_md.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 24
+    },
+    {
+      "id": "squire:keepitlevel/decorations/parks/park_sm",
+      "sourcePath": "decorations/parks/park_sm.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/decorations/statues/fountain_art",
+      "sourcePath": "decorations/statues/fountain_art.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 60
+    },
+    {
+      "id": "squire:keepitlevel/decorations/statues/fountain_ds",
+      "sourcePath": "decorations/statues/fountain_ds.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 34
+    },
+    {
+      "id": "squire:keepitlevel/decorations/statues/fountain_quartz",
+      "sourcePath": "decorations/statues/fountain_quartz.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 12
+    },
+    {
+      "id": "keepitlevel_fountain",
+      "sourcePath": "decorations/statues/fountain_small.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/camp",
+      "sourcePath": "decorations/supplies/camp.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/dock",
+      "sourcePath": "decorations/supplies/dock.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/nethership",
+      "sourcePath": "decorations/supplies/nethership.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/ship",
+      "sourcePath": "decorations/supplies/ship.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/supplycamp",
+      "sourcePath": "decorations/supplies/supplycamp.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/decorations/supplies/supplyship",
+      "sourcePath": "decorations/supplies/supplyship.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 86
+    },
+    {
+      "id": "keepitlevel_library",
+      "sourcePath": "education/library1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/education/library2",
+      "sourcePath": "education/library2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 83
+    },
+    {
+      "id": "squire:keepitlevel/education/library3",
+      "sourcePath": "education/library3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 140
+    },
+    {
+      "id": "squire:keepitlevel/education/library4",
+      "sourcePath": "education/library4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 157
+    },
+    {
+      "id": "squire:keepitlevel/education/library5",
+      "sourcePath": "education/library5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 158
+    },
+    {
+      "id": "squire:keepitlevel/education/library_d1",
+      "sourcePath": "education/library_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/education/library_d2",
+      "sourcePath": "education/library_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 83
+    },
+    {
+      "id": "squire:keepitlevel/education/library_d3",
+      "sourcePath": "education/library_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 140
+    },
+    {
+      "id": "squire:keepitlevel/education/library_d4",
+      "sourcePath": "education/library_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 157
+    },
+    {
+      "id": "squire:keepitlevel/education/library_d5",
+      "sourcePath": "education/library_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 158
+    },
+    {
+      "id": "squire:keepitlevel/education/school1",
+      "sourcePath": "education/school1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/education/school2",
+      "sourcePath": "education/school2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 83
+    },
+    {
+      "id": "squire:keepitlevel/education/school3",
+      "sourcePath": "education/school3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 137
+    },
+    {
+      "id": "squire:keepitlevel/education/school4",
+      "sourcePath": "education/school4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/education/school5",
+      "sourcePath": "education/school5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/education/school_d1",
+      "sourcePath": "education/school_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/education/school_d2",
+      "sourcePath": "education/school_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 83
+    },
+    {
+      "id": "squire:keepitlevel/education/school_d3",
+      "sourcePath": "education/school_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 137
+    },
+    {
+      "id": "squire:keepitlevel/education/school_d4",
+      "sourcePath": "education/school_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/education/school_d5",
+      "sourcePath": "education/school_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/education/university1",
+      "sourcePath": "education/university1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 153
+    },
+    {
+      "id": "squire:keepitlevel/education/university2",
+      "sourcePath": "education/university2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 224
+    },
+    {
+      "id": "squire:keepitlevel/education/university3",
+      "sourcePath": "education/university3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 298
+    },
+    {
+      "id": "squire:keepitlevel/education/university4",
+      "sourcePath": "education/university4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 299
+    },
+    {
+      "id": "squire:keepitlevel/education/university5",
+      "sourcePath": "education/university5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 300
+    },
+    {
+      "id": "squire:keepitlevel/education/university_d1",
+      "sourcePath": "education/university_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 153
+    },
+    {
+      "id": "squire:keepitlevel/education/university_d2",
+      "sourcePath": "education/university_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 224
+    },
+    {
+      "id": "squire:keepitlevel/education/university_d3",
+      "sourcePath": "education/university_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 298
+    },
+    {
+      "id": "squire:keepitlevel/education/university_d4",
+      "sourcePath": "education/university_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 299
+    },
+    {
+      "id": "squire:keepitlevel/education/university_d5",
+      "sourcePath": "education/university_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 300
+    },
+    {
+      "id": "keepitlevel_builder_lodge",
+      "sourcePath": "fundamentals/builder1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 11
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder2",
+      "sourcePath": "fundamentals/builder2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 17
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder3",
+      "sourcePath": "fundamentals/builder3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 89
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder4",
+      "sourcePath": "fundamentals/builder4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 94
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder5",
+      "sourcePath": "fundamentals/builder5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 98
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder_d1",
+      "sourcePath": "fundamentals/builder_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 11
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder_d2",
+      "sourcePath": "fundamentals/builder_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 17
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder_d3",
+      "sourcePath": "fundamentals/builder_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 89
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder_d4",
+      "sourcePath": "fundamentals/builder_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 94
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/builder_d5",
+      "sourcePath": "fundamentals/builder_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 98
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook1",
+      "sourcePath": "fundamentals/cook1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook2",
+      "sourcePath": "fundamentals/cook2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook3",
+      "sourcePath": "fundamentals/cook3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 115
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook4",
+      "sourcePath": "fundamentals/cook4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook5",
+      "sourcePath": "fundamentals/cook5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 159
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook_d1",
+      "sourcePath": "fundamentals/cook_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook_d2",
+      "sourcePath": "fundamentals/cook_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook_d3",
+      "sourcePath": "fundamentals/cook_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 115
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook_d4",
+      "sourcePath": "fundamentals/cook_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 147
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/cook_d5",
+      "sourcePath": "fundamentals/cook_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 159
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital1",
+      "sourcePath": "fundamentals/hospital1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital2",
+      "sourcePath": "fundamentals/hospital2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 26
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital3",
+      "sourcePath": "fundamentals/hospital3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital4",
+      "sourcePath": "fundamentals/hospital4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 148
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital5",
+      "sourcePath": "fundamentals/hospital5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 152
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital_d1",
+      "sourcePath": "fundamentals/hospital_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 21
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital_d2",
+      "sourcePath": "fundamentals/hospital_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 26
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital_d3",
+      "sourcePath": "fundamentals/hospital_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 108
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital_d4",
+      "sourcePath": "fundamentals/hospital_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 148
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/hospital_d5",
+      "sourcePath": "fundamentals/hospital_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 152
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack1",
+      "sourcePath": "fundamentals/lumberjack1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack2",
+      "sourcePath": "fundamentals/lumberjack2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack3",
+      "sourcePath": "fundamentals/lumberjack3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack4",
+      "sourcePath": "fundamentals/lumberjack4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack5",
+      "sourcePath": "fundamentals/lumberjack5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack_d1",
+      "sourcePath": "fundamentals/lumberjack_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack_d2",
+      "sourcePath": "fundamentals/lumberjack_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack_d3",
+      "sourcePath": "fundamentals/lumberjack_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack_d4",
+      "sourcePath": "fundamentals/lumberjack_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/lumberjack_d5",
+      "sourcePath": "fundamentals/lumberjack_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner1",
+      "sourcePath": "fundamentals/miner1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner2",
+      "sourcePath": "fundamentals/miner2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner3",
+      "sourcePath": "fundamentals/miner3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 45
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner4",
+      "sourcePath": "fundamentals/miner4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner5",
+      "sourcePath": "fundamentals/miner5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 166
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner_d1",
+      "sourcePath": "fundamentals/miner_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner_d2",
+      "sourcePath": "fundamentals/miner_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner_d3",
+      "sourcePath": "fundamentals/miner_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 45
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner_d4",
+      "sourcePath": "fundamentals/miner_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 122
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/miner_d5",
+      "sourcePath": "fundamentals/miner_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 166
+    },
+    {
+      "id": "keepitlevel_residence",
+      "sourcePath": "fundamentals/residence1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence2",
+      "sourcePath": "fundamentals/residence2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 10
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence3",
+      "sourcePath": "fundamentals/residence3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 62
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence4",
+      "sourcePath": "fundamentals/residence4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence5",
+      "sourcePath": "fundamentals/residence5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 74
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence_d1",
+      "sourcePath": "fundamentals/residence_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence_d2",
+      "sourcePath": "fundamentals/residence_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 10
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence_d3",
+      "sourcePath": "fundamentals/residence_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 62
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence_d4",
+      "sourcePath": "fundamentals/residence_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/residence_d5",
+      "sourcePath": "fundamentals/residence_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 74
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern1",
+      "sourcePath": "fundamentals/tavern1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 178
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern2",
+      "sourcePath": "fundamentals/tavern2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 388
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern3",
+      "sourcePath": "fundamentals/tavern3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 477
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern_d1",
+      "sourcePath": "fundamentals/tavern_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 178
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern_d2",
+      "sourcePath": "fundamentals/tavern_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 388
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/tavern_d3",
+      "sourcePath": "fundamentals/tavern_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 477
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall1",
+      "sourcePath": "fundamentals/townhall1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall2",
+      "sourcePath": "fundamentals/townhall2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 10
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall3",
+      "sourcePath": "fundamentals/townhall3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 259
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall4",
+      "sourcePath": "fundamentals/townhall4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 279
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall5",
+      "sourcePath": "fundamentals/townhall5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 291
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall_d1",
+      "sourcePath": "fundamentals/townhall_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall_d2",
+      "sourcePath": "fundamentals/townhall_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 10
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall_d3",
+      "sourcePath": "fundamentals/townhall_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 259
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall_d4",
+      "sourcePath": "fundamentals/townhall_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 279
+    },
+    {
+      "id": "squire:keepitlevel/fundamentals/townhall_d5",
+      "sourcePath": "fundamentals/townhall_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 291
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_lg1",
+      "sourcePath": "infrastructure/decks/deck_lg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_lg2",
+      "sourcePath": "infrastructure/decks/deck_lg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_lg3",
+      "sourcePath": "infrastructure/decks/deck_lg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_lg4",
+      "sourcePath": "infrastructure/decks/deck_lg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_lg5",
+      "sourcePath": "infrastructure/decks/deck_lg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_md1",
+      "sourcePath": "infrastructure/decks/deck_md1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_md2",
+      "sourcePath": "infrastructure/decks/deck_md2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_md3",
+      "sourcePath": "infrastructure/decks/deck_md3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_md4",
+      "sourcePath": "infrastructure/decks/deck_md4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_md5",
+      "sourcePath": "infrastructure/decks/deck_md5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_sm1",
+      "sourcePath": "infrastructure/decks/deck_sm1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_sm2",
+      "sourcePath": "infrastructure/decks/deck_sm2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_sm3",
+      "sourcePath": "infrastructure/decks/deck_sm3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_sm4",
+      "sourcePath": "infrastructure/decks/deck_sm4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_sm5",
+      "sourcePath": "infrastructure/decks/deck_sm5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_xs1",
+      "sourcePath": "infrastructure/decks/deck_xs1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_xs2",
+      "sourcePath": "infrastructure/decks/deck_xs2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_xs3",
+      "sourcePath": "infrastructure/decks/deck_xs3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_xs4",
+      "sourcePath": "infrastructure/decks/deck_xs4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/deck_xs5",
+      "sourcePath": "infrastructure/decks/deck_xs5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_lg_stone",
+      "sourcePath": "infrastructure/decks/pylon_lg_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_lg_wood",
+      "sourcePath": "infrastructure/decks/pylon_lg_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_md_stone",
+      "sourcePath": "infrastructure/decks/pylon_md_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_md_wood",
+      "sourcePath": "infrastructure/decks/pylon_md_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_sm_stone",
+      "sourcePath": "infrastructure/decks/pylon_sm_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_sm_wood",
+      "sourcePath": "infrastructure/decks/pylon_sm_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_xs_stone",
+      "sourcePath": "infrastructure/decks/pylon_xs_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/decks/pylon_xs_wood",
+      "sourcePath": "infrastructure/decks/pylon_xs_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minermainshaft",
+      "sourcePath": "infrastructure/mineshafts/minermainshaft.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx2left",
+      "sourcePath": "infrastructure/mineshafts/minerx2left.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx2right",
+      "sourcePath": "infrastructure/mineshafts/minerx2right.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx2top",
+      "sourcePath": "infrastructure/mineshafts/minerx2top.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx3leftright",
+      "sourcePath": "infrastructure/mineshafts/minerx3leftright.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx3topleft",
+      "sourcePath": "infrastructure/mineshafts/minerx3topleft.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx3topright",
+      "sourcePath": "infrastructure/mineshafts/minerx3topright.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/minerx4",
+      "sourcePath": "infrastructure/mineshafts/minerx4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/simplequarry1",
+      "sourcePath": "infrastructure/mineshafts/simplequarry1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 450
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/mineshafts/simplequarryshaft1",
+      "sourcePath": "infrastructure/mineshafts/simplequarryshaft1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 691
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_lg_stone",
+      "sourcePath": "infrastructure/misc/gapfill_lg_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_lg_wood",
+      "sourcePath": "infrastructure/misc/gapfill_lg_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_md_stone",
+      "sourcePath": "infrastructure/misc/gapfill_md_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_md_wood",
+      "sourcePath": "infrastructure/misc/gapfill_md_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_sm_stone",
+      "sourcePath": "infrastructure/misc/gapfill_sm_stone.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/misc/gapfill_sm_wood",
+      "sourcePath": "infrastructure/misc/gapfill_sm_wood.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 0
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg1",
+      "sourcePath": "infrastructure/rail/rail_lg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg2",
+      "sourcePath": "infrastructure/rail/rail_lg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg3",
+      "sourcePath": "infrastructure/rail/rail_lg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg4",
+      "sourcePath": "infrastructure/rail/rail_lg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg5",
+      "sourcePath": "infrastructure/rail/rail_lg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_end1",
+      "sourcePath": "infrastructure/rail/rail_lg_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_end2",
+      "sourcePath": "infrastructure/rail/rail_lg_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_end3",
+      "sourcePath": "infrastructure/rail/rail_lg_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_end4",
+      "sourcePath": "infrastructure/rail/rail_lg_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_end5",
+      "sourcePath": "infrastructure/rail/rail_lg_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_station1",
+      "sourcePath": "infrastructure/rail/rail_lg_station1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_station2",
+      "sourcePath": "infrastructure/rail/rail_lg_station2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_station3",
+      "sourcePath": "infrastructure/rail/rail_lg_station3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_station4",
+      "sourcePath": "infrastructure/rail/rail_lg_station4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_lg_station5",
+      "sourcePath": "infrastructure/rail/rail_lg_station5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md1",
+      "sourcePath": "infrastructure/rail/rail_md1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md2",
+      "sourcePath": "infrastructure/rail/rail_md2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md3",
+      "sourcePath": "infrastructure/rail/rail_md3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md4",
+      "sourcePath": "infrastructure/rail/rail_md4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md5",
+      "sourcePath": "infrastructure/rail/rail_md5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_end1",
+      "sourcePath": "infrastructure/rail/rail_md_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_end2",
+      "sourcePath": "infrastructure/rail/rail_md_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_end3",
+      "sourcePath": "infrastructure/rail/rail_md_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_end4",
+      "sourcePath": "infrastructure/rail/rail_md_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_end5",
+      "sourcePath": "infrastructure/rail/rail_md_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_station1",
+      "sourcePath": "infrastructure/rail/rail_md_station1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_station2",
+      "sourcePath": "infrastructure/rail/rail_md_station2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_station3",
+      "sourcePath": "infrastructure/rail/rail_md_station3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_station4",
+      "sourcePath": "infrastructure/rail/rail_md_station4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_station5",
+      "sourcePath": "infrastructure/rail/rail_md_station5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_vert1",
+      "sourcePath": "infrastructure/rail/rail_md_vert1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_vert2",
+      "sourcePath": "infrastructure/rail/rail_md_vert2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_vert3",
+      "sourcePath": "infrastructure/rail/rail_md_vert3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_vert4",
+      "sourcePath": "infrastructure/rail/rail_md_vert4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_md_vert5",
+      "sourcePath": "infrastructure/rail/rail_md_vert5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x1",
+      "sourcePath": "infrastructure/rail/rail_x1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x2",
+      "sourcePath": "infrastructure/rail/rail_x2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x3",
+      "sourcePath": "infrastructure/rail/rail_x3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x4",
+      "sourcePath": "infrastructure/rail/rail_x4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x5",
+      "sourcePath": "infrastructure/rail/rail_x5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve1",
+      "sourcePath": "infrastructure/rail/rail_x_curve1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve2",
+      "sourcePath": "infrastructure/rail/rail_x_curve2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve3",
+      "sourcePath": "infrastructure/rail/rail_x_curve3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve4",
+      "sourcePath": "infrastructure/rail/rail_x_curve4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve5",
+      "sourcePath": "infrastructure/rail/rail_x_curve5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_end1",
+      "sourcePath": "infrastructure/rail/rail_x_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_end2",
+      "sourcePath": "infrastructure/rail/rail_x_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_end3",
+      "sourcePath": "infrastructure/rail/rail_x_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_end4",
+      "sourcePath": "infrastructure/rail/rail_x_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/rail/rail_x_end5",
+      "sourcePath": "infrastructure/rail/rail_x_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg1",
+      "sourcePath": "infrastructure/railroad/railrd_lg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg2",
+      "sourcePath": "infrastructure/railroad/railrd_lg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg3",
+      "sourcePath": "infrastructure/railroad/railrd_lg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg4",
+      "sourcePath": "infrastructure/railroad/railrd_lg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg5",
+      "sourcePath": "infrastructure/railroad/railrd_lg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_end1",
+      "sourcePath": "infrastructure/railroad/railrd_lg_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_end2",
+      "sourcePath": "infrastructure/railroad/railrd_lg_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_end3",
+      "sourcePath": "infrastructure/railroad/railrd_lg_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_end4",
+      "sourcePath": "infrastructure/railroad/railrd_lg_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_end5",
+      "sourcePath": "infrastructure/railroad/railrd_lg_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_station1",
+      "sourcePath": "infrastructure/railroad/railrd_lg_station1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_station2",
+      "sourcePath": "infrastructure/railroad/railrd_lg_station2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_station3",
+      "sourcePath": "infrastructure/railroad/railrd_lg_station3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_station4",
+      "sourcePath": "infrastructure/railroad/railrd_lg_station4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_lg_station5",
+      "sourcePath": "infrastructure/railroad/railrd_lg_station5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md1",
+      "sourcePath": "infrastructure/railroad/railrd_md1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md2",
+      "sourcePath": "infrastructure/railroad/railrd_md2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md3",
+      "sourcePath": "infrastructure/railroad/railrd_md3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md4",
+      "sourcePath": "infrastructure/railroad/railrd_md4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md5",
+      "sourcePath": "infrastructure/railroad/railrd_md5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_end1",
+      "sourcePath": "infrastructure/railroad/railrd_md_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_end2",
+      "sourcePath": "infrastructure/railroad/railrd_md_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_end3",
+      "sourcePath": "infrastructure/railroad/railrd_md_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_end4",
+      "sourcePath": "infrastructure/railroad/railrd_md_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_end5",
+      "sourcePath": "infrastructure/railroad/railrd_md_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_station1",
+      "sourcePath": "infrastructure/railroad/railrd_md_station1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_station2",
+      "sourcePath": "infrastructure/railroad/railrd_md_station2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_station3",
+      "sourcePath": "infrastructure/railroad/railrd_md_station3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_station4",
+      "sourcePath": "infrastructure/railroad/railrd_md_station4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_station5",
+      "sourcePath": "infrastructure/railroad/railrd_md_station5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert1",
+      "sourcePath": "infrastructure/railroad/railrd_md_vert1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert2",
+      "sourcePath": "infrastructure/railroad/railrd_md_vert2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert3",
+      "sourcePath": "infrastructure/railroad/railrd_md_vert3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert4",
+      "sourcePath": "infrastructure/railroad/railrd_md_vert4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert5",
+      "sourcePath": "infrastructure/railroad/railrd_md_vert5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x1",
+      "sourcePath": "infrastructure/railroad/railrd_x1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x2",
+      "sourcePath": "infrastructure/railroad/railrd_x2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x3",
+      "sourcePath": "infrastructure/railroad/railrd_x3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x4",
+      "sourcePath": "infrastructure/railroad/railrd_x4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x5",
+      "sourcePath": "infrastructure/railroad/railrd_x5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_curve1",
+      "sourcePath": "infrastructure/railroad/railrd_x_curve1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_curve2",
+      "sourcePath": "infrastructure/railroad/railrd_x_curve2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_curve3",
+      "sourcePath": "infrastructure/railroad/railrd_x_curve3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_curve4",
+      "sourcePath": "infrastructure/railroad/railrd_x_curve4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_curve5",
+      "sourcePath": "infrastructure/railroad/railrd_x_curve5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_end1",
+      "sourcePath": "infrastructure/railroad/railrd_x_end1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_end2",
+      "sourcePath": "infrastructure/railroad/railrd_x_end2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_end3",
+      "sourcePath": "infrastructure/railroad/railrd_x_end3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_end4",
+      "sourcePath": "infrastructure/railroad/railrd_x_end4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/railroad/railrd_x_end5",
+      "sourcePath": "infrastructure/railroad/railrd_x_end5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_lg1",
+      "sourcePath": "infrastructure/roads/road_lg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_lg2",
+      "sourcePath": "infrastructure/roads/road_lg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_lg3",
+      "sourcePath": "infrastructure/roads/road_lg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_lg4",
+      "sourcePath": "infrastructure/roads/road_lg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_lg5",
+      "sourcePath": "infrastructure/roads/road_lg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md1",
+      "sourcePath": "infrastructure/roads/road_md1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md2",
+      "sourcePath": "infrastructure/roads/road_md2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md3",
+      "sourcePath": "infrastructure/roads/road_md3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md4",
+      "sourcePath": "infrastructure/roads/road_md4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md5",
+      "sourcePath": "infrastructure/roads/road_md5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md_vert1",
+      "sourcePath": "infrastructure/roads/road_md_vert1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md_vert2",
+      "sourcePath": "infrastructure/roads/road_md_vert2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md_vert3",
+      "sourcePath": "infrastructure/roads/road_md_vert3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md_vert4",
+      "sourcePath": "infrastructure/roads/road_md_vert4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_md_vert5",
+      "sourcePath": "infrastructure/roads/road_md_vert5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_sm1",
+      "sourcePath": "infrastructure/roads/road_sm1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_sm2",
+      "sourcePath": "infrastructure/roads/road_sm2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_sm3",
+      "sourcePath": "infrastructure/roads/road_sm3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_sm4",
+      "sourcePath": "infrastructure/roads/road_sm4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_sm5",
+      "sourcePath": "infrastructure/roads/road_sm5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_to_ground1",
+      "sourcePath": "infrastructure/roads/road_to_ground1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_to_ground2",
+      "sourcePath": "infrastructure/roads/road_to_ground2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_to_ground3",
+      "sourcePath": "infrastructure/roads/road_to_ground3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_to_ground4",
+      "sourcePath": "infrastructure/roads/road_to_ground4.blueprint",
+      "blockers": [],
+      "strippedEntities": 1,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_to_ground5",
+      "sourcePath": "infrastructure/roads/road_to_ground5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxlg1",
+      "sourcePath": "infrastructure/roads/road_u_lgxlg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxlg2",
+      "sourcePath": "infrastructure/roads/road_u_lgxlg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxlg3",
+      "sourcePath": "infrastructure/roads/road_u_lgxlg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxlg4",
+      "sourcePath": "infrastructure/roads/road_u_lgxlg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxlg5",
+      "sourcePath": "infrastructure/roads/road_u_lgxlg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxmd1",
+      "sourcePath": "infrastructure/roads/road_u_lgxmd1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxmd2",
+      "sourcePath": "infrastructure/roads/road_u_lgxmd2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxmd3",
+      "sourcePath": "infrastructure/roads/road_u_lgxmd3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxmd4",
+      "sourcePath": "infrastructure/roads/road_u_lgxmd4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_lgxmd5",
+      "sourcePath": "infrastructure/roads/road_u_lgxmd5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_mdxmd1",
+      "sourcePath": "infrastructure/roads/road_u_mdxmd1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_mdxmd2",
+      "sourcePath": "infrastructure/roads/road_u_mdxmd2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_mdxmd3",
+      "sourcePath": "infrastructure/roads/road_u_mdxmd3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_mdxmd4",
+      "sourcePath": "infrastructure/roads/road_u_mdxmd4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_u_mdxmd5",
+      "sourcePath": "infrastructure/roads/road_u_mdxmd5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_x1",
+      "sourcePath": "infrastructure/roads/road_x1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_x2",
+      "sourcePath": "infrastructure/roads/road_x2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_x3",
+      "sourcePath": "infrastructure/roads/road_x3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_x4",
+      "sourcePath": "infrastructure/roads/road_x4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/infrastructure/roads/road_x5",
+      "sourcePath": "infrastructure/roads/road_x5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/military/archery1",
+      "sourcePath": "military/archery1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/archery2",
+      "sourcePath": "military/archery2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/military/archery3",
+      "sourcePath": "military/archery3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/military/archery4",
+      "sourcePath": "military/archery4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/military/archery5",
+      "sourcePath": "military/archery5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 175
+    },
+    {
+      "id": "squire:keepitlevel/military/archery_d1",
+      "sourcePath": "military/archery_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/archery_d2",
+      "sourcePath": "military/archery_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/military/archery_d3",
+      "sourcePath": "military/archery_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/military/archery_d4",
+      "sourcePath": "military/archery_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/military/archery_d5",
+      "sourcePath": "military/archery_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 175
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks1",
+      "sourcePath": "military/barracks1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks2",
+      "sourcePath": "military/barracks2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks3",
+      "sourcePath": "military/barracks3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 161
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks4",
+      "sourcePath": "military/barracks4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks5",
+      "sourcePath": "military/barracks5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks_d1",
+      "sourcePath": "military/barracks_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks_d2",
+      "sourcePath": "military/barracks_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 31
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks_d3",
+      "sourcePath": "military/barracks_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 161
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks_d4",
+      "sourcePath": "military/barracks_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/military/barracks_d5",
+      "sourcePath": "military/barracks_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 110
+    },
+    {
+      "id": "squire:keepitlevel/military/barrackstower1",
+      "sourcePath": "military/barrackstower1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/military/barrackstower2",
+      "sourcePath": "military/barrackstower2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 6
+    },
+    {
+      "id": "squire:keepitlevel/military/barrackstower3",
+      "sourcePath": "military/barrackstower3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 75
+    },
+    {
+      "id": "squire:keepitlevel/military/barrackstower4",
+      "sourcePath": "military/barrackstower4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 109
+    },
+    {
+      "id": "squire:keepitlevel/military/barrackstower5",
+      "sourcePath": "military/barrackstower5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 111
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy1",
+      "sourcePath": "military/combatacademy1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy2",
+      "sourcePath": "military/combatacademy2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy3",
+      "sourcePath": "military/combatacademy3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy4",
+      "sourcePath": "military/combatacademy4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy5",
+      "sourcePath": "military/combatacademy5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 175
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy_d1",
+      "sourcePath": "military/combatacademy_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy_d2",
+      "sourcePath": "military/combatacademy_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy_d3",
+      "sourcePath": "military/combatacademy_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 146
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy_d4",
+      "sourcePath": "military/combatacademy_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 173
+    },
+    {
+      "id": "squire:keepitlevel/military/combatacademy_d5",
+      "sourcePath": "military/combatacademy_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 175
+    },
+    {
+      "id": "keepitlevel_guardtower",
+      "sourcePath": "military/guardtower1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower2",
+      "sourcePath": "military/guardtower2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower3",
+      "sourcePath": "military/guardtower3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower4",
+      "sourcePath": "military/guardtower4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower5",
+      "sourcePath": "military/guardtower5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower_d1",
+      "sourcePath": "military/guardtower_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower_d2",
+      "sourcePath": "military/guardtower_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower_d3",
+      "sourcePath": "military/guardtower_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 72
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower_d4",
+      "sourcePath": "military/guardtower_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/military/guardtower_d5",
+      "sourcePath": "military/guardtower_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 84
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter1",
+      "sourcePath": "mystic/enchanter1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter2",
+      "sourcePath": "mystic/enchanter2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter3",
+      "sourcePath": "mystic/enchanter3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 57
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter4",
+      "sourcePath": "mystic/enchanter4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 90
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter5",
+      "sourcePath": "mystic/enchanter5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter_d1",
+      "sourcePath": "mystic/enchanter_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter_d2",
+      "sourcePath": "mystic/enchanter_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter_d3",
+      "sourcePath": "mystic/enchanter_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 57
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter_d4",
+      "sourcePath": "mystic/enchanter_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 90
+    },
+    {
+      "id": "squire:keepitlevel/mystic/enchanter_d5",
+      "sourcePath": "mystic/enchanter_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 91
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard1",
+      "sourcePath": "mystic/graveyard1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 361
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard2",
+      "sourcePath": "mystic/graveyard2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 372
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard3",
+      "sourcePath": "mystic/graveyard3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 399
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard4",
+      "sourcePath": "mystic/graveyard4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 448
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard5",
+      "sourcePath": "mystic/graveyard5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 457
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard_d1",
+      "sourcePath": "mystic/graveyard_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 361
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard_d2",
+      "sourcePath": "mystic/graveyard_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 372
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard_d3",
+      "sourcePath": "mystic/graveyard_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 399
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard_d4",
+      "sourcePath": "mystic/graveyard_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 448
+    },
+    {
+      "id": "squire:keepitlevel/mystic/graveyard_d5",
+      "sourcePath": "mystic/graveyard_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 457
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite1",
+      "sourcePath": "mystic/mysticalsite1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite2",
+      "sourcePath": "mystic/mysticalsite2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite3",
+      "sourcePath": "mystic/mysticalsite3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite4",
+      "sourcePath": "mystic/mysticalsite4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite5",
+      "sourcePath": "mystic/mysticalsite5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite_d1",
+      "sourcePath": "mystic/mysticalsite_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite_d2",
+      "sourcePath": "mystic/mysticalsite_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite_d3",
+      "sourcePath": "mystic/mysticalsite_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite_d4",
+      "sourcePath": "mystic/mysticalsite_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/mysticalsite_d5",
+      "sourcePath": "mystic/mysticalsite_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 40
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker1",
+      "sourcePath": "mystic/netherworker1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker2",
+      "sourcePath": "mystic/netherworker2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker3",
+      "sourcePath": "mystic/netherworker3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 227
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker4",
+      "sourcePath": "mystic/netherworker4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 231
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker5",
+      "sourcePath": "mystic/netherworker5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 234
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker_d1",
+      "sourcePath": "mystic/netherworker_d1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 4
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker_d2",
+      "sourcePath": "mystic/netherworker_d2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 155
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker_d3",
+      "sourcePath": "mystic/netherworker_d3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 227
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker_d4",
+      "sourcePath": "mystic/netherworker_d4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 231
+    },
+    {
+      "id": "squire:keepitlevel/mystic/netherworker_d5",
+      "sourcePath": "mystic/netherworker_d5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 234
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg1",
+      "sourcePath": "walls/wall_lg1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg2",
+      "sourcePath": "walls/wall_lg2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg3",
+      "sourcePath": "walls/wall_lg3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 15
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg4",
+      "sourcePath": "walls/wall_lg4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 17
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg5",
+      "sourcePath": "walls/wall_lg5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 27
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg_gate1",
+      "sourcePath": "walls/wall_lg_gate1.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:gate_wood"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg_gate2",
+      "sourcePath": "walls/wall_lg_gate2.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:gate_wood"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 5
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg_gate3",
+      "sourcePath": "walls/wall_lg_gate3.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:gate_iron"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 15
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg_gate4",
+      "sourcePath": "walls/wall_lg_gate4.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:gate_iron"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 17
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_lg_gate5",
+      "sourcePath": "walls/wall_lg_gate5.blueprint",
+      "blockers": [
+        "UNMAPPED_BLOCK:minecolonies:gate_iron"
+      ],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 27
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md1",
+      "sourcePath": "walls/wall_md1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md2",
+      "sourcePath": "walls/wall_md2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 3
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md3",
+      "sourcePath": "walls/wall_md3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 10
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md4",
+      "sourcePath": "walls/wall_md4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 11
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md5",
+      "sourcePath": "walls/wall_md5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 18
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md_corner1",
+      "sourcePath": "walls/wall_md_corner1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md_corner2",
+      "sourcePath": "walls/wall_md_corner2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 2
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md_corner3",
+      "sourcePath": "walls/wall_md_corner3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 27
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md_corner4",
+      "sourcePath": "walls/wall_md_corner4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 28
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_md_corner5",
+      "sourcePath": "walls/wall_md_corner5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 37
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_sm1",
+      "sourcePath": "walls/wall_sm1.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_sm2",
+      "sourcePath": "walls/wall_sm2.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 1
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_sm3",
+      "sourcePath": "walls/wall_sm3.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_sm4",
+      "sourcePath": "walls/wall_sm4.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 9
+    },
+    {
+      "id": "squire:keepitlevel/walls/wall_sm5",
+      "sourcePath": "walls/wall_sm5.blueprint",
+      "blockers": [],
+      "strippedEntities": 0,
+      "strippedBlockEntities": 13
+    }
+  ]
+}

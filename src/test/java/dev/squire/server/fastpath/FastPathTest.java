@@ -63,7 +63,14 @@ class FastPathTest {
 	}
 
 	@Test
-	void projectPauseAndResumeAreDeterministic() {
+	void projectControlsAreDeterministic() {
+		for (String phrase : new String[] {"开工", "开工吧", "请开工", "确认开工",
+				"现在开工", "可以开工了", "让他开工", "让它开工", "开始施工",
+				"开始建造", "按这个蓝图建造", "就按这个盖", "start building",
+				"confirm build"}) {
+			assertEquals(FastPathIntent.ProjectControl.Kind.CONFIRM,
+				projectControl(phrase));
+		}
 		assertEquals(FastPathIntent.ProjectControl.Kind.PAUSE,
 			projectControl("暂停工程"));
 		assertEquals(FastPathIntent.ProjectControl.Kind.PAUSE,

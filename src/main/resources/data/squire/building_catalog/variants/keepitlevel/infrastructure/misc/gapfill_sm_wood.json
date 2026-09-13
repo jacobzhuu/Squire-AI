@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/misc/gapfill_sm_wood",
+  "format": "minecraft:structure_nbt",
+  "displayName": "缝隙填充 · gapfill_sm_wood",
+  "tier": 1,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/infrastructure/misc/gapfill_sm_wood",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/misc/gapfill_sm_wood.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    1,
+    1,
+    11
+  ],
+  "primaryOffset": {
+    "x": 0,
+    "y": 0,
+    "z": 5
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "planks"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "spruce_structure",
+      "variant": "planks"
+    }
+  ],
+  "neighborComputedProperties": {}
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "blueprints": [
+    "squire:blueprints/shelter_wood.json",
+    "squire:blueprints/shelter_stone.json",
+    "squire:blueprints/storage_shed.json",
+    "squire:blueprints/watchtower.json",
+    "squire:blueprints/mine_outpost.json",
+    "squire:blueprints/field_smithy.json",
+    "squire:blueprints/roadside_inn.json",
+    "squire:blueprints/keepitlevel_residence.json",
+    "squire:blueprints/keepitlevel_fountain.json",
+    "squire:blueprints/keepitlevel_builder_lodge.json",
+    "squire:blueprints/keepitlevel_guardtower.json",
+    "squire:blueprints/keepitlevel_library.json",
+    "squire:blueprints/keepitlevel_warehouse.json"
+  ]
+}

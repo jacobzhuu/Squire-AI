@@ -52,7 +52,7 @@ public final class HouseBlueprintFactory {
 		}
 
 		return new Blueprint(spec.blueprintId(), spec.displayName(), 1,
-			Blueprint.Category.SHELTER, w, totalHeight, d, steps,
+			Blueprint.Category.HOUSING, w, totalHeight, d, steps,
 			Set.of(BlueprintRegistry.ABILITY_BUILD));
 	}
 }

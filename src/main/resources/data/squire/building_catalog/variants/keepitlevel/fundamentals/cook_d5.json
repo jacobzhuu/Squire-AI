@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/fundamentals/cook_d5",
+  "format": "minecraft:structure_nbt",
+  "displayName": "餐厅 · Tier 5 · 带平台",
+  "tier": 5,
+  "category": "CIVIC",
+  "minEngineerLevel": 10,
+  "structure": "squire:keepitlevel/fundamentals/cook_d5",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": -6,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/fundamentals/cook_d5.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "public"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    46,
+    11
+  ],
+  "primaryOffset": {
+    "x": 6,
+    "y": 6,
+    "z": 4
+  },
+  "groundY": 6,
+  "siteRequirements": [
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        5
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence",
+        "trapdoor"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab",
+        "stairs"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:spruce_trapdoor",
+      "slot": "spruce_structure",
+      "variant": "trapdoor"
+    },
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_stairs",
+      "slot": "stone_bricks",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:deepslate_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:end_stone_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:stone_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:polished_deepslate_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

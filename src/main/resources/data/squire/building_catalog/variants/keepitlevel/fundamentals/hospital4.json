@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/fundamentals/hospital4",
+  "format": "minecraft:structure_nbt",
+  "displayName": "医院 · Tier 4 · 标准",
+  "tier": 4,
+  "category": "CIVIC",
+  "minEngineerLevel": 7,
+  "structure": "squire:keepitlevel/fundamentals/hospital4",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": -1,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/fundamentals/hospital4.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "public"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    46,
+    11
+  ],
+  "primaryOffset": {
+    "x": 4,
+    "y": 1,
+    "z": 7
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence"
+      ]
+    },
+    {
+      "id": "glass",
+      "displayName": "透明窗格",
+      "type": "WINDOW",
+      "defaultFamily": "squire:glass",
+      "requiredVariants": [
+        "pane"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:glass_pane",
+      "slot": "glass",
+      "variant": "pane"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:deepslate_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:prismarine_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:deepslate_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:polished_deepslate_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ],
+    "minecraft:glass_pane": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

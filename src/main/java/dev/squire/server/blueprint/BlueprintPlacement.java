@@ -41,6 +41,29 @@ public final class BlueprintPlacement {
 	private final Map<String, String> materials = new LinkedHashMap<>();
 
 	private State state = State.GHOST;
+	/** Preview cache becomes immutable content at confirmation; includes access progress. */
+	private Blueprint.Resolved snapshot;
+	private boolean committed;
+	/** Last terrain review shown to the player; refreshed after reload before confirmation. */
+	public String terrainReview = "";
+	private int authorizedLevel;
+	private boolean legacyFullPrice;
+	private boolean artificialWater;
+	private BlockPos waterSource;
+	public boolean artificialWater() { return artificialWater; }
+	public BlockPos waterSource() { return waterSource; }
+	public boolean configureWater(boolean artificial, BlockPos source) {
+		if (committed) return false;
+		artificialWater = artificial; waterSource = source == null ? null : source.toImmutable(); invalidatePreview(); return true;
+	}
+	public boolean legacyFullPrice() { return legacyFullPrice; }
+	public void markLegacyFullPrice() { legacyFullPrice = true; }
+	public int authorizedLevel() { return authorizedLevel; }
+	public void authorizeLevel(int level) { authorizedLevel = Math.max(0, Math.min(10, level)); }
+	public Blueprint.Resolved snapshot() { return snapshot; }
+	public boolean committed() { return committed; }
+	public void snapshot(Blueprint.Resolved value, boolean committed) { this.snapshot = value; this.committed = committed; }
+	public void invalidatePreview() { if (!committed) snapshot = null; }
 
 	public BlueprintPlacement(UUID placementId, UUID ownerId, UUID agentId,
 			String blueprintId, String dimensionId, BlockPos origin, Direction facing,
@@ -77,16 +100,18 @@ public final class BlueprintPlacement {
 	}
 
 	public boolean setMaterial(String slotId, String familyId) {
-		if ((state != State.GHOST && state != State.READY) || slotId == null
+		if (committed || (state != State.GHOST && state != State.READY) || slotId == null
 				|| slotId.isBlank() || familyId == null || familyId.isBlank()) return false;
 		materials.put(slotId, familyId);
+		invalidatePreview();
 		state = State.GHOST;
 		return true;
 	}
 
 	public boolean resetMaterials(Map<String, String> defaults) {
-		if (state != State.GHOST && state != State.READY) return false;
+		if (committed || state != State.GHOST && state != State.READY) return false;
 		materials.clear();
+		invalidatePreview();
 		if (defaults != null) materials.putAll(defaults);
 		state = State.GHOST;
 		return true;
@@ -94,10 +119,11 @@ public final class BlueprintPlacement {
 
 	/** Adjust an uncommitted ghost without replacing its persistent identity. */
 	public boolean relocate(BlockPos nextOrigin, Direction nextFacing) {
-		if (state != State.GHOST && state != State.READY) {
+		if (committed || state != State.GHOST && state != State.READY) {
 			return false;
 		}
 		this.origin = nextOrigin.toImmutable();
+		invalidatePreview();
 		this.facing = nextFacing == null || nextFacing.getAxis().isVertical()
 			? Direction.NORTH : nextFacing;
 		this.state = State.GHOST;
@@ -106,11 +132,12 @@ public final class BlueprintPlacement {
 
 	/** Replace the design of an uncommitted ghost (used by the house configurator). */
 	public boolean changeBlueprint(String nextBlueprintId) {
-		if ((state != State.GHOST && state != State.READY)
+		if (committed || (state != State.GHOST && state != State.READY)
 				|| nextBlueprintId == null || nextBlueprintId.isBlank()) {
 			return false;
 		}
 		this.blueprintId = nextBlueprintId;
+		invalidatePreview();
 		this.state = State.GHOST;
 		return true;
 	}

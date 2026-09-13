@@ -18,6 +18,8 @@ public final class PermissionManager {
 
 	private final Map<UUID, Set<String>> granted = new ConcurrentHashMap<>();
 	private final Map<UUID, Set<String>> revoked = new ConcurrentHashMap<>();
+	/** Player preferences can disable their own access but never enlarge the server policy. */
+	private final Map<UUID, Set<String>> playerDisabled = new ConcurrentHashMap<>();
 	/** 可选的持久层；测试和无存档场景下为 null，改动就不落盘。 */
 	private volatile PermissionStore store;
 
@@ -27,8 +29,8 @@ public final class PermissionManager {
 	}
 
 	/**
-	 * Restore explicitly granted/revoked nodes from disk. Only these two maps are
-	 * persisted — defaults stay in code ({@link PermissionNodes#DEFAULT_PLAYER_NODES}).
+	 * Restore server overrides and player toggles from disk. Default grants stay in
+	 * code ({@link PermissionNodes#DEFAULT_PLAYER_NODES}).
 	 *
 	 * @return number of player entries recovered
 	 */
@@ -36,15 +38,16 @@ public final class PermissionManager {
 		if (store == null) {
 			return 0;
 		}
-		return store.load((restoredGranted, restoredRevoked) -> {
+		return store.load((restoredGranted, restoredRevoked, restoredDisabled) -> {
 			granted.putAll(restoredGranted);
 			revoked.putAll(restoredRevoked);
+			playerDisabled.putAll(restoredDisabled);
 		});
 	}
 
 	private void persist() {
 		if (store != null) {
-			store.save(Map.copyOf(granted), Map.copyOf(revoked));
+			store.save(Map.copyOf(granted), Map.copyOf(revoked), Map.copyOf(playerDisabled));
 		}
 	}
 
@@ -69,8 +72,9 @@ public final class PermissionManager {
 			return false;
 		}
 		if (revoked.getOrDefault(playerId, Set.of()).contains(node)) {
-			return false; // 自己关掉的开关，管理员身份也不帮他打开
+			return false; // Server policy denies this node, even for operators.
 		}
+		if (playerDisabled.getOrDefault(playerId, Set.of()).contains(node)) return false;
 		if (isAdmin) {
 			return true; // admins hold every node they have not switched off
 		}
@@ -106,14 +110,56 @@ public final class PermissionManager {
 		persist();
 	}
 
+	/** Admin command: clear only the server allow/deny override for one player and node. */
+	public void resetPolicy(UUID playerId, String node) {
+		if (!PermissionNodes.isKnown(node)) throw new IllegalArgumentException("unknown node: " + node);
+		granted.computeIfPresent(playerId, (k, set) -> without(set, node));
+		revoked.computeIfPresent(playerId, (k, set) -> without(set, node));
+		persist();
+	}
+
+	/** A player's own toggle may remove access or restore only policy-allowed access. */
+	public boolean setPlayerEnabled(UUID playerId, String node, boolean enabled) {
+		return setPlayerEnabled(playerId, node, enabled, false);
+	}
+
+	public boolean setPlayerEnabled(UUID playerId, String node, boolean enabled, boolean isAdmin) {
+		if (!PermissionNodes.isKnown(node)) throw new IllegalArgumentException("unknown node: " + node);
+		if (enabled && revoked.getOrDefault(playerId, Set.of()).contains(node)) return false;
+		if (enabled && !isAdmin && !granted.getOrDefault(playerId, Set.of()).contains(node)
+				&& !PermissionNodes.DEFAULT_PLAYER_NODES.contains(node)) return false;
+		if (enabled) {
+			playerDisabled.computeIfPresent(playerId, (k, set) -> without(set, node));
+		} else {
+			playerDisabled.merge(playerId, Set.of(node), PermissionManager::union);
+		}
+		persist();
+		return true;
+	}
+
+	private static Set<String> union(Set<String> a, Set<String> b) {
+		var merged = new java.util.HashSet<>(a);
+		merged.addAll(b);
+		return Set.copyOf(merged);
+	}
+
+	private static Set<String> without(Set<String> values, String node) {
+		return values.stream().filter(n -> !n.equals(node))
+			.collect(java.util.stream.Collectors.toUnmodifiableSet());
+	}
+
 	/** Test/admin helper: clear all explicit grants and revocations. */
 	public void reset() {
 		granted.clear();
 		revoked.clear();
+		playerDisabled.clear();
 		persist();
 	}
 
 	public Map<UUID, Set<String>> snapshotGrants() {
 		return Map.copyOf(granted);
 	}
+
+	public Map<UUID, Set<String>> snapshotRevocations() { return Map.copyOf(revoked); }
+	public Map<UUID, Set<String>> snapshotPlayerDisabled() { return Map.copyOf(playerDisabled); }
 }

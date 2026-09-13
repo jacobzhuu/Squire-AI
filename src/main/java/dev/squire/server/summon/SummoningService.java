@@ -16,6 +16,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
@@ -34,8 +35,10 @@ import net.minecraft.util.math.Direction;
 public final class SummoningService {
 
 	private record Pattern(List<BlockPos> blocks, BlockPos feet) { }
-	private record Pending(UUID playerId, ServerWorld world, BlockPos head) { }
+	private record Pending(ServerPlayerEntity player, ServerWorld world, BlockPos head,
+			BlockState before, Item item, int heldCount, Hand hand) { }
 
+	private static final int MAX_PENDING_ACTIVATIONS = 128;
 	private static final Queue<Pending> PENDING = new ArrayDeque<>();
 
 	public static void register() {
@@ -43,9 +46,9 @@ public final class SummoningService {
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			Pending pending;
 			while ((pending = PENDING.poll()) != null) {
-				ServerPlayerEntity player = server.getPlayerManager()
-					.getPlayer(pending.playerId());
-				if (player != null && player.getServerWorld() == pending.world()) {
+				ServerPlayerEntity player = pending.player();
+				if (!player.isRemoved() && player.getServerWorld() == pending.world()
+						&& placementSucceeded(player, pending)) {
 					tryActivate(player, pending.head());
 				}
 			}
@@ -63,15 +66,30 @@ public final class SummoningService {
 		}
 		// Capture the placing player before vanilla places the head, then inspect the
 		// resulting world state after the interaction has completed on the server.
+		if (PENDING.size() >= MAX_PENDING_ACTIVATIONS) {
+			return ActionResult.PASS;
+		}
 		BlockPos head = new ItemPlacementContext(serverPlayer, hand, held, hit).getBlockPos();
-		PENDING.add(new Pending(serverPlayer.getUuid(), serverWorld,
-			head.toImmutable()));
+		PENDING.add(new Pending(serverPlayer, serverWorld, head.toImmutable(),
+			serverWorld.getBlockState(head), held.getItem(), held.getCount(), hand));
 		return ActionResult.PASS;
+	}
+
+	private static boolean placementSucceeded(ServerPlayerEntity player, Pending pending) {
+		if (player.isSpectator()) return false;
+		BlockState placed = pending.world().getBlockState(pending.head());
+		Block expected = pending.item() == Items.CARVED_PUMPKIN
+			? Blocks.CARVED_PUMPKIN : Blocks.JACK_O_LANTERN;
+		if (!placed.isOf(expected) || pending.before().isOf(expected)) return false;
+		if (player.isCreative()) return true;
+		ItemStack held = player.getStackInHand(pending.hand());
+		int remaining = held.isOf(pending.item()) ? held.getCount() : 0;
+		return remaining < pending.heldCount();
 	}
 
 	public static boolean tryActivate(ServerPlayerEntity player, BlockPos head) {
 		if (!SquireRuntime.isAlive() || player.isRemoved()
-				|| player.getWorld() != player.getServerWorld()) {
+				|| player.isSpectator() || player.getWorld() != player.getServerWorld()) {
 			return false;
 		}
 		ServerWorld world = player.getServerWorld();
@@ -80,9 +98,37 @@ public final class SummoningService {
 			return false;
 		}
 		var runtime = SquireRuntime.get();
-		if (runtime.agentStore().recordOfOwner(player.getUuid()).isPresent()) {
+		return consumePattern(player, world, pattern, runtime);
+	}
+
+	static boolean tryActivate(ServerPlayerEntity player, BlockPos head,
+			dev.squire.server.world.ProtectionAdapter protection) {
+		if (!SquireRuntime.isAlive() || player.isRemoved() || player.isSpectator()
+				|| player.getWorld() != player.getServerWorld()) return false;
+		ServerWorld world = player.getServerWorld();
+		Pattern pattern = findPattern(world, head);
+		if (pattern == null) return false;
+		SquireRuntime runtime = SquireRuntime.get();
+		return consumePattern(player, world, pattern, runtime, protection);
+	}
+
+	private static boolean consumePattern(ServerPlayerEntity player, ServerWorld world,
+			Pattern pattern, SquireRuntime runtime) {
+		return consumePattern(player, world, pattern, runtime, runtime.protectionAdapter());
+	}
+
+	private static boolean consumePattern(ServerPlayerEntity player, ServerWorld world,
+			Pattern pattern, SquireRuntime runtime,
+			dev.squire.server.world.ProtectionAdapter protection) {
+		var records = runtime.agentStore().recordsOfOwner(player.getUuid());
+		if (records.size() >= 2) {
 			player.sendMessage(net.minecraft.text.Text.translatable(
 				"squire.summon.already_bound"), false);
+			return false;
+		}
+		if (records.size() == 1 && !records.get(0).profile.profession.hasProfession()) {
+			player.sendMessage(net.minecraft.text.Text.translatable(
+				"squire.summon.choose_first_profession"), false);
 			return false;
 		}
 		if (!world.getBlockState(pattern.feet().down()).isSolidBlock(world,
@@ -94,16 +140,32 @@ public final class SummoningService {
 
 		Map<BlockPos, BlockState> original = new LinkedHashMap<>();
 		for (BlockPos pos : pattern.blocks()) {
+			var decision = protection.canBreak(world, pos, player.getUuid());
+			if (decision == null || !decision.allowed()) {
+				player.sendMessage(net.minecraft.text.Text.translatable(
+					"squire.summon.protected"), false);
+				return false;
+			}
 			original.put(pos.toImmutable(), world.getBlockState(pos));
-			world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL);
+		}
+		for (BlockPos pos : pattern.blocks()) {
+			if (!world.setBlockState(pos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL)) {
+				restore(world, original);
+				player.sendMessage(net.minecraft.text.Text.translatable(
+					"squire.summon.failed"), false);
+				return false;
+			}
 		}
 		try {
-			var avatar = runtime.summonFirstAt(player, pattern.feet());
+			var avatar = records.isEmpty()
+				? runtime.summonFirstAt(player, pattern.feet())
+				: runtime.summonAdditionalAt(player, pattern.feet());
 			if (avatar == null) {
 				restore(world, original);
 				return false;
 			}
-			ItemStack bell = SquireItems.boundRecallBell(player.getUuid(), avatar.agentId());
+			// 新铃保持未绑定；玩家手持它右键目标侍从，绑定关系才明确。
+			ItemStack bell = new ItemStack(SquireItems.RECALL_BELL);
 			runtime.syncRecallBellDisplay(bell,
 				dev.squire.server.item.BellTier.COMMON);
 			if (!player.giveItemStack(bell)) {

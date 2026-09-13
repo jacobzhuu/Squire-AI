@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/agriculture/fields/plantation/kelp_field",
+  "format": "minecraft:structure_nbt",
+  "displayName": "种植园田块 · kelp_field",
+  "tier": 1,
+  "category": "PRODUCTION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/agriculture/fields/plantation/kelp_field",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": -1,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/agriculture/fields/plantation/kelp_field.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "agriculture"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    16,
+    11
+  ],
+  "primaryOffset": {
+    "x": 5,
+    "y": 1,
+    "z": 9
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        1,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        -1,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        -1,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "trapdoor"
+      ]
+    },
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab",
+        "stairs",
+        "wall"
+      ]
+    },
+    {
+      "id": "glass",
+      "displayName": "透明窗格",
+      "type": "WINDOW",
+      "defaultFamily": "squire:glass",
+      "requiredVariants": [
+        "block"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_trapdoor",
+      "slot": "spruce_structure",
+      "variant": "trapdoor"
+    },
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_stairs",
+      "slot": "stone_bricks",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    },
+    {
+      "block": "minecraft:stone_brick_wall",
+      "slot": "stone_bricks",
+      "variant": "wall"
+    },
+    {
+      "block": "minecraft:glass",
+      "slot": "glass",
+      "variant": "block"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:stone_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

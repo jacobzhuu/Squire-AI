@@ -29,6 +29,83 @@ import net.minecraft.network.PacketByteBuf;
  * <p>这组测试守的就是那条底线：版本对不上必须整包丢弃，而不是硬读。</p>
  */
 class PanelStateTest {
+	@Test
+	void siteDiagnosticsLongerThan48CharactersSurvivePanelSync() {
+		for (int length : new int[] {48, 54, 512}) {
+			List<String> issues = List.of("地".repeat(length));
+			var state = PanelState.EMPTY.withConstruction("", "site", "GHOST",
+				"external:house", List.of(), issues, true);
+			var packet = buffer();
+			try {
+				state.write(packet);
+				assertEquals(state, PanelState.read(packet));
+				assertEquals(0, packet.readableBytes());
+			} finally {
+				packet.release();
+			}
+		}
+	}
+
+	@Test
+	void oversizedSiteDiagnosticsAreBoundedWithoutBreakingFollowingFields() {
+		for (String issue : List.of("地".repeat(513), "地".repeat(510) + "\uD83D\uDE00more")) {
+			var state = PanelState.EMPTY.withConstruction("", "site", "GHOST",
+				"external:house", List.of(), java.util.Collections.nCopies(20, issue), true);
+			var packet = buffer();
+			try {
+				state.write(packet);
+				PanelState back = PanelState.read(packet);
+				String expected = "地".repeat(issue.startsWith("地".repeat(511)) ? 511 : 510) + "\u2026";
+				assertEquals(java.util.Collections.nCopies(16, expected), back.siteIssues());
+				assertTrue(back.siteExecutable());
+				assertEquals(state.profession(), back.profession());
+				assertEquals(state.roster(), back.roster());
+				assertEquals(0, packet.readableBytes());
+			} finally {
+				packet.release();
+			}
+		}
+	}
+
+	@Test
+	void aLargeMaterialBillIsNotCutOffAtSixteenEntries() {
+		List<String> materials = java.util.stream.IntStream.range(0, 80).mapToObj(i -> i + " × 材料").toList();
+		var state = PanelState.EMPTY.withConstruction("MATERIALS_MISSING", "大建筑", "BUILDING", "external:house", materials, List.of(), false);
+		var packet = buffer(); state.write(packet);
+		assertEquals(materials, PanelState.read(packet).materialLines());
+		assertEquals(0, packet.readableBytes());
+	}
+	@Test
+	void materialChoiceCodecUsesOneRealSeparatorAndRestoresEveryField() {
+		String encoded = PanelState.encodeMaterialChoice("wall", "墙体", "minecraft:oak",
+			"橡木", "minecraft:oak_planks");
+		assertTrue(encoded.contains("\u001f"));
+		assertFalse(encoded.contains("\\u001f"),
+			"a literal unicode escape is not the separator the client parser expects");
+
+		PanelState.MaterialChoice decoded = PanelState.decodeMaterialChoice(encoded)
+			.orElseThrow();
+		assertEquals("wall", decoded.slotId());
+		assertEquals("墙体", decoded.slotName());
+		assertEquals("minecraft:oak", decoded.familyId());
+		assertEquals("橡木", decoded.familyName());
+		assertEquals("minecraft:oak_planks", decoded.representativeItemId());
+		assertTrue(PanelState.decodeMaterialChoice(
+			"wall\\u001f墙体\\u001fminecraft:oak").isEmpty(),
+			"the broken literal-delimiter format must not look valid");
+	}
+
+	@Test
+	void rosterCodecKeepsIdentityAndSelectionFlags() {
+		String encoded = PanelState.encodeRosterEntry(java.util.UUID.randomUUID().toString(),
+			"豆包", "engineer", true, false, true);
+		PanelState.RosterEntry entry = PanelState.decodeRosterEntry(encoded).orElseThrow();
+		assertEquals("豆包", entry.name());
+		assertEquals("engineer", entry.professionId());
+		assertTrue(entry.active());
+		assertFalse(entry.primary());
+		assertTrue(entry.current());
+	}
 
 	private static PacketByteBuf buffer() {
 		return new PacketByteBuf(Unpooled.buffer());
@@ -57,7 +134,9 @@ class PanelStateTest {
 				List.of("minecraft:diamond|4|1"),
 				List.of("engineer.basic_blueprint"), List.of("engineer.intercept"),
 				26, 3, 2, 64, true, true, 1, 21, List.of("house", "shed"),
-				List.of("shed|1", "house|3", "outpost|9")));
+				List.of("shed|1", "house|3", "outpost|9"),
+				List.of(new ProfessionView.BlueprintEntry("keepitlevel_library", "学者图书馆", "CIVIC", 7,
+					11, 16, 11, "Richard Gowen", "KeepItLevel spruce medieval", "https://example.org/source", "MIT", "fixed", false, "需要 Lv7")), 42));
 		PacketByteBuf buf = buffer();
 		original.write(buf);
 
@@ -106,6 +185,15 @@ class PanelStateTest {
 		assertEquals(9, job.templateLibrary().get(2).minLevel());
 		assertFalse(job.templateLibrary().get(2).unlockedAt(job.level()));
 		assertTrue(job.templateLibrary().get(1).unlockedAt(job.level()));
+		// 外部/固定蓝图卡片共用这条有界网络通道，但不会混进旧参数模板列表。
+		assertEquals(1, job.blueprintLibrary().size());
+		assertEquals("keepitlevel_library", job.blueprintLibrary().get(0).id());
+		assertEquals("CIVIC", job.blueprintLibrary().get(0).category());
+		assertEquals(7, job.blueprintLibrary().get(0).minLevel());
+		assertEquals(11, job.blueprintLibrary().get(0).width());
+		assertEquals("Richard Gowen", job.blueprintLibrary().get(0).author());
+		assertEquals("KeepItLevel spruce medieval", job.blueprintLibrary().get(0).style());
+		assertFalse(job.blueprintLibrary().get(0).unlockedAt(job.level()));
 		// 材料是「id|要几个|有几个」，客户端拆开之后要能算出「还差」。
 		assertEquals(1, job.materials().size());
 		assertEquals("minecraft:diamond", job.materials().get(0).itemId());

@@ -28,6 +28,38 @@ class ProfessionProgressionTest {
 	private final ProfessionConfig config = ProfessionConfig.defaults();
 	private final ProfessionService service = new ProfessionService(config);
 
+	@Test
+	void basicTrainingUnlocksBothProfessionsWithoutConstructionEvenWithLegacyConfig() {
+		ProfessionConfig legacy = ProfessionConfig.fromJson(JsonParser.parseString(
+			"{\"general\":{\"trainingXpRequired\":100}}").getAsJsonObject());
+		ProfessionData data = new ProfessionData();
+		for (TrainingMilestone milestone : TrainingMilestone.required()) {
+			assertFalse(data.trainingComplete(legacy));
+			data.completeTraining(milestone);
+		}
+		assertEquals(80, legacy.trainingXpRequired);
+		assertEquals(80, data.trainingXp());
+		assertFalse(data.hasTrained(TrainingMilestone.BUILD));
+		assertTrue(data.remainingTraining().isEmpty());
+		for (SquireProfession profession : SquireProfession.values()) {
+			assertTrue(new ProfessionService(legacy).checkChoice(data, profession).ok());
+		}
+		data.completeTraining(TrainingMilestone.BUILD);
+		assertTrue(data.hasTrained(TrainingMilestone.BUILD));
+		assertEquals(80, data.trainingXp(), "Saved build history does not replace basic training");
+	}
+
+	@Test
+	void lowerCustomTrainingThresholdRemainsSupported() {
+		ProfessionConfig custom = ProfessionConfig.fromJson(JsonParser.parseString(
+			"{\"general\":{\"trainingXpRequired\":20}}").getAsJsonObject());
+		ProfessionData data = new ProfessionData();
+		data.completeTraining(TrainingMilestone.BUILD);
+		assertFalse(data.trainingComplete(custom));
+		data.completeTraining(TrainingMilestone.OPEN_PANEL);
+		assertTrue(data.trainingComplete(custom));
+	}
+
 	private ProfessionData guardAt(int level, int xp) {
 		ProfessionData data = new ProfessionData();
 		data.setProfession(SquireProfession.GUARD);
@@ -238,10 +270,10 @@ class ProfessionProgressionTest {
 		void idsMatchDesignDocument() {
 			// of() 按「解锁等级，再按 id」排序，所以同为 Lv.5 的两条按字典序。
 			assertEquals(List.of("guard.basic_melee", "guard.equipment_awareness",
-					"guard.threat_evaluation", "guard.bow_proficiency",
+					"guard.cooperative_hunt", "guard.threat_evaluation", "guard.bow_proficiency",
 					"guard.supply_awareness", "guard.weapon_switching",
-					"guard.shield_proficiency", "guard.intercept", "guard.combat_stance",
-					"guard.high_threat_awareness", "guard.guardian_protocol"),
+					"guard.protective_totem", "guard.shield_proficiency", "guard.intercept", "guard.combat_stance",
+					"guard.high_threat_awareness", "guard.self_sacrifice", "guard.guardian_protocol", "guard.immortal_oath"),
 				ProfessionAbility.of(SquireProfession.GUARD).stream()
 					.map(ProfessionAbility::id).toList());
 			assertEquals(List.of("engineer.basic_blueprint", "engineer.template_library_1",

@@ -1,0 +1,1540 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "housing",
+      "name": "住宅"
+    },
+    {
+      "id": "agriculture",
+      "name": "农业"
+    },
+    {
+      "id": "workshops",
+      "name": "工坊"
+    },
+    {
+      "id": "public",
+      "name": "公共／教育"
+    },
+    {
+      "id": "infrastructure",
+      "name": "基础设施"
+    },
+    {
+      "id": "military",
+      "name": "军事"
+    },
+    {
+      "id": "mystic",
+      "name": "神秘"
+    },
+    {
+      "id": "decorations",
+      "name": "景观／装饰"
+    },
+    {
+      "id": "walls",
+      "name": "城墙／城门"
+    }
+  ],
+  "names": {
+    "residence": "云杉民居",
+    "tavern": "乡间酒馆",
+    "mayors_house": "市长官邸",
+    "builder": "工匠小屋",
+    "library": "学者图书馆",
+    "warehouse": "大型云杉仓库",
+    "guardtower": "边境守望塔",
+    "fountain": "村庄喷泉",
+    "beekeeper": "养蜂场",
+    "chickenherder": "养鸡场",
+    "composter": "堆肥工坊",
+    "cowboy": "牧牛场",
+    "farmer": "农夫小屋",
+    "fisherman": "渔夫小屋",
+    "florist": "花匠小屋",
+    "lumberjack": "伐木场",
+    "plantation": "种植园管理所",
+    "rabbithutch": "养兔场",
+    "shepherd": "牧羊场",
+    "swineherder": "养猪场",
+    "farm_nice": "精致农田",
+    "farm_simple": "简易农田",
+    "plantation_fields": "种植园田块",
+    "tree_farm": "云杉树场",
+    "alchemist": "炼金工坊",
+    "baker": "面包坊",
+    "blacksmith": "铁匠铺",
+    "concretemixer": "混凝土工坊",
+    "cookery": "食品工坊",
+    "crusher": "粉碎工坊",
+    "dyer": "染坊",
+    "fletcher": "制箭工坊",
+    "glassblower": "玻璃工坊",
+    "mechanic": "机械工坊",
+    "sawmill": "锯木厂",
+    "sifter": "筛选工坊",
+    "smeltery": "冶炼厂",
+    "stonemason": "石匠工坊",
+    "stonesmeltery": "石材烧制坊",
+    "deck": "平台",
+    "deliveryman": "运输站",
+    "dock": "码头",
+    "miner": "矿工小屋",
+    "mineshaft": "矿井通道",
+    "gapfill": "缝隙填充",
+    "pylon": "支柱",
+    "quarry": "采石场",
+    "rail": "铁路组件",
+    "railroad": "道路铁路组件",
+    "roads": "道路组件",
+    "camp": "营地",
+    "garden": "花园",
+    "market": "集市",
+    "park": "公园",
+    "shed": "景观棚屋",
+    "ship": "船舶景观",
+    "stall": "市场摊位",
+    "tree": "云杉景观树",
+    "cook": "餐厅",
+    "hospital": "医院",
+    "school": "学校",
+    "townhall": "市政厅",
+    "university": "大学",
+    "archery": "射箭场",
+    "barracks": "兵营",
+    "barrackstower": "兵营塔楼",
+    "combatacademy": "战斗学院",
+    "enchanter": "附魔师高塔",
+    "graveyard": "墓园",
+    "mysticalsite": "神秘遗址",
+    "netherworker": "下界工坊",
+    "wall": "城墙与城门",
+    "datapack_test": "上游材质测试"
+  },
+  "families": [
+    {
+      "pattern": "fundamentals/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "public"
+    },
+    {
+      "pattern": "education/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "public"
+    },
+    {
+      "pattern": "military/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "military"
+    },
+    {
+      "pattern": "mystic/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "mystic"
+    },
+    {
+      "pattern": "agriculture/(?:horticulture|husbandry)/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "agriculture"
+    },
+    {
+      "pattern": "craftsmanship/[^/]+/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "workshops"
+    },
+    {
+      "pattern": "decorations/housing/(?P<name>.+?)(?P<deck>_d)?(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "housing"
+    },
+    {
+      "pattern": "agriculture/fields/farm_nice/.*",
+      "family": "farm_nice",
+      "category": "agriculture"
+    },
+    {
+      "pattern": "agriculture/fields/farm_simple/.*",
+      "family": "farm_simple",
+      "category": "agriculture"
+    },
+    {
+      "pattern": "agriculture/fields/plantation/.*",
+      "family": "plantation_fields",
+      "category": "agriculture"
+    },
+    {
+      "pattern": "agriculture/fields/trees/.*",
+      "family": "tree_farm",
+      "category": "agriculture"
+    },
+    {
+      "pattern": "infrastructure/decks/pylon_.*",
+      "family": "pylon",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "infrastructure/decks/deck_.*(?P<tier>[1-5])",
+      "family": "deck",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "infrastructure/mineshafts/simplequarry.*",
+      "family": "quarry",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "infrastructure/mineshafts/.*",
+      "family": "mineshaft",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "infrastructure/misc/.*",
+      "family": "gapfill",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "infrastructure/(?P<name>rail|railroad|roads)/.*(?P<tier>[1-5])",
+      "family": "{name}",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "walls/.*(?P<tier>[1-5])",
+      "family": "wall",
+      "category": "walls"
+    },
+    {
+      "pattern": "decorations/markets/market.*",
+      "family": "market",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/markets/stall.*",
+      "family": "stall",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/misc/datapacktestone1",
+      "family": "datapack_test",
+      "category": "internal"
+    },
+    {
+      "pattern": "decorations/misc/spruce_tree.*",
+      "family": "tree",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/misc/shed.*",
+      "family": "shed",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/parks/(?P<name>garden|park)_.*",
+      "family": "{name}",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/statues/.*",
+      "family": "fountain",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/supplies/dock",
+      "family": "dock",
+      "category": "infrastructure"
+    },
+    {
+      "pattern": "decorations/supplies/(?:supply)?camp",
+      "family": "camp",
+      "category": "decorations"
+    },
+    {
+      "pattern": "decorations/supplies/.*ship",
+      "family": "ship",
+      "category": "decorations"
+    }
+  ],
+  "categoryOverrides": {
+    "residence": "housing",
+    "tavern": "housing",
+    "builder": "workshops",
+    "lumberjack": "agriculture",
+    "miner": "infrastructure",
+    "warehouse": "infrastructure",
+    "deliveryman": "infrastructure"
+  },
+  "legacyCategories": {
+    "housing": "HOUSING",
+    "agriculture": "PRODUCTION",
+    "workshops": "PRODUCTION",
+    "public": "CIVIC",
+    "infrastructure": "INFRASTRUCTURE",
+    "military": "DEFENCE",
+    "mystic": "CIVIC",
+    "decorations": "DECORATION",
+    "walls": "DEFENCE",
+    "internal": "DECORATION"
+  },
+  "growth": {
+    "categoryMinimum": {
+      "military": 4,
+      "mystic": 5
+    }
+  },
+  "legacyAliases": {
+    "fundamentals/residence1.blueprint": "keepitlevel_residence",
+    "fundamentals/builder1.blueprint": "keepitlevel_builder_lodge",
+    "craftsmanship/storage/warehouse1.blueprint": "keepitlevel_warehouse",
+    "military/guardtower1.blueprint": "keepitlevel_guardtower",
+    "education/library1.blueprint": "keepitlevel_library",
+    "decorations/statues/fountain_small.blueprint": "keepitlevel_fountain"
+  },
+  "markers": {
+    "structurize:blocksubstitution": "keep",
+    "structurize:blocksolidsubstitution": "foundation",
+    "structurize:blockfluidsubstitution": "environment-fluid",
+    "structurize:blocktagsubstitution": "anchor",
+    "minecolonies:decorationcontroller": "keep"
+  },
+  "direct": {
+    "minecraft:water_cauldron": { "block": "minecraft:cauldron" },
+    "minecraft:lava_cauldron": { "block": "minecraft:cauldron" },
+    "minecraft:powder_snow_cauldron": { "block": "minecraft:cauldron" },
+    "minecraft:dirt_path": {
+      "block": "minecraft:coarse_dirt"
+    },
+    "minecolonies:blockhutcitizen": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutbuilder": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutwarehouse": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutlibrary": {
+      "block": "minecraft:bookshelf"
+    },
+    "minecolonies:blockhutschool": {
+      "block": "minecraft:lectern"
+    },
+    "minecolonies:blockhutuniversity": {
+      "block": "minecraft:bookshelf"
+    },
+    "minecolonies:blockhutcomposter": {
+      "block": "minecraft:composter"
+    },
+    "minecolonies:blockhutfarmer": {
+      "block": "minecraft:composter"
+    },
+    "minecolonies:blockhutflorist": {
+      "block": "minecraft:flower_pot"
+    },
+    "minecolonies:blockhutplantation": {
+      "block": "minecraft:composter"
+    },
+    "minecolonies:blockhutbeekeeper": {
+      "block": "minecraft:beehive"
+    },
+    "minecolonies:blockhutchickenherder": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutcowboy": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutfisherman": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutrabbithutch": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutshepherd": {
+      "block": "minecraft:loom"
+    },
+    "minecolonies:blockhutswineherder": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutfletcher": {
+      "block": "minecraft:fletching_table"
+    },
+    "minecolonies:blockhutsawmill": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutalchemist": {
+      "block": "minecraft:brewing_stand"
+    },
+    "minecolonies:blockhutbaker": {
+      "block": "minecraft:smoker"
+    },
+    "minecolonies:blockhutconcretemixer": {
+      "block": "minecraft:stonecutter"
+    },
+    "minecolonies:blockhutkitchen": {
+      "block": "minecraft:smoker"
+    },
+    "minecolonies:blockhutdyer": {
+      "block": "minecraft:loom"
+    },
+    "minecolonies:blockhutglassblower": {
+      "block": "minecraft:furnace"
+    },
+    "minecolonies:blockhutcrusher": {
+      "block": "minecraft:stonecutter"
+    },
+    "minecolonies:blockhutsifter": {
+      "block": "minecraft:composter"
+    },
+    "minecolonies:blockhutstonemason": {
+      "block": "minecraft:stonecutter"
+    },
+    "minecolonies:blockhutstonesmeltery": {
+      "block": "minecraft:furnace"
+    },
+    "minecolonies:blockhutblacksmith": {
+      "block": "minecraft:smithing_table"
+    },
+    "minecolonies:blockhutmechanic": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutsmeltery": {
+      "block": "minecraft:blast_furnace"
+    },
+    "minecolonies:blockhutdeliveryman": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhutcook": {
+      "block": "minecraft:smoker"
+    },
+    "minecolonies:blockhuthospital": {
+      "block": "minecraft:brewing_stand"
+    },
+    "minecolonies:blockhutlumberjack": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutminer": {
+      "block": "minecraft:stonecutter"
+    },
+    "minecolonies:blockhuttavern": {
+      "block": "minecraft:barrel"
+    },
+    "minecolonies:blockhuttownhall": {
+      "block": "minecraft:lectern"
+    },
+    "minecolonies:blockhutarchery": {
+      "block": "minecraft:fletching_table"
+    },
+    "minecolonies:blockhutbarracks": {
+      "block": "minecraft:smithing_table"
+    },
+    "minecolonies:blockhutbarrackstower": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutcombatacademy": {
+      "block": "minecraft:smithing_table"
+    },
+    "minecolonies:blockhutguardtower": {
+      "block": "minecraft:crafting_table"
+    },
+    "minecolonies:blockhutenchanter": {
+      "block": "minecraft:enchanting_table"
+    },
+    "minecolonies:blockhutgraveyard": {
+      "block": "minecraft:chiseled_stone_bricks"
+    },
+    "minecolonies:blockhutmysticalsite": {
+      "block": "minecraft:chiseled_stone_bricks"
+    },
+    "minecolonies:blockhutnetherworker": {
+      "block": "minecraft:smithing_table"
+    },
+    "minecolonies:blockminecoloniesrack": {
+      "block": "minecraft:barrel",
+      "preserve": [
+        "facing"
+      ]
+    },
+    "minecolonies:barrel_block": {
+      "block": "minecraft:composter",
+      "preserve": []
+    },
+    "minecolonies:composted_dirt": {
+      "block": "minecraft:dirt",
+      "preserve": []
+    },
+    "minecolonies:blockstash": {
+      "block": "minecraft:barrel",
+      "preserve": []
+    },
+    "minecolonies:blockpostbox": {
+      "block": "minecraft:barrel",
+      "preserve": []
+    },
+    "minecolonies:blockminecoloniesnamedgrave": {
+      "block": "minecraft:chiseled_stone_bricks",
+      "preserve": []
+    },
+    "minecolonies:blockhutplantationfield": {
+      "block": "minecraft:composter",
+      "preserve": []
+    },
+    "minecolonies:simplequarry": {
+      "block": "minecraft:stonecutter",
+      "preserve": []
+    },
+    "domum_ornamentum:architectscutter": {
+      "block": "minecraft:stonecutter",
+      "preserve": [
+        "facing"
+      ]
+    },
+    "domum_ornamentum:blockbarreldeco_onside": {
+      "block": "minecraft:barrel",
+      "preserve": [
+        "facing"
+      ]
+    },
+    "domum_ornamentum:blockbarreldeco_standing": {
+      "block": "minecraft:barrel",
+      "preserve": [
+        "facing"
+      ]
+    },
+    "domum_ornamentum:purple_cobblestone_extra": {
+      "block": "minecraft:purple_terracotta",
+      "preserve": []
+    },
+    "domum_ornamentum:paper_extra": {
+      "block": "minecraft:white_wool",
+      "preserve": []
+    },
+    "domum_ornamentum:fancy_light": {
+      "block": "minecraft:glowstone"
+    },
+    "domum_ornamentum:center_light": {
+      "block": "minecraft:glowstone"
+    },
+    "domum_ornamentum:crossed_light": {
+      "block": "minecraft:glowstone"
+    }
+  },
+  "shapes": {
+    "domum_ornamentum:vanilla_stairs_compat": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:dark_brick_stair": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:light_brick_stair": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:shingle": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:shingle_flat": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:shingle_flat_lower": {
+      "variant": "stairs",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "half",
+        "shape",
+        "facing"
+      ]
+    },
+    "domum_ornamentum:vanilla_slab_compat": {
+      "variant": "slab",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "type"
+      ]
+    },
+    "domum_ornamentum:shingle_slab": {
+      "variant": "slab",
+      "textureKeys": [
+        "minecraft:block/dark_oak_planks",
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [],
+      "slabFromShape": true
+    },
+    "domum_ornamentum:light_brick": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:dark_brick": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:plain": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:double_crossed": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:one_crossed_lr": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:one_crossed_rl": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:framed": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:up_gated": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:horizontal_plain": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:blockpillar": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:blockypillar": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:squarepillar": {
+      "variant": "block",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    },
+    "domum_ornamentum:vanilla_wall_compat": {
+      "variant": "wall",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "east",
+        "west",
+        "north",
+        "south",
+        "up"
+      ]
+    },
+    "domum_ornamentum:vanilla_fence_compat": {
+      "variant": "fence",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "east",
+        "west",
+        "north",
+        "south"
+      ]
+    },
+    "domum_ornamentum:blockpaperwall": {
+      "variant": "fence",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "east",
+        "west",
+        "north",
+        "south"
+      ]
+    },
+    "domum_ornamentum:vanilla_fence_gate_compat": {
+      "variant": "gate",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "in_wall",
+        "open"
+      ]
+    },
+    "domum_ornamentum:vanilla_doors_compat": {
+      "variant": "door",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "half",
+        "hinge",
+        "open"
+      ]
+    },
+    "domum_ornamentum:fancy_door": {
+      "variant": "door",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "half",
+        "hinge",
+        "open"
+      ]
+    },
+    "domum_ornamentum:vanilla_trapdoors_compat": {
+      "variant": "trapdoor",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "half",
+        "open"
+      ]
+    },
+    "domum_ornamentum:fancy_trapdoors": {
+      "variant": "trapdoor",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "half",
+        "open"
+      ]
+    },
+    "domum_ornamentum:panel": {
+      "variant": "trapdoor",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": [
+        "facing",
+        "half",
+        "open"
+      ]
+    },
+    "domum_ornamentum:post": {
+      "variant": "fence",
+      "textureKeys": [
+        "minecraft:block/oak_planks"
+      ],
+      "preserve": []
+    }
+  },
+  "materials": {
+    "minecraft:stone_bricks": {
+      "block": "minecraft:stone_bricks",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:deepslate_bricks": {
+      "block": "minecraft:deepslate_bricks",
+      "stairs": "minecraft:deepslate_brick_stairs",
+      "slab": "minecraft:deepslate_brick_slab",
+      "wall": "minecraft:deepslate_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:nether_bricks": {
+      "block": "minecraft:nether_bricks",
+      "stairs": "minecraft:nether_brick_stairs",
+      "slab": "minecraft:nether_brick_slab",
+      "wall": "minecraft:nether_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:prismarine_bricks": {
+      "block": "minecraft:prismarine_bricks",
+      "stairs": "minecraft:prismarine_brick_stairs",
+      "slab": "minecraft:prismarine_brick_slab",
+      "wall": "minecraft:prismarine_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:prismarine": {
+      "block": "minecraft:prismarine",
+      "stairs": "minecraft:prismarine_stairs",
+      "slab": "minecraft:prismarine_slab",
+      "wall": "minecraft:prismarine_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:dark_prismarine": {
+      "block": "minecraft:dark_prismarine",
+      "stairs": "minecraft:dark_prismarine_stairs",
+      "slab": "minecraft:dark_prismarine_slab",
+      "wall": "minecraft:prismarine_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:end_stone_bricks": {
+      "block": "minecraft:end_stone_bricks",
+      "stairs": "minecraft:end_stone_brick_stairs",
+      "slab": "minecraft:end_stone_brick_slab",
+      "wall": "minecraft:end_stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:stone": {
+      "block": "minecraft:stone",
+      "stairs": "minecraft:stone_stairs",
+      "slab": "minecraft:stone_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:mud_bricks": {
+      "block": "minecraft:mud_bricks",
+      "stairs": "minecraft:mud_brick_stairs",
+      "slab": "minecraft:mud_brick_slab",
+      "wall": "minecraft:mud_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:quartz_block": {
+      "block": "minecraft:quartz_block",
+      "stairs": "minecraft:quartz_stairs",
+      "slab": "minecraft:quartz_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:polished_deepslate": {
+      "block": "minecraft:polished_deepslate",
+      "stairs": "minecraft:polished_deepslate_stairs",
+      "slab": "minecraft:polished_deepslate_slab",
+      "wall": "minecraft:polished_deepslate_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:sandstone": {
+      "block": "minecraft:sandstone",
+      "stairs": "minecraft:sandstone_stairs",
+      "slab": "minecraft:sandstone_slab",
+      "wall": "minecraft:sandstone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:smooth_sandstone": {
+      "block": "minecraft:smooth_sandstone",
+      "stairs": "minecraft:smooth_sandstone_stairs",
+      "slab": "minecraft:smooth_sandstone_slab",
+      "wall": "minecraft:sandstone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:cobblestone": {
+      "block": "minecraft:cobblestone",
+      "stairs": "minecraft:cobblestone_stairs",
+      "slab": "minecraft:cobblestone_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:cobbled_deepslate": {
+      "block": "minecraft:cobbled_deepslate",
+      "stairs": "minecraft:cobbled_deepslate_stairs",
+      "slab": "minecraft:cobbled_deepslate_slab",
+      "wall": "minecraft:cobbled_deepslate_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:cut_copper": {
+      "block": "minecraft:cut_copper",
+      "stairs": "minecraft:cut_copper_stairs",
+      "slab": "minecraft:cut_copper_slab",
+      "wall": "minecraft:brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:waxed_cut_copper": {
+      "block": "minecraft:waxed_cut_copper",
+      "stairs": "minecraft:waxed_cut_copper_stairs",
+      "slab": "minecraft:waxed_cut_copper_slab",
+      "wall": "minecraft:brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:polished_granite": {
+      "block": "minecraft:polished_granite",
+      "stairs": "minecraft:polished_granite_stairs",
+      "slab": "minecraft:polished_granite_slab",
+      "wall": "minecraft:granite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:polished_diorite": {
+      "block": "minecraft:polished_diorite",
+      "stairs": "minecraft:polished_diorite_stairs",
+      "slab": "minecraft:polished_diorite_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:smooth_quartz": {
+      "block": "minecraft:smooth_quartz",
+      "stairs": "minecraft:smooth_quartz_stairs",
+      "slab": "minecraft:smooth_quartz_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:spruce_planks": {
+      "block": "minecraft:spruce_planks",
+      "stairs": "minecraft:spruce_stairs",
+      "slab": "minecraft:spruce_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:spruce_wood": {
+      "block": "minecraft:spruce_wood",
+      "stairs": "minecraft:spruce_stairs",
+      "slab": "minecraft:spruce_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:stripped_spruce_wood": {
+      "block": "minecraft:stripped_spruce_wood",
+      "stairs": "minecraft:spruce_stairs",
+      "slab": "minecraft:spruce_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:netherrack": {
+      "block": "minecraft:netherrack",
+      "stairs": "minecraft:nether_brick_stairs",
+      "slab": "minecraft:nether_brick_slab",
+      "wall": "minecraft:nether_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:end_stone": {
+      "block": "minecraft:end_stone",
+      "stairs": "minecraft:end_stone_brick_stairs",
+      "slab": "minecraft:end_stone_brick_slab",
+      "wall": "minecraft:end_stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:chiseled_nether_bricks": {
+      "block": "minecraft:chiseled_nether_bricks",
+      "stairs": "minecraft:nether_brick_stairs",
+      "slab": "minecraft:nether_brick_slab",
+      "wall": "minecraft:nether_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:chiseled_quartz_block": {
+      "block": "minecraft:chiseled_quartz_block",
+      "stairs": "minecraft:quartz_stairs",
+      "slab": "minecraft:quartz_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:smooth_stone": {
+      "block": "minecraft:smooth_stone",
+      "stairs": "minecraft:stone_stairs",
+      "slab": "minecraft:stone_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:copper_block": {
+      "block": "minecraft:copper_block",
+      "stairs": "minecraft:cut_copper_stairs",
+      "slab": "minecraft:cut_copper_slab",
+      "wall": "minecraft:brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:waxed_copper_block": {
+      "block": "minecraft:waxed_copper_block",
+      "stairs": "minecraft:waxed_cut_copper_stairs",
+      "slab": "minecraft:waxed_cut_copper_slab",
+      "wall": "minecraft:brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:raw_copper_block": {
+      "block": "minecraft:raw_copper_block",
+      "stairs": "minecraft:cut_copper_stairs",
+      "slab": "minecraft:cut_copper_slab",
+      "wall": "minecraft:brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:raw_iron_block": {
+      "block": "minecraft:raw_iron_block",
+      "stairs": "minecraft:stone_stairs",
+      "slab": "minecraft:stone_slab",
+      "wall": "minecraft:cobblestone_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:glass": {
+      "block": "minecraft:glass",
+      "stairs": "minecraft:quartz_stairs",
+      "slab": "minecraft:quartz_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:glowstone": {
+      "block": "minecraft:glowstone",
+      "stairs": "minecraft:quartz_stairs",
+      "slab": "minecraft:quartz_slab",
+      "wall": "minecraft:diorite_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:white_wool": {
+      "block": "minecraft:white_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:white_concrete": {
+      "block": "minecraft:white_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:orange_wool": {
+      "block": "minecraft:orange_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:orange_concrete": {
+      "block": "minecraft:orange_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:magenta_wool": {
+      "block": "minecraft:magenta_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:magenta_concrete": {
+      "block": "minecraft:magenta_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:light_blue_wool": {
+      "block": "minecraft:light_blue_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:light_blue_concrete": {
+      "block": "minecraft:light_blue_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:yellow_wool": {
+      "block": "minecraft:yellow_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:yellow_concrete": {
+      "block": "minecraft:yellow_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:lime_wool": {
+      "block": "minecraft:lime_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:lime_concrete": {
+      "block": "minecraft:lime_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:pink_wool": {
+      "block": "minecraft:pink_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:pink_concrete": {
+      "block": "minecraft:pink_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:gray_wool": {
+      "block": "minecraft:gray_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:gray_concrete": {
+      "block": "minecraft:gray_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:light_gray_wool": {
+      "block": "minecraft:light_gray_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:light_gray_concrete": {
+      "block": "minecraft:light_gray_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:cyan_wool": {
+      "block": "minecraft:cyan_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:cyan_concrete": {
+      "block": "minecraft:cyan_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:purple_wool": {
+      "block": "minecraft:purple_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:purple_concrete": {
+      "block": "minecraft:purple_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:blue_wool": {
+      "block": "minecraft:blue_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:blue_concrete": {
+      "block": "minecraft:blue_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:brown_wool": {
+      "block": "minecraft:brown_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:brown_concrete": {
+      "block": "minecraft:brown_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:green_wool": {
+      "block": "minecraft:green_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:green_concrete": {
+      "block": "minecraft:green_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:red_wool": {
+      "block": "minecraft:red_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:red_concrete": {
+      "block": "minecraft:red_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:black_wool": {
+      "block": "minecraft:black_wool",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "minecraft:black_concrete": {
+      "block": "minecraft:black_concrete",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:purple_cobblestone_extra": {
+      "block": "minecraft:purple_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:cyan_brick_extra": {
+      "block": "minecraft:cyan_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:brown_brick_extra": {
+      "block": "minecraft:brown_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:orange_brick_extra": {
+      "block": "minecraft:orange_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:red_brick_extra": {
+      "block": "minecraft:red_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    },
+    "domum_ornamentum:lime_brick_extra": {
+      "block": "minecraft:lime_terracotta",
+      "stairs": "minecraft:stone_brick_stairs",
+      "slab": "minecraft:stone_brick_slab",
+      "wall": "minecraft:stone_brick_wall",
+      "door": "minecraft:spruce_door",
+      "trapdoor": "minecraft:spruce_trapdoor",
+      "fence": "minecraft:spruce_fence",
+      "gate": "minecraft:spruce_fence_gate"
+    }
+  },
+  "normalizedProperties": {
+    "waterlogged": "false",
+    "honey_level": "0",
+    "level": "0",
+    "age": "0"
+  },
+  "blockedVanilla": [
+    "minecraft:nether_portal",
+    "minecraft:spawner",
+    "minecraft:bedrock",
+    "minecraft:barrier",
+    "minecraft:command_block",
+    "minecraft:farmland"
+  ],
+  "levelOverrides": {}
+}

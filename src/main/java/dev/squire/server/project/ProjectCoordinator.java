@@ -64,7 +64,7 @@ public final class ProjectCoordinator {
 	private final BlueprintManager blueprints;
 	private final PlayerNotifier notifier;
 	private final ProjectStore store;
-	private final java.util.function.Function<UUID, AvatarEntity> avatarOfOwner;
+	private final java.util.function.Function<UUID, AvatarEntity> avatarOfAgent;
 	private final java.util.function.Function<UUID, dev.squire.server.profile.SquireProfile>
 		profileOfAgent;
 	private final dev.squire.server.world.ProtectionAdapter protection;
@@ -75,7 +75,7 @@ public final class ProjectCoordinator {
 	public ProjectCoordinator(RuntimeServices services, TaskScheduler scheduler,
 			GoalCoordinator goals, BlueprintManager blueprints, PlayerNotifier notifier,
 			ProjectStore store,
-			java.util.function.Function<UUID, AvatarEntity> avatarOfOwner,
+			java.util.function.Function<UUID, AvatarEntity> avatarOfAgent,
 			java.util.function.Function<UUID, dev.squire.server.profile.SquireProfile>
 				profileOfAgent,
 			dev.squire.server.world.ProtectionAdapter protection) {
@@ -85,7 +85,7 @@ public final class ProjectCoordinator {
 		this.blueprints = blueprints;
 		this.notifier = notifier;
 		this.store = store;
-		this.avatarOfOwner = avatarOfOwner;
+		this.avatarOfAgent = avatarOfAgent;
 		this.profileOfAgent = profileOfAgent;
 		this.protection = protection;
 	}
@@ -112,14 +112,37 @@ public final class ProjectCoordinator {
 	}
 
 	public void remove(UUID projectId) {
+		Project retained = projects.get(projectId);
+		if (retained != null && retained.state() == Project.State.FORCE_CANCELLED) return;
+		if (retained != null && (!retained.reservedMaterials().isEmpty() || !retained.pendingMutation().isEmpty())) return;
 		if (projects.remove(projectId) != null) {
 			save();
 		}
 	}
 
 	public void save() {
+		projects.values().forEach(this::captureProgress);
 		store.save(projects.values());
 		supplyDirty = false;
+	}
+	private void captureProgress(Project project) {
+		if (project.state() == Project.State.FORCE_CANCELLED) return;
+		blueprints.placement(project.placementId).ifPresent(p -> {
+			if (p.committed() && p.snapshot() != null) project.constructionProgress(dev.squire.server.blueprint.ConstructionSnapshotCodec.writeProgress(p.snapshot()));
+		});
+	}
+	/** Persist intent before a world mutation; interrupted intents are quarantined on load. */
+	public synchronized boolean beginMutation(UUID id, String operation) {
+		Project project = projects.get(id);
+		if (project == null || project.state() == Project.State.FORCE_CANCELLED || !project.pendingMutation().isEmpty()) return false;
+		project.pendingMutation(operation); captureProgress(project);
+		return store.save(projects.values());
+	}
+	public synchronized boolean completeMutation(UUID id) {
+		Project project = projects.get(id); if (project == null || project.state() == Project.State.FORCE_CANCELLED) return false;
+		String pending = project.pendingMutation(); project.pendingMutation(""); captureProgress(project);
+		if (store.save(projects.values())) return true;
+		project.pendingMutation(pending); project.setState(Project.State.PAUSED); return false;
 	}
 
 	/** Executor-facing atomic debit from a project's durable real-item escrow. */
@@ -138,11 +161,40 @@ public final class ProjectCoordinator {
 		return project == null ? 0 : project.reservedCount(itemId);
 	}
 
+	/** Read-only escrow snapshot used by the blueprint preview for this placement. */
+	public Map<Identifier, Integer> reservedForPlacement(UUID placementId) {
+		if (placementId == null) return Map.of();
+		return projects.values().stream()
+			.filter(Project::active)
+			.filter(project -> placementId.equals(project.placementId))
+			.findFirst().map(Project::reservedMaterials).orElse(Map.of());
+	}
+
 	/** 启动时恢复。结束的工程不留，否则档案只增不减。 */
 	public int load() {
 		projects.clear();
 		for (Project project : store.load()) {
-			if (project.active()) {
+			if (project.state() == Project.State.FORCE_CANCELLED) {
+				projects.put(project.projectId, project);
+				blueprints.remove(project.placementId);
+				continue; // Missing geometry must never turn an abandoned project back into PAUSED.
+			}
+			var placement = blueprints.placement(project.placementId).orElse(null);
+			if (placement != null && project.constructionProgress() == null
+					&& (placement.snapshot() == null || placement.snapshot().costPlan() == null)) placement.markLegacyFullPrice();
+			if (project.constructionProgress() != null && (placement == null || placement.snapshot() == null)) {
+				project.pendingMutation("RECOVERY_GEOMETRY_MISSING"); project.setState(Project.State.PAUSED);
+			}
+			if (project.constructionProgress() != null && placement != null && placement.snapshot() != null) {
+				try {
+					var geometry = dev.squire.server.blueprint.ConstructionSnapshotCodec.writeGeometry(placement.snapshot());
+					dev.squire.server.blueprint.ConstructionSnapshotCodec.mergeProgress(geometry, project.constructionProgress());
+					placement.snapshot(dev.squire.server.blueprint.ConstructionSnapshotCodec.read(geometry), true);
+				} catch (RuntimeException bad) {
+					project.pendingMutation("RECOVERY_CHECKPOINT_MISMATCH"); project.setState(Project.State.PAUSED);
+				}
+			}
+			if (project.active() || !project.reservedMaterials().isEmpty()) {
 				projects.put(project.projectId, project);
 			}
 		}
@@ -158,6 +210,23 @@ public final class ProjectCoordinator {
 		}
 		boolean dirty = false;
 		for (Project project : List.copyOf(projects.values())) {
+			if (project.state() == Project.State.FORCE_CANCELLED) {
+				stopAbandonedWork(project);
+				continue;
+			}
+			if (project.active() && project.pendingMutation().isEmpty()
+					&& dev.squire.server.blueprint.BuildingContentPolicy.current().retired(project.blueprintId)) {
+				var retiring = blueprints.placement(project.placementId).map(BlueprintPlacement::snapshot).map(Blueprint.Resolved::access).orElse(null);
+				if (retiring == null || !retiring.cancelRequested) {
+					cancel(project); dirty = true; continue;
+				}
+			}
+			if ((project.state() == Project.State.CANCELLED || project.state() == Project.State.DONE)
+					&& !project.reservedMaterials().isEmpty()) {
+				dirty |= returnSupply(project) > 0;
+				if (project.reservedMaterials().isEmpty()) { projects.remove(project.projectId); dirty = true; }
+				continue;
+			}
 			if (project.state() != Project.State.RUNNING) {
 				continue;
 			}
@@ -175,20 +244,38 @@ public final class ProjectCoordinator {
 
 	/** @return true 表示状态变了、值得落盘 */
 	private boolean advance(Project project, long tick) {
+		if (!project.pendingMutation().isEmpty()) { project.setState(Project.State.PAUSED); return true; }
+		var oldPlacement = blueprints.placement(project.placementId).orElse(null);
+		var access = blueprints.placement(project.placementId).flatMap(blueprints::resolve).map(Blueprint.Resolved::access).orElse(null);
+		if (oldPlacement != null && !oldPlacement.committed() && access != null
+				&& (!access.valid() || access.temporaryCount() > 0 || access.excavationCount() > 0)) {
+			pause(project);
+			project.currentStage().ifPresent(s -> s.block("旧工程新增临时通道需要确认，请点击继续查看范围。"));
+			return true;
+		}
+		if (access != null && access.cancelRequested && access.placed.isEmpty()) {
+			returnSupply(project);
+			if (!project.pendingMutation().isEmpty()) return true;
+			project.setState(Project.State.CANCELLED);
+			blueprints.remove(project.placementId);
+			if (project.reservedMaterials().isEmpty()) projects.remove(project.projectId);
+			return true;
+		}
 		Stage stage = project.currentStage().orElse(null);
 		if (stage == null) {
 			int returned = returnSupply(project);
+			if (!project.pendingMutation().isEmpty()) return true;
 			project.setState(Project.State.DONE);
 			blueprints.placement(project.placementId).ifPresent(placement ->
 				placement.setState(BlueprintPlacement.State.DONE));
 			blueprints.save();
-			AvatarEntity finishedAvatar = avatarOfOwner.apply(project.ownerId);
+			AvatarEntity finishedAvatar = avatarFor(project);
 			if (finishedAvatar != null) finishedAvatar.setActivityDetail(null);
 			notifier.send(project.ownerId, "[Squire] 「" + project.name + "」全部完成了。"
 				+ (returned > 0 ? "剩余 " + returned + " 件工程物资已返还。" : ""));
 			return true;
 		}
-		AvatarEntity avatar = avatarOfOwner.apply(project.ownerId);
+		AvatarEntity avatar = avatarFor(project);
 		if (avatar == null) {
 			return blockOnce(stage, Stage.BlockerCode.AGENT_MISSING,
 				"没有可用的侍从。请右键召集铃让他回来；首次召唤方法可按 K 查看。");
@@ -199,12 +286,42 @@ public final class ProjectCoordinator {
 				"工地在 " + project.dimensionId + "，他不在那个维度。");
 		}
 		stage.assignTo(avatar.agentId());
+		if (dev.squire.server.blueprint.TerrainLeveling.parse(project.blueprintId).isPresent()) {
+			var terrain = blueprints.placement(project.placementId).flatMap(blueprints::resolve).orElse(null);
+			String blocked = avatar.profile() == null || avatar.profile().profession.profession()
+				!= dev.squire.server.profession.SquireProfession.ENGINEER ? "负责平地的侍从已不是工程师" : "";
+			if (terrain == null) blocked = "平地快照不可用";
+			else if (blocked.isEmpty() && (stage.state() != Stage.State.RUNNING || tick % 20 == 0))
+				blocked = dev.squire.server.blueprint.TerrainLeveling.liveBlocker((ServerWorld) avatar.getWorld(), terrain);
+			if (blocked.isEmpty() && terrain != null && (stage.state() != Stage.State.RUNNING || tick % 20 == 0)) {
+				var owner = services.requester(project.ownerId);
+				if (owner != null && owner.getWorld() == avatar.getWorld())
+					blocked = dev.squire.server.runtime.TerrainLevelingService.permissionIssue(owner, terrain);
+			}
+			if (!blocked.isEmpty()) {
+				pause(project);
+				return blockOnce(stage, Stage.BlockerCode.SITE_UNSAFE, blocked);
+			}
+		}
 
 		if (stage.state() == Stage.State.RUNNING) {
 			return pollRunning(project, stage, tick);
 		}
 		// PENDING 或 BLOCKED：两者都是「再试一次看能不能往前走」。
 		return startStage(project, stage, avatar, tick);
+	}
+
+	/** 旧工程优先从蓝图摆放补齐绑定，之后始终按永久 agentId 找身体。 */
+	private AvatarEntity avatarFor(Project project) {
+		if (project.agentId() == null) {
+			blueprints.placement(project.placementId)
+				.ifPresent(site -> project.bindAgentIfMissing(site.agentId));
+			if (project.agentId() == null) {
+				project.currentStage().map(Stage::assignedAgentId)
+					.ifPresent(project::bindAgentIfMissing);
+			}
+		}
+		return project.agentId() == null ? null : avatarOfAgent.apply(project.agentId());
 	}
 
 	private boolean blockOnce(Stage stage, String reason) {
@@ -235,7 +352,7 @@ public final class ProjectCoordinator {
 		}
 		return switch (stage.kind) {
 			case FULFIL_MATERIALS -> fulfil(project, stage, avatar, world, resolved);
-			case HAUL -> haul(project, stage, avatar, world, resolved);
+			case HAUL -> prepareSite(project, stage, avatar, world, resolved);
 			case EXCAVATE -> excavate(project, stage, avatar, world, resolved, tick);
 			case BUILD -> build(project, stage, avatar, world, resolved, tick);
 			case LIGHT -> light(project, stage, avatar, world, resolved, tick);
@@ -254,7 +371,7 @@ public final class ProjectCoordinator {
 			return completeStage(project, stage, "真实材料已全部预留。");
 		}
 		StringBuilder reason = new StringBuilder(
-			"工程物资池不足；请补齐后点击“补料并重试”：");
+			"工程物资池不足；请把材料放进你或负责施工的侍从背包，再点击“存入本批材料”：");
 		for (Map.Entry<Identifier, Integer> entry : missing.entrySet()) {
 			reason.append("\n  · 还差 ").append(entry.getValue()).append(" 个 ")
 				.append(services.itemDisplayName(entry.getKey()));
@@ -297,20 +414,36 @@ public final class ProjectCoordinator {
 	}
 
 	/**
-	 * 交料：等玩家把材料交给伙伴。
-	 *
-	 * <p>只有<b>保守</b>档才有这一步。它是工程里唯一一个等人的阶段，也正是
-	 * {@code GoalCoordinator} 表达不了的那种阻塞点：没有任务在跑，也没有失败。
-	 * 其余档位下材料已经在他手上了，这一步直接跳过。</p>
+	 * 场地准备。HAUL 是存档里的旧稳定枚举名；材料现在会在确认开工时直接预留，
+	 * 因而这个槽位用于先封堵地下水、补齐一层承重基础，再让掘进清理主体空间。
 	 */
-	private boolean haul(Project project, Stage stage, AvatarEntity avatar,
+	private boolean prepareSite(Project project, Stage stage, AvatarEntity avatar,
 			ServerWorld world, Blueprint.Resolved resolved) {
-		return skipStage(project, stage,
-			"材料已在开工时转入工程物资池，无需重复交料。");
+		List<Blueprint.Cell> supports = BlueprintManager.automaticSiteSupports(world,
+			resolved);
+		if (supports.isEmpty()) {
+			return skipStage(project, stage, "场地平整，无需补地基。");
+		}
+		if (busy(avatar)) {
+			return false;
+		}
+		Map<String, Object> params = Map.of(
+			BlueprintBuildExecutor.PARAM_PLACEMENT_ID, project.placementId.toString(),
+			BlueprintBuildExecutor.PARAM_PROJECT_ID, project.projectId.toString(),
+			BlueprintBuildExecutor.PARAM_SITE_PREPARATION, true);
+		Task task = new Task(avatar.agentId(), project.ownerId,
+			BlueprintBuildExecutor.TYPE, TaskPriority.P3_USER_TASK,
+			"自动处理场地（" + supports.size() + " 格）", null,
+			BlueprintBuildExecutor.sitePrepared(services, project.placementId),
+			400L + 40L * supports.size(), RetryPolicy.DEFAULT, true, "c3", params);
+		return runStage(project, stage, avatar, task,
+			"开始按地形采样材料自动补齐承重基础（" + supports.size() + " 格）。");
 	}
 
 	private boolean excavate(Project project, Stage stage, AvatarEntity avatar,
 			ServerWorld world, Blueprint.Resolved resolved, long tick) {
+		if (resolved.access() != null && resolved.access().excavationCount() > 0)
+			return skipStage(project, stage, "开挖已纳入施工通路，将边挖边推进。");
 		List<net.minecraft.util.math.BlockPos> toClear =
 			BlueprintManager.pendingClear(world, resolved);
 		if (toClear.isEmpty()) {
@@ -318,20 +451,18 @@ public final class ProjectCoordinator {
 		}
 		// 先问清楚他手上能不能挖动。提交一个注定卡到超时的任务，
 		// 玩家看到的只会是「他突然不干活了」，而不是「他没镐」。
-		var firstBlock = world.getBlockState(toClear.get(0));
-		var toolSlot = avatar.items().bestToolSlot(firstBlock);
-		if (!dev.squire.server.body.proxy.FakePlayerInteractionProxy.canHarvest(
-				firstBlock, avatar.items().stackAt(toolSlot))) {
-			return blockOnce(stage, Stage.BlockerCode.TOOL_MISSING,
-				"他手上没有能挖动"
-				+ firstBlock.getBlock().getName().getString()
-				+ "的工具。给他一把镐（丢在他脚边就行）。");
+		for (var pos : toClear) {
+			var state = world.getBlockState(pos);
+			var slot = avatar.items().bestToolSlot(state);
+			if (!dev.squire.server.body.proxy.FakePlayerInteractionProxy.canHarvest(state, avatar.items().stackAt(slot)))
+				return blockOnce(stage, Stage.BlockerCode.TOOL_MISSING,
+					dev.squire.server.body.proxy.FakePlayerInteractionProxy.missingHarvestToolMessage(state));
 		}
 		if (busy(avatar)) {
 			return false;
 		}
 		Map<String, Object> params = Map.of(ExcavateExecutor.PARAM_PLACEMENT_ID,
-			project.placementId.toString());
+			project.placementId.toString(), BlueprintBuildExecutor.PARAM_PROJECT_ID, project.projectId.toString());
 		Task task = new Task(avatar.agentId(), project.ownerId, ExcavateExecutor.TYPE,
 			TaskPriority.P3_USER_TASK, "挖出 " + toClear.size() + " 格负空间", null,
 			ExcavateExecutor.blueprintCleared(services, project.placementId),
@@ -342,8 +473,9 @@ public final class ProjectCoordinator {
 
 	private boolean build(Project project, Stage stage, AvatarEntity avatar,
 			ServerWorld world, Blueprint.Resolved resolved, long tick) {
-		List<Blueprint.Cell> toPlace = BlueprintManager.pendingPlacements(world, resolved);
-		if (toPlace.isEmpty()) {
+		List<Blueprint.Cell> toPlace = BlueprintManager.pendingProjectPlacements(world,
+			resolved);
+		if (toPlace.isEmpty() && (resolved.access() == null || resolved.access().work.isEmpty())) {
 			return skipStage(project, stage, "已经盖好了。");
 		}
 		if (busy(avatar)) {
@@ -355,8 +487,10 @@ public final class ProjectCoordinator {
 		Task task = new Task(avatar.agentId(), project.ownerId,
 			BlueprintBuildExecutor.TYPE, TaskPriority.P3_USER_TASK,
 			"按蓝图盖 " + toPlace.size() + " 格", null,
-			BlueprintBuildExecutor.blueprintBuilt(services, project.placementId),
-			600L + 40L * toPlace.size(), RetryPolicy.DEFAULT, true, "c3", params);
+			BlueprintBuildExecutor.blueprintBuilt(services, project.placementId, true),
+			600L + (resolved.access() == null || resolved.access().work.isEmpty() ? 40L : 80L) * toPlace.size()
+				+ (resolved.access() == null ? 0L : 200L * resolved.access().temporaryCount() + 80L * resolved.access().excavationCount()),
+			RetryPolicy.DEFAULT, true, "c3", params);
 		return runStage(project, stage, avatar, task,
 			"开始施工（" + toPlace.size() + " 格）。");
 	}
@@ -370,7 +504,7 @@ public final class ProjectCoordinator {
 		// 提交一个注定 INSUFFICIENT_ITEM 的任务，只会把整个工程拖停。
 		if (project.reservedCount(Torchlight.TORCH) <= 0) {
 			return blockOnce(stage, Stage.BlockerCode.MATERIALS_MISSING,
-				"工程物资池里没有火把。请补齐后点击“补料并重试”，"
+				"工程物资池里没有火把。请补齐后点击“存入本批材料”，"
 				+ "或者你自己把这儿点亮。");
 		}
 		if (busy(avatar)) {
@@ -389,7 +523,17 @@ public final class ProjectCoordinator {
 	/** 验收读真实世界：建筑立着、而且不黑。 */
 	private boolean verify(Project project, Stage stage, AvatarEntity avatar,
 			ServerWorld world, Blueprint.Resolved resolved) {
-		List<Blueprint.Cell> missing = BlueprintManager.pendingPlacements(world, resolved)
+		if (dev.squire.server.blueprint.TerrainLeveling.isTerrain(resolved)) {
+			var fillPositions = resolved.toPlace().stream().map(Blueprint.Cell::pos).collect(java.util.stream.Collectors.toSet());
+			if (!BlueprintManager.pendingPlacements(world, resolved).isEmpty()
+					|| resolved.toClear().stream().filter(p -> !fillPositions.contains(p))
+						.anyMatch(p -> !world.getBlockState(p).isAir())
+					|| resolved.siteRequirements().stream().filter(q -> !q.kind().equals("terrain_air")).anyMatch(q -> !q.satisfied(world)))
+				return blockOnce(stage, Stage.BlockerCode.VERIFICATION_FAILED, "地面或清理范围已变化，请检查后重试");
+			return completeStage(project, stage, "平地验收通过");
+		}
+		List<Blueprint.Cell> missing = BlueprintManager
+			.pendingProjectPlacements(world, resolved)
 			.stream().filter(cell -> !cell.optional()).toList();
 		if (!missing.isEmpty()) {
 			return blockOnce(stage, Stage.BlockerCode.VERIFICATION_FAILED,
@@ -445,12 +589,36 @@ public final class ProjectCoordinator {
 
 	private static String playerFacingFailure(Stage stage, Stage.BlockerCode code,
 			String raw) {
+		if (raw != null && raw.startsWith("HARVEST_TOOL_MISSING:")) {
+			var id = net.minecraft.util.Identifier.tryParse(raw.substring("HARVEST_TOOL_MISSING:".length()));
+			if (id != null && net.minecraft.registry.Registries.BLOCK.containsId(id))
+				return dev.squire.server.body.proxy.FakePlayerInteractionProxy.missingHarvestToolMessage(
+					net.minecraft.registry.Registries.BLOCK.get(id).getDefaultState());
+		}
+		if ("SETTLED_BUILDING_CHANGED".equals(raw)) return "已结算方块或固定账单之外的地基发生变化。请恢复原状后继续，或取消工程；不会免费补造可拆除材料。";
+		if ("CONSTRUCTION_NO_SAFE_ANCHOR".equals(raw)) return "施工区内暂时没有可安全安置工程师的位置（支撑、碰撞、区块或边界限制）。恢复安全站位后可继续。";
+		if ("CONSTRUCTION_OCCUPIED".equals(raw)) return "施工位置有生物占用，请让开后继续；材料与进度保留。";
+		if ("CONSTRUCTION_CLEANUP_DEPENDENCY".equals(raw)) return "临时设施仍支撑其他方块，无法安全回收；归属与待退款记录保留。";
+		if (raw != null && raw.startsWith("CONSTRUCTION_")) return "施工结算存档异常，已暂停并保留材料、几何及恢复记录；请核对记录后处理，不能自动退款或重建。";
+		if (raw != null && raw.startsWith("FLUID_")) {
+			if (raw.startsWith("FLUID_SOURCE_EXHAUSTED")) return "指定水源已耗尽或不再是可装桶的水源。请恢复已授权水源或交付满水桶后继续；不会创造水源。";
+			if (raw.startsWith("FLUID_SOURCE_UNLOADED")) return "指定水源区块未加载，请靠近水源后继续；不会为远程取水强制加载区块。";
+			if (raw.startsWith("FLUID_CONTAINMENT_OPEN")) return "液体围护存在缺口，不能安全注水或注入岩浆。请修复围护后继续：" + raw.substring("FLUID_CONTAINMENT_OPEN".length());
+			if (raw.startsWith("FLUID_FIRE_RISK")) return "岩浆附近存在可燃材料，已停止注液以避免火灾。请检查材料主题与周边环境。";
+			if (raw.equals("FLUID_WATER_EVAPORATES")) return "当前维度的水会蒸发，不能建造这份含水蓝图；未扣除水桶。";
+			if (raw.equals("FLUID_NO_SAFE_ROUTE")) return "找不到安全的取水／注液站位与道路。请清理通道后继续。";
+			if (raw.equals("FLUID_DID_NOT_SETTLE")) return "原版液体流动未形成蓝图要求的布局，已暂停验收；不会强行写入流动方块。";
+			return "液体施工条件发生变化，已暂停并保留桶与结算记录：" + raw;
+		}
+		if ("ACCESS_DIG_UNSAFE".equals(raw)) return "开挖通路的方块或立足点已变化，存在容器、流体、落沙或支撑风险；已暂停并保留进度。";
 		return switch (code) {
 			case MATERIALS_MISSING -> stage.kind == Stage.Kind.LIGHT
 				? "缺少火把。请把火把放进侍从背包，再点击继续。"
 				: "材料不足。请在工程页面查看中文缺料清单并转交材料。";
 			case TOOL_MISSING -> "缺少合适的工具，请把工具交给侍从后再继续。";
-			case NO_REACHABLE_TARGET -> "找不到能到达的施工位置，请清理道路后再继续。";
+			case NO_REACHABLE_TARGET -> raw != null && raw.startsWith("ACCESS_")
+				? "施工通道或回收路线无法安全通行，请检查蓝色范围内的脚手架（旧工程可能为圆石）和障碍后继续；进度与材料保留。"
+				: "找不到能到达的施工位置，请清理道路后再继续。";
 			case PROTECTED -> "工地受到保护，侍从没有修改权限。";
 			default -> raw == null || raw.isBlank() ? "任务执行失败。"
 				: "任务执行失败（错误码：" + raw + "）。";
@@ -499,7 +667,9 @@ public final class ProjectCoordinator {
 	private static Stage.BlockerCode blockerFor(String error) {
 		String code = error == null ? "" : error.toUpperCase(java.util.Locale.ROOT);
 		if (code.contains("INSUFFICIENT_ITEM")) return Stage.BlockerCode.MATERIALS_MISSING;
-		if (code.contains("NO_REACHABLE_TARGET")) return Stage.BlockerCode.NO_REACHABLE_TARGET;
+		if (code.contains("NO_REACHABLE_TARGET") || code.contains("ACCESS_ROUTE") || code.contains("ACCESS_OUT_OF_REACH")
+				|| code.contains("ACCESS_CLEANUP_NO_ROUTE") || code.contains("ACCESS_CLEANUP_UNSAFE")
+				|| code.contains("ACCESS_UNSAFE_FALL")) return Stage.BlockerCode.NO_REACHABLE_TARGET;
 		if (code.contains("PROTECT") || code.contains("DENIED")) return Stage.BlockerCode.PROTECTED;
 		if (code.contains("TOOL") || code.contains("HARVEST")) return Stage.BlockerCode.TOOL_MISSING;
 		return Stage.BlockerCode.TASK_FAILED;
@@ -513,7 +683,7 @@ public final class ProjectCoordinator {
 		notifier.send(project.ownerId, "[Squire] 「" + project.name + "」"
 			+ project.progress() + " " + stage.displayName() + what);
 		// 名牌也只在阶段边界改一次——最廉价的进度展示，不需要新的渲染路径。
-		AvatarEntity avatar = avatarOfOwner.apply(project.ownerId);
+		AvatarEntity avatar = avatarFor(project);
 		if (avatar != null) {
 			avatar.setActivityDetail(project.state() == Project.State.RUNNING
 				? stage.displayName() + " " + project.progress() : null);
@@ -523,6 +693,7 @@ public final class ProjectCoordinator {
 	// ------------------------------------------------------------------ 玩家控制
 
 	public void pause(Project project) {
+		if (project.state() == Project.State.FORCE_CANCELLED) return;
 		project.currentStage().ifPresent(stage -> {
 			if (stage.goalId() != null) {
 				goals.goal(stage.goalId()).ifPresent(goal ->
@@ -534,12 +705,14 @@ public final class ProjectCoordinator {
 			}
 		});
 		project.setState(Project.State.PAUSED);
-		AvatarEntity avatar = avatarOfOwner.apply(project.ownerId);
+		AvatarEntity avatar = avatarFor(project);
 		if (avatar != null) avatar.setActivityDetail(null);
 		save();
 	}
 
 	public void resume(Project project) {
+		if (project.state() == Project.State.FORCE_CANCELLED) return;
+		if (!project.pendingMutation().isEmpty()) return;
 		project.setState(Project.State.RUNNING);
 		project.currentStage().ifPresent(stage -> {
 			if (stage.state() == Stage.State.FAILED
@@ -551,8 +724,23 @@ public final class ProjectCoordinator {
 	}
 
 	public void cancel(Project project) {
+		if (project.state() == Project.State.FORCE_CANCELLED) return;
+		if (!project.pendingMutation().isEmpty()) {
+			project.setState(Project.State.PAUSED);
+			notifier.send(project.ownerId, "工程存在未确定的施工结算，已保留材料与进度；需核对恢复记录，不能自动退款或重建。");
+			return;
+		}
+		var access = blueprints.placement(project.placementId).flatMap(blueprints::resolve).map(Blueprint.Resolved::access).orElse(null);
+		if (access != null && !access.placed.isEmpty()) {
+			pause(project); access.cancelRequested = true; access.cleanup = true;
+			for (Stage stage : project.stages()) {
+				stage.setState(stage.kind == Stage.Kind.BUILD ? Stage.State.PENDING : Stage.State.SKIPPED);
+				stage.setGoalId(null);
+			}
+			project.setState(Project.State.RUNNING); blueprints.save(); save(); return;
+		}
 		project.setState(Project.State.CANCELLED);
-		AvatarEntity avatar = avatarOfOwner.apply(project.ownerId);
+		AvatarEntity avatar = avatarFor(project);
 		if (avatar != null) {
 			avatar.setActivityDetail(null);
 		}
@@ -564,24 +752,73 @@ public final class ProjectCoordinator {
 			}
 		});
 		int returned = returnSupply(project);
+		if (!project.pendingMutation().isEmpty()) { save(); return; }
 		if (returned > 0) {
 			notifier.send(project.ownerId,
 				"[Squire] 已返还 " + returned + " 件剩余工程物资。");
 		}
-		projects.remove(project.projectId);
+		if (project.reservedMaterials().isEmpty()) projects.remove(project.projectId);
 		save();
+	}
+
+	/** Persist the terminal decision before stopping tasks. Do not guess at disputed item balances. */
+	public synchronized boolean forceCancel(Project project) {
+		if (projects.get(project.projectId) != project) return false;
+		if (project.state() == Project.State.FORCE_CANCELLED) { stopAbandonedWork(project); return true; }
+		if (!project.active()) return false;
+		var tasks = new java.util.LinkedHashSet<UUID>();
+		for (Stage stage : project.stages()) {
+			if (stage.goalId() != null) goals.goal(stage.goalId()).ifPresent(goal -> tasks.addAll(goal.remainingTaskIds()));
+		}
+		for (Task task : scheduler.liveTasks()) if (belongsTo(project, task)) tasks.add(task.taskId());
+		project.rememberCancelledTasks(tasks);
+		captureProgress(project);
+		Project.State previous = project.state();
+		project.setState(Project.State.FORCE_CANCELLED);
+		if (!store.save(projects.values())) {
+			project.setState(previous);
+			return false;
+		}
+		stopAbandonedWork(project);
+		AvatarEntity avatar = avatarFor(project);
+		if (avatar != null) avatar.setActivityDetail(null);
+		LOG.warn("[project] force-cancelled owner={} agent={} project={} pending={} ownerSupply={} agentSupply={}",
+			project.ownerId, project.agentId(), project.projectId, project.pendingMutation(), project.ownerSupply(), project.agentSupply());
+		return true;
+	}
+
+	private boolean belongsTo(Project project, Task task) {
+		return project.ownerId.equals(task.requesterId()) && (project.forceCancelledTaskIds().contains(task.taskId())
+			|| project.projectId.toString().equals(task.stringParam(BlueprintBuildExecutor.PARAM_PROJECT_ID))
+			|| project.placementId.toString().equals(task.stringParam(BlueprintBuildExecutor.PARAM_PLACEMENT_ID)));
+	}
+
+	private void stopAbandonedWork(Project project) {
+		var tasks = new java.util.LinkedHashSet<>(project.forceCancelledTaskIds());
+		for (Task task : scheduler.liveTasks()) if (belongsTo(project, task)) tasks.add(task.taskId());
+		scheduler.cancelTasks(tasks, "PROJECT_FORCE_CANCELLED");
+		goals.cancelForTasks(tasks, "PROJECT_FORCE_CANCELLED");
+		blueprints.remove(project.placementId);
+	}
+
+	/** Called after task/goal recovery as well, before recovered work can tick. */
+	public void reconcileForceCancelled() {
+		projects.values().stream().filter(p -> p.state() == Project.State.FORCE_CANCELLED).forEach(this::stopAbandonedWork);
 	}
 
 	/** Return every unspent escrow item, preferring the holder it originally came from. */
 	private int returnSupply(Project project) {
+		if (project.state() == Project.State.FORCE_CANCELLED) return 0;
+		if (!project.pendingMutation().isEmpty()) return 0;
 		Map<Identifier, Integer> ownerItems = project.ownerSupply();
 		Map<Identifier, Integer> agentItems = project.agentSupply();
 		if (ownerItems.isEmpty() && agentItems.isEmpty()) return 0;
 		ServerPlayerEntity owner = services.requester(project.ownerId);
-		AvatarEntity avatar = avatarOfOwner.apply(project.ownerId);
+		AvatarEntity avatar = avatarFor(project);
 		// advance() only completes with a live avatar, and cancel is owner-driven.  Keep
 		// the escrow untouched if neither holder exists rather than voiding real items.
 		if (owner == null && avatar == null) return 0;
+		if (!beginMutation(project.projectId, "refund:" + ownerItems + ":" + agentItems)) { project.setState(Project.State.PAUSED); return 0; }
 		int returned = 0;
 		for (var entry : agentItems.entrySet()) {
 			returned += returnStacks(entry.getKey(), entry.getValue(), avatar, owner, false);
@@ -590,6 +827,7 @@ public final class ProjectCoordinator {
 			returned += returnStacks(entry.getKey(), entry.getValue(), avatar, owner, true);
 		}
 		project.clearSupply();
+		if (!completeMutation(project.projectId)) return 0;
 		if (owner != null) {
 			owner.getInventory().markDirty();
 			owner.currentScreenHandler.sendContentUpdates();
@@ -624,6 +862,11 @@ public final class ProjectCoordinator {
 			stages.add(new Stage(UUID.randomUUID(), kind));
 		}
 		return List.copyOf(stages);
+	}
+
+	public static List<Stage> compileTerrainStages() {
+		return java.util.stream.Stream.of(Stage.Kind.FULFIL_MATERIALS, Stage.Kind.EXCAVATE,
+			Stage.Kind.HAUL, Stage.Kind.VERIFY).map(k -> new Stage(UUID.randomUUID(), k)).toList();
 	}
 
 	/** 诊断：每个阶段一行。 */

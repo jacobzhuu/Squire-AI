@@ -203,7 +203,7 @@ public final class M27RecallBellAndHuntGameTests implements FabricGameTest {
 			var profile = runtime.profileOf(avatar);
 			profile.autonomy = AutonomyLevel.PROACTIVE.id();
 			profile.profession.setProfession(SquireProfession.GUARD);
-			profile.profession.level = 1;
+			profile.profession.level = 3;
 			avatar.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
 			avatar.insertStack(new ItemStack(Items.ARROW, 4));
 
@@ -218,7 +218,7 @@ public final class M27RecallBellAndHuntGameTests implements FabricGameTest {
 			context.assertTrue(cow.getHealth() < before,
 				"PROACTIVE squire attacks the exact cow the owner struck");
 			context.assertTrue(!avatar.isDrawingBow(),
-				"Lv1 Guard does not gain bow use through cooperative hunting");
+				"Lv3 Guard does not gain bow use through cooperative hunting");
 
 			WolfEntity wolf = EntityType.WOLF.create(context.getWorld());
 			context.assertTrue(wolf != null, "wolf entity exists");

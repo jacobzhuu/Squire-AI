@@ -121,6 +121,7 @@ public final class AttackTargetExecutor implements dev.squire.server.task.TaskEx
 		}
 		// 用什么打和护卫那条路共用同一份判据——包括职业闸门：一只还没学会用弓的
 		// 守卫（Lv.1–3）不会因为走的是「去打那只怪」这条路就突然会用弓了。
+		target = dev.squire.server.combat.GuardSelfDefense.target(avatar, target);
 		avatar.setTarget(target);
 		boolean shoot = dev.squire.server.combat.CombatStyle.prepare(avatar, target,
 			avatar.combatStyle(), dev.squire.server.combat.CombatStyle.gatesFor(

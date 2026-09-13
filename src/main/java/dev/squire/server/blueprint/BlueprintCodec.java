@@ -20,7 +20,7 @@ import com.google.gson.JsonParser;
  * <p>格式（{@code data/squire/blueprints/<id>.json}）：</p>
  * <pre>
  * {
- *   "displayName": "\u77f3\u5c4b", "tier": 1, "category": "SHELTER",
+	 *   "displayName": "\u77f3\u5c4b", "tier": 1, "category": "HOUSING",
  *   "size": [7, 5, 7],
  *   "requiredAbilities": ["build.blueprint"],
  *   "steps": [
@@ -67,15 +67,34 @@ public final class BlueprintCodec {
 			}
 		}
 		List<Blueprint.MaterialSlot> slots = materialSlots(id, root);
+		String format = root.has("format") ? root.get("format").getAsString()
+			: "squire:steps";
 		return new Blueprint(id,
 			root.has("displayName") ? root.get("displayName").getAsString() : id,
 			root.has("tier") ? root.get("tier").getAsInt() : 1,
 			Blueprint.Category.parse(root.has("category")
 				? root.get("category").getAsString() : null),
-			size[0], size[1], size[2], steps, abilities, slots);
+			size[0], size[1], size[2], steps, abilities, slots,
+			metadata(root, format));
 	}
 
-	private static List<Blueprint.MaterialSlot> materialSlots(String id,
+	static Blueprint.Metadata metadata(JsonObject root, String format) {
+		JsonObject metadata = root.getAsJsonObject("metadata");
+		if (metadata == null) metadata = new JsonObject();
+		Set<String> tags = new LinkedHashSet<>();
+		JsonArray rawTags = metadata.getAsJsonArray("tags");
+		if (rawTags != null) for (JsonElement value : rawTags) tags.add(value.getAsString());
+		return new Blueprint.Metadata(string(metadata, "author"),
+			string(metadata, "source"), string(metadata, "license"),
+			string(metadata, "style"), string(metadata, "description"), tags, format,
+			root.has("minEngineerLevel") ? root.get("minEngineerLevel").getAsInt() : 0);
+	}
+
+	private static String string(JsonObject object, String key) {
+		return object.has(key) ? object.get(key).getAsString() : "";
+	}
+
+	static List<Blueprint.MaterialSlot> materialSlots(String id,
 			JsonObject root) {
 		JsonArray raw = root.getAsJsonArray("materialSlots");
 		if (raw == null) return List.of();

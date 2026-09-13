@@ -1,0 +1,925 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_sm",
+  "format": "minecraft:structure_nbt",
+  "displayName": "云杉树场 · spruce_farm_sm",
+  "tier": 1,
+  "category": "PRODUCTION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_sm",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/agriculture/fields/trees/spruce_farm_sm.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "agriculture"
+    ]
+  },
+  "sourceFrame": [
+    11,
+    13,
+    11
+  ],
+  "primaryOffset": {
+    "x": 5,
+    "y": 0,
+    "z": 5
+  },
+  "groundY": 0,
+  "siteRequirements": [
+    {
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab",
+        "wall"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    },
+    {
+      "block": "minecraft:stone_brick_wall",
+      "slot": "stone_bricks",
+      "variant": "wall"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

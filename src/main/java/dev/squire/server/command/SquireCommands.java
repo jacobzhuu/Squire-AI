@@ -274,10 +274,12 @@ public final class SquireCommands {
 			.executes(SquireCommands::blueprintStatus)
 			.then(CommandManager.literal("list").executes(SquireCommands::blueprintList))
 			.then(CommandManager.literal("status").executes(SquireCommands::blueprintStatus))
+			.then(CommandManager.literal("diagnose").executes(c -> withPlayer(c, p -> SquireRuntime.get().blueprintDiagnose(p))))
+			.then(CommandManager.literal("recover").executes(c -> withPlayer(c, p -> SquireRuntime.get().blueprintRecover(p))))
 			.then(CommandManager.literal("place")
 				.then(CommandManager.argument("id", StringArgumentType.word())
 					.suggests((ctx, builder) -> {
-						for (String id : SquireRuntime.get().blueprints().registry().ids()) {
+						for (String id : SquireRuntime.get().blueprints().registry().playerIds()) {
 							builder.suggest(id);
 						}
 						return builder.buildFuture();
@@ -648,10 +650,15 @@ public final class SquireCommands {
 			projectBranch() {
 		return CommandManager.literal("project")
 			.executes(SquireCommands::projectStatus)
+			.then(CommandManager.literal("water")
+				.then(CommandManager.literal("artificial").executes(c -> withPlayer(c, p -> dev.squire.server.runtime.EngineerWaterSettings.configure(p, "artificial"))))
+				.then(CommandManager.literal("existing").executes(c -> withPlayer(c, p -> dev.squire.server.runtime.EngineerWaterSettings.configure(p, "existing"))))
+				.then(CommandManager.literal("source").executes(c -> withPlayer(c, p -> dev.squire.server.runtime.EngineerWaterSettings.configure(p, "source"))))
+				.then(CommandManager.literal("supplied").executes(c -> withPlayer(c, p -> dev.squire.server.runtime.EngineerWaterSettings.configure(p, "supplied")))))
 			.then(CommandManager.literal("start")
 				.then(CommandManager.argument("id", StringArgumentType.word())
 					.suggests((ctx, builder) -> {
-						for (String id : SquireRuntime.get().blueprints().registry().ids()) {
+						for (String id : SquireRuntime.get().blueprints().registry().playerIds()) {
 							builder.suggest(id);
 						}
 						return builder.buildFuture();
@@ -659,7 +666,9 @@ public final class SquireCommands {
 					.executes(SquireCommands::projectStart)))
 			.then(CommandManager.literal("pause").executes(SquireCommands::projectPause))
 			.then(CommandManager.literal("resume").executes(SquireCommands::projectResume))
-			.then(CommandManager.literal("cancel").executes(SquireCommands::projectCancel));
+			.then(CommandManager.literal("cancel").executes(SquireCommands::projectCancel)
+				.then(CommandManager.literal("force").executes(c -> withPlayer(c,
+					p -> SquireRuntime.get().projectForceCancel(p)))));
 	}
 
 	private static int projectStart(CommandContext<ServerCommandSource> context) {
@@ -850,7 +859,7 @@ public final class SquireCommands {
 		try {
 			ServerPlayerEntity player = source.getPlayerOrThrow();
 			var result = body.apply(source, player);
-			source.sendFeedback(() -> Text.literal(result.message()), false);
+			source.sendFeedback(() -> Text.literal(SquireRuntime.get().namedMessage(source.getPlayer()==null?null:source.getPlayer().getUuid(),result.message())), false);
 			return result.success() ? 1 : 0;
 		} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
 			source.sendError(Text.translatable("squire.cmd.players_only"));
@@ -959,7 +968,7 @@ public final class SquireCommands {
 			}
 			var result = SquireRuntime.get().undoOperation(player, operationId,
 				acceptConflicts);
-			source.sendFeedback(() -> Text.literal(result.message()), false);
+			source.sendFeedback(() -> Text.literal(SquireRuntime.get().namedMessage(source.getPlayer()==null?null:source.getPlayer().getUuid(),result.message())), false);
 			return result.success() ? 1 : 0;
 		} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
 			source.sendError(SquireText.msg("squire.cmd.players_only"));
@@ -1430,7 +1439,7 @@ public final class SquireCommands {
 				.build();
 			var result = rt.cbp().plan(spec, source.getWorld().getTime());
 			if (result.ok()) {
-				source.sendFeedback(() -> Text.literal(result.message()), false);
+				source.sendFeedback(() -> Text.literal(SquireRuntime.get().namedMessage(source.getPlayer()==null?null:source.getPlayer().getUuid(),result.message())), false);
 				return 1;
 			}
 			source.sendError(Text.literal("[Squire] " + result.message()));
@@ -1561,7 +1570,11 @@ public final class SquireCommands {
 		ServerCommandSource source = context.getSource();
 		try {
 			ServerPlayerEntity player = source.getPlayerOrThrow();
-			SquireRuntime.get().summonFor(player);
+			var rt=SquireRuntime.get();
+            var id=rt.agents().explicitTarget(player.getUuid()).orElseGet(() -> rt.agentStore().recordOfOwner(player.getUuid()).map(r -> r.agentId).orElse(null));
+            if(id==null) {source.sendError(Text.literal("[Squire] Use /squire summon <head x y z> near a completed training dummy."));return 0;}
+            var result=rt.recallSelectedWithBell(player,id);surface(source,result);
+            if(!result.success())return 0;
 			return 1;
 		} catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
 			source.sendError(SquireText.msg("squire.cmd.players_only"));
@@ -1649,9 +1662,9 @@ public final class SquireCommands {
 
 	static void surface(ServerCommandSource source, SquireRuntime.ExecutionResult result) {
 		if (result.success()) {
-			source.sendFeedback(() -> Text.literal(result.message()), false);
+			source.sendFeedback(() -> Text.literal(SquireRuntime.get().namedMessage(source.getPlayer()==null?null:source.getPlayer().getUuid(),result.message())), false);
 		} else {
-			source.sendError(Text.literal(result.message()).formatted(Formatting.RED));
+			source.sendError(Text.literal(SquireRuntime.get().namedMessage(source.getPlayer()==null?null:source.getPlayer().getUuid(),result.message())).formatted(Formatting.RED));
 		}
 	}
 

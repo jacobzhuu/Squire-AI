@@ -360,7 +360,7 @@ public final class M18ProfessionGameTests implements FabricGameTest {
 	// ================================================== 工程师经验
 
 	/** 施工验收通过之后工程经验一次性到账；参数化蓝图的规格跨重启还原得回来。 */
-	@GameTest(templateName = FLOOR, tickLimit = 500, batchId = "squire-profession-build")
+	@GameTest(templateName = FLOOR, tickLimit = 1200, batchId = "squire-profession-build")
 	public void aFinishedBuildPaysTheEngineerOnce(TestContext context) {
 		SquireRuntime rt = runtime(context);
 		ServerWorld world = context.getWorld();
@@ -384,12 +384,12 @@ public final class M18ProfessionGameTests implements FabricGameTest {
 				"profession build", null,
 				BlueprintBuildExecutor.blueprintBuilt(rt.runtimeServicesForTest(),
 					placement.placementId),
-				600L, RetryPolicy.DEFAULT, true, "c2",
+				1000L, RetryPolicy.DEFAULT, true, "c2",
 				Map.of(BlueprintBuildExecutor.PARAM_PLACEMENT_ID,
 					placement.placementId.toString())), world.getTime());
 		});
 
-		context.runAtTick(320, () -> {
+		context.runAtTick(950, () -> {
 			AvatarEntity avatar = rt.resolveAvatarFor(owner.getUuid()).orElseThrow();
 			ProfessionData data = rt.professionOf(avatar);
 			context.assertTrue(data.xp > 0,

@@ -4,17 +4,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * 转职之前的新手训练项目（Lv.0）。
- *
- * <h2>为什么要有这一段</h2>
- * <p>直接让玩家一召唤出来就选职业，等于让他在<b>什么都还没见过</b>的时候做一个
- * 会影响之后几小时的选择。这五项训练不是关卡，是一份「你已经和他一起做过这些事」
- * 的清单——走完它，玩家自然知道守卫和工程师各自意味着什么。</p>
- *
- * <h2>每一项都必须是玩家真的做过的事</h2>
- * <p>不设「等 5 分钟」这类纯计时项。每一条都挂在一个已经存在的服务端事实上：
- * 开过面板、给过装备、下过站位命令、一起打倒过一只怪、盖过一次蓝图。
- * 于是训练进度天然不可刷——它就是玩家的实际足迹。</p>
+ * Four basic activities before choosing a profession. BUILD is retained for
+ * saved history; construction practice belongs after choosing Engineer.
  */
 public enum TrainingMilestone {
 
@@ -26,7 +17,7 @@ public enum TrainingMilestone {
 	ORDER("order", "给他下一次站位命令", 20),
 	/** 一起打倒一只敌对生物。 */
 	KILL("kill", "和他一起打倒一只敌对生物", 20),
-	/** 完成一次蓝图施工。 */
+	/** Optional post-profession practice; retained for save compatibility. */
 	BUILD("build", "让他按蓝图盖成一次东西", 20);
 
 	private final String id;
@@ -69,13 +60,17 @@ public enum TrainingMilestone {
 		return null;
 	}
 
-	/** 五项全做完正好 100。转职门槛就是这个数。 */
+	/** Total attainable XP before choosing a profession. */
 	public static int totalXp() {
 		int total = 0;
-		for (TrainingMilestone milestone : values()) {
+		for (TrainingMilestone milestone : required()) {
 			total += milestone.xp;
 		}
 		return total;
+	}
+
+	public static List<TrainingMilestone> required() {
+		return List.of(OPEN_PANEL, EQUIP, ORDER, KILL);
 	}
 
 	public static List<TrainingMilestone> all() {

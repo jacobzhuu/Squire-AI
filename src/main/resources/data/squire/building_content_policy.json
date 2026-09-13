@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "retiredIds": ["shelter_wood", "shelter_stone", "storage_shed", "watchtower", "mine_outpost", "field_smithy", "roadside_inn"],
+  "retiredPrefixes": ["project/", "generated_house/"],
+  "retiredTools": ["blueprint.design", "blueprint.set_size", "blueprint.set_floors", "blueprint.set_variant", "blueprint.mirror", "blueprint.add_module", "blueprint.save_preset", "blueprint.load_preset", "blueprint.list_presets", "blueprint.set_material_region"],
+  "catalogMaterialLevel": 4,
+  "retiredAbilities": ["engineer.template_library_1", "engineer.structural_variants", "engineer.multi_floor", "engineer.blueprint_mirror", "engineer.optional_modules", "engineer.modular_blueprint", "engineer.compound_blueprint", "engineer.blueprint_preset_library"],
+  "catalogFullMaterialLevel": 10
+}

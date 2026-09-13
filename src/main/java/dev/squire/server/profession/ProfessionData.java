@@ -81,7 +81,7 @@ public final class ProfessionData {
 	/** 已经攒到的训练经验。派生自已完成项，所以永远和那份清单一致。 */
 	public int trainingXp() {
 		int total = 0;
-		for (TrainingMilestone milestone : TrainingMilestone.values()) {
+		for (TrainingMilestone milestone : TrainingMilestone.required()) {
 			if (trainingDone.contains(milestone.id())) {
 				total += milestone.xp();
 			}
@@ -110,7 +110,7 @@ public final class ProfessionData {
 	/** 还差哪几项。面板 Lv.0 页直接列它。 */
 	public java.util.List<TrainingMilestone> remainingTraining() {
 		java.util.List<TrainingMilestone> out = new java.util.ArrayList<>();
-		for (TrainingMilestone milestone : TrainingMilestone.values()) {
+		for (TrainingMilestone milestone : TrainingMilestone.required()) {
 			if (!hasTrained(milestone)) {
 				out.add(milestone);
 			}

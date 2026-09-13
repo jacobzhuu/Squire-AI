@@ -53,6 +53,13 @@ public final class RecallBellItem extends Item {
 		stack.getOrCreateNbt().remove(SquireItems.NBT_UPGRADE_FROM);
 	}
 
+    @Override
+    public void inventoryTick(ItemStack stack, World world, net.minecraft.entity.Entity entity, int slot, boolean selected) {
+        if (!world.isClient && world.getTime() % 40 == 0 && SquireRuntime.isAlive()) {
+            SquireRuntime.get().syncRecallBellDisplay(stack, SquireItems.tierOf(stack));
+        }
+    }
+
 	@Override
 	public void appendTooltip(ItemStack stack, World world, List<Text> tooltip,
 			TooltipContext context) {
@@ -88,9 +95,14 @@ public final class RecallBellItem extends Item {
 			tooltip.add(Text.translatable("item.squire.recall_bell.upgrade_cost."
 				+ tier.id()).formatted(Formatting.DARK_GRAY));
 		}
-		if (stack.hasNbt() && stack.getNbt().containsUuid(SquireItems.NBT_OWNER)) {
-			tooltip.add(Text.translatable("item.squire.recall_bell.bound")
-				.formatted(Formatting.GOLD));
-		}
-	}
+        if (nbt != null && nbt.containsUuid(SquireItems.NBT_AGENT)) {
+            String name = nbt.getString("SquireDisplayName");
+            tooltip.add(Text.translatable(name.isBlank() ? "item.squire.recall_bell.unknown" : "item.squire.recall_bell.bound_name", name).formatted(Formatting.GOLD));
+            String profession = nbt.getString("SquireDisplayProfession");
+            tooltip.add(Text.translatable("item.squire.recall_bell.profession", Text.translatable(
+                profession.isBlank() ? "squire.gui.profession.untrained" : "squire.gui.profession." + profession)).formatted(Formatting.AQUA));
+        } else {
+            tooltip.add(Text.translatable("item.squire.recall_bell.unbound").formatted(Formatting.YELLOW));
+        }
+    }
 }

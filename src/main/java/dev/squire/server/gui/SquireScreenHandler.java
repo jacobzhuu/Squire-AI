@@ -26,6 +26,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
  * 不需要自定义封包；只有"发送聊天内容"因为要带字符串才另开了一个 C2S 包。</p>
  */
 public class SquireScreenHandler extends ScreenHandler {
+    public static final int BUTTON_GUARD_ATTACK = 1300;
+    public static final int BUTTON_TASK_STOP = 1301;
 
 	/** 装备槽顺序，界面从上到下就按这个排。 */
 	public static final List<EquipmentSlot> EQUIPMENT_ORDER = List.of(
@@ -104,6 +106,7 @@ public class SquireScreenHandler extends ScreenHandler {
 	public static final int BUTTON_PROJECT_MINE = 55;
 	public static final int BUTTON_PROJECT_WATCHTOWER = 56;
 	public static final int BUTTON_PROJECT_STORAGE = 57;
+	public static final int BUTTON_PROJECT_FORCE_CANCEL = 58;
 	public static final int BUTTON_HOUSE_WIDTH = 80;
 	public static final int BUTTON_HOUSE_DEPTH = 81;
 	public static final int BUTTON_HOUSE_HEIGHT = 82;
@@ -116,6 +119,9 @@ public class SquireScreenHandler extends ScreenHandler {
 	public static final int BUTTON_BLUEPRINT_RIGHT = 89;
 	public static final int BUTTON_PROJECT_CONFIRM = 90;
 	public static final int BUTTON_PROJECT_TRANSFER = 91;
+	public static final int BUTTON_WATER_MODE = 92;
+	public static final int BUTTON_WATER_SOURCE = 93;
+	public static final int BUTTON_WATER_SUPPLIED = 94;
 	public static final int BUTTON_PERMISSION_BASE = 100;
 	/** Material editor: six fixed semantic slots, each with previous/next controls. */
 	public static final int BUTTON_MATERIAL_PREVIOUS_BASE = 150;
@@ -140,6 +146,31 @@ public class SquireScreenHandler extends ScreenHandler {
 	public static final int BUTTON_DESIGN_MODULE_BASE = 210;
 	public static final int BUTTON_DESIGN_PRESET_SAVE = 220;
 	public static final int BUTTON_DESIGN_PRESET_LOAD = 221;
+	/** 蓝图库卡片：下标与 {@link dev.squire.server.blueprint.ProjectSpec.Template} 一致。 */
+	public static final int BUTTON_DESIGN_TEMPLATE_BASE = 230;
+	/** 职业页的侍从切换按钮；最多两名。 */
+	public static final int BUTTON_ROSTER_BASE = 240;
+	/** Reloadable fixed/external blueprint cards, ordered exactly as ProfessionView sends them. */
+	public static final int BUTTON_BLUEPRINT_LIBRARY_BASE = 300;
+	public static final int BUTTON_BLUEPRINT_LIBRARY_LIMIT = 64;
+	public static final int BUTTON_TERRAIN_BASE = 400;
+	public String terrainReview = "";
+	private boolean verifiedTerrainAction;
+
+	public void terrainAction(ServerPlayerEntity player, int id, String review) {
+		boolean adjustment = id >= BUTTON_TERRAIN_BASE && id < BUTTON_TERRAIN_BASE
+			+ dev.squire.server.runtime.TerrainLevelingService.Action.values().length;
+		if (!adjustment && id != BUTTON_PROJECT_CONFIRM && id != BUTTON_PROJECT_CANCEL
+			&& id != BUTTON_PROJECT_PAUSE && id != BUTTON_PROJECT_RESUME) return;
+		var placement = dev.squire.server.runtime.SquireRuntime.get().blueprints().activeOf(player.getUuid()).orElse(null);
+		String expected = placement == null ? "" : placement.placementId + "/" + placement.terrainReview;
+		if (!expected.equals(review) || placement != null && (avatar == null || !avatar.agentId().equals(placement.agentId))) {
+			player.sendMessage(net.minecraft.text.Text.literal("平地预览或施工者已变化，请查看更新后的页面再操作。"), false);
+			syncState(player); return;
+		}
+		verifiedTerrainAction = true;
+		try { onButtonClick(player, id); } finally { verifiedTerrainAction = false; }
+	}
 
 	private static final int AVATAR_INVENTORY_SIZE = AvatarEntity.MAIN_INVENTORY_SIZE;
 
@@ -211,6 +242,9 @@ public class SquireScreenHandler extends ScreenHandler {
 	/** 背囊当前这一页的内容（服务端穿透到真实背包，客户端是占位）。 */
 	private final Inventory backpackContents;
 	private final AvatarEntity avatar;
+    public java.util.UUID snapshotAgent;
+    public boolean inventoryAccessible;
+    public boolean bodyAvailable;
 	private final PlayerEntity opener;
 
 	/** 客户端侧的展示状态；服务端每次改动后同步过来。 */
@@ -397,10 +431,20 @@ public class SquireScreenHandler extends ScreenHandler {
 	 * <p>所以只保留两条真正的前提：这具身体<b>还在世界里</b>（被卸载或死掉之后槽位
 	 * 后面没有真实存储），以及和玩家<b>在同一个维度</b>（跨维度的实体不是同一个实例）。</p>
 	 */
+    public boolean canExchange(PlayerEntity player) {
+        return avatar != null && canUse(player) && avatar.getWorld() == player.getWorld()
+            && avatar.squaredDistanceTo(player) <= 64.0;
+    }
+
+    @Override
+    public void onSlotClick(int slot, int button, net.minecraft.screen.slot.SlotActionType action, PlayerEntity player) {
+        if (player.getWorld().isClient || canExchange(player)) super.onSlotClick(slot, button, action, player);
+    }
+
 	@Override
 	public boolean canUse(PlayerEntity player) {
 		return avatar == null || (avatar.isAlive() && !avatar.isRemoved()
-			&& avatar.getWorld() == player.getWorld());
+			&& (avatar.ownerId().equals(player.getUuid()) || player.hasPermissionLevel(2)));
 	}
 
 	/**
@@ -410,6 +454,7 @@ public class SquireScreenHandler extends ScreenHandler {
 	 */
 	@Override
 	public ItemStack quickMove(PlayerEntity player, int index) {
+        if (!canExchange(player)) return ItemStack.EMPTY;
 		// 背包槽夹在装备和伙伴背包之间，所以这三条边界都要算上它；
 		// 少算一格的话 shift+点击会把东西塞进错误的区间。
 		int equipmentEnd = AVATAR_GRID_START;
@@ -419,6 +464,9 @@ public class SquireScreenHandler extends ScreenHandler {
 		Slot slot = slots.get(index);
 		if (!slot.hasStack()) {
 			return ItemStack.EMPTY;
+		}
+		if (index >= playerEnd && backpackContents instanceof AvatarBackpackContentsInventory contents) {
+			return quickMoveBackpackToPlayer(player, slot, contents, avatarEnd, playerEnd);
 		}
 		ItemStack stack = slot.getStack();
 		ItemStack original = stack.copy();
@@ -444,6 +492,49 @@ public class SquireScreenHandler extends ScreenHandler {
 		return original;
 	}
 
+	private ItemStack quickMoveBackpackToPlayer(PlayerEntity player, Slot slot,
+			AvatarBackpackContentsInventory contents, int playerStart, int playerEnd) {
+		int backpackIndex = slot.getIndex();
+		ItemStack original = contents.exactStack(backpackIndex);
+		if (original.isEmpty()) return ItemStack.EMPTY;
+		ItemStack remaining = original.copy();
+		List<ItemStack> playerBefore = new java.util.ArrayList<>(player.getInventory().size());
+		for (int i = 0; i < player.getInventory().size(); i++)
+			playerBefore.add(player.getInventory().getStack(i).copy());
+		// ScreenHandler.insertItem assumes its input is an ordinary-sized stack and
+		// inserts at most one max-sized stack per call. Expanded storage may return
+		// hundreds of items, so offer it in legal chunks while keeping the entire
+		// destination-side simulation inside the inventory snapshot transaction.
+		while (!remaining.isEmpty()) {
+			ItemStack offered = remaining.split(Math.min(remaining.getCount(),
+				remaining.getMaxCount()));
+			int offeredCount = offered.getCount();
+			insertItem(offered, playerStart, playerEnd, true);
+			if (!offered.isEmpty()) {
+				remaining.increment(offered.getCount());
+				break;
+			}
+			if (offeredCount <= 0) break;
+		}
+		int moved = original.getCount() - remaining.getCount();
+		if (moved <= 0) return ItemStack.EMPTY;
+
+		ItemStack extracted = contents.extractExact(backpackIndex, moved);
+		if (extracted.getCount() != moved || !ItemStack.canCombine(original, extracted)) {
+			for (int i = 0; i < playerBefore.size(); i++)
+				player.getInventory().setStack(i, playerBefore.get(i));
+			player.getInventory().markDirty();
+			if (!extracted.isEmpty()) {
+				var view = avatar.items().backpack();
+				ItemStack remainderAfterRestore = view == null ? extracted : view.insert(extracted);
+				if (!remainderAfterRestore.isEmpty())
+					dev.squire.SquireMod.LOGGER.error("[Squire] backpack transfer rollback left {} item(s) unreturned", remainderAfterRestore.getCount());
+			}
+			return ItemStack.EMPTY;
+		}
+		return original;
+	}
+
 	/**
 	 * 模式与权限按钮。字符串参数走不了这条路，所以聊天另走一个 C2S 包。
 	 *
@@ -452,6 +543,15 @@ public class SquireScreenHandler extends ScreenHandler {
 	 */
 	@Override
 	public boolean onButtonClick(PlayerEntity player, int id) {
+		if (avatar == null && id == BUTTON_PROJECT_FORCE_CANCEL && player instanceof ServerPlayerEntity owner) {
+			var runtime = dev.squire.server.runtime.SquireRuntime.get();
+			var record = snapshotAgent == null ? null : runtime.agentStore().recordOfAgent(snapshotAgent).orElse(null);
+			if (record == null || !record.ownerId.equals(owner.getUuid())) return false;
+			runtime.agents().withTarget(owner.getUuid(), snapshotAgent,
+				() -> SquireActions.byId(id).handler().run(owner, null));
+			syncState(owner);
+			return true;
+		}
 		if (avatar == null || !(player instanceof ServerPlayerEntity serverPlayer)) {
 			return false;
 		}
@@ -460,6 +560,13 @@ public class SquireScreenHandler extends ScreenHandler {
 				&& !player.hasPermissionLevel(2)) {
 			return false; // 不是主人，别动人家的伙伴
 		}
+		var terrainPlacement = runtime.blueprints().activeOf(player.getUuid()).orElse(null);
+		if (!verifiedTerrainAction && (id >= BUTTON_TERRAIN_BASE && id < BUTTON_TERRAIN_BASE + 12
+			|| terrainPlacement != null && dev.squire.server.blueprint.TerrainLeveling.parse(terrainPlacement.blueprintId).isPresent()
+				&& (id == BUTTON_PROJECT_CONFIRM || id == BUTTON_PROJECT_CANCEL || id == BUTTON_PROJECT_PAUSE || id == BUTTON_PROJECT_RESUME))) {
+			serverPlayer.sendMessage(net.minecraft.text.Text.literal("请使用当前平地预览页面操作。"), false);
+			return false;
+		}
 		// 翻页不在动作表里，因为它<b>不对侍从做任何事</b>——和切页签一样是看的方式。
 		// 动作表是"能对他下的命令"的唯一事实源，混进视图控制只会让那张表变模糊。
 		if (id == BUTTON_BACKPACK_PREV || id == BUTTON_BACKPACK_NEXT) {
@@ -467,11 +574,36 @@ public class SquireScreenHandler extends ScreenHandler {
 			syncState(serverPlayer);
 			return true;
 		}
+		if (id >= BUTTON_ROSTER_BASE && id < BUTTON_ROSTER_BASE + 2) {
+			int index = id - BUTTON_ROSTER_BASE;
+			var records = runtime.agentStore().recordsOfOwner(player.getUuid());
+			if (index >= records.size()) return false;
+			var record = records.get(index);
+			runtime.agentStore().setPrimary(record.agentId);
+			var target = runtime.agents().resolveByAgentId(record.agentId).orElse(null);
+			if (target == null) {
+				serverPlayer.sendMessage(net.minecraft.text.Text.literal(
+					"[Squire] 这名侍从不在当前维度，请使用绑定给他的召集铃。"), false);
+				syncState(serverPlayer);
+				return true;
+			}
+			dev.squire.server.registry.SquireScreens.open(serverPlayer, target);
+			return true;
+		}
+		if (id >= BUTTON_BLUEPRINT_LIBRARY_BASE
+				&& id < BUTTON_BLUEPRINT_LIBRARY_BASE + BUTTON_BLUEPRINT_LIBRARY_LIMIT) {
+			var library = synced.profession().blueprintLibrary();
+			int index = id - BUTTON_BLUEPRINT_LIBRARY_BASE;
+			if (index >= library.size()) return false;
+			selectBlueprint(serverPlayer, library.get(index).id(), synced.profession().catalogVersion());
+			return true;
+		}
 		SquireActions.Action action = SquireActions.byId(id);
 		if (action == null) {
 			return false;
 		}
-		action.handler().run(serverPlayer, avatar);
+		runtime.agents().withTarget(player.getUuid(), avatar.agentId(),
+			() -> action.handler().run(serverPlayer, avatar));
 		runtime.persistSnapshot(avatar);
 		avatar.refreshModeNameplate();
 		syncState(serverPlayer);
@@ -488,7 +620,7 @@ public class SquireScreenHandler extends ScreenHandler {
 	private ProfessionView professionView(dev.squire.server.runtime.SquireRuntime runtime,
 			ServerPlayerEntity player) {
 		if (avatar == null) {
-			return ProfessionView.EMPTY;
+            return runtime.agentStore().recordOfAgent(snapshotAgent).map(r -> ProfessionView.of(r.profile.profession,runtime.professionConfig(), itemId -> 0)).orElse(ProfessionView.EMPTY);
 		}
 		var data = runtime.professionOf(avatar);
 		if (data == null) {
@@ -496,7 +628,8 @@ public class SquireScreenHandler extends ScreenHandler {
 		}
 		ProfessionView view = ProfessionView.of(data, runtime.professionConfig(),
 			itemId -> dev.squire.server.runtime.SquireProfessionService
-				.countMaterial(player, avatar, itemId));
+				.countMaterial(player, avatar, itemId))
+			.withBuildingCatalog(runtime.blueprints().registry().catalog(), catalogFamily, runtime.blueprints().registry().revision());
 		return view.hasProfession()
 				&& data.profession() == dev.squire.server.profession
 					.SquireProfession.GUARD
@@ -575,7 +708,7 @@ public class SquireScreenHandler extends ScreenHandler {
 	@Override
 	public void sendContentUpdates() {
 		super.sendContentUpdates();
-		if (avatar != null && opener instanceof ServerPlayerEntity server
+		if (opener instanceof ServerPlayerEntity server
 				&& ++stateResyncAge % 20 == 0) {
 			syncState(server);
 		}
@@ -595,20 +728,28 @@ public class SquireScreenHandler extends ScreenHandler {
 			avatar == null ? 0 : avatar.mode().ordinal(), mask,
 			avatar == null ? 0 : (int) Math.ceil(avatar.getHealth()),
 			avatar == null ? 20 : (int) Math.ceil(avatar.getMaxHealth()),
-			avatar == null ? null : runtime.profileOf(avatar),
+			avatar == null ? runtime.agentStore().recordOfAgent(snapshotAgent).map(r -> r.profile).orElse(null) : runtime.profileOf(avatar),
 			avatar == null ? dev.squire.server.body.avatar.AvatarEntity
 				.FOLLOW_TELEPORT_DEFAULT : avatar.followTeleportDistance(),
 			runtime.shortcuts().names(player.getUuid()),
 			avatar == null ? 0 : dev.squire.server.combat.CombatStyle
 				.modeOf(avatar, runtime.weaponGatesOf(avatar)).ordinal(),
 			runtime.shortcuts().specs(player.getUuid()),
-			avatar == null ? "" : runtime.displayNameOf(avatar),
+			avatar == null ? runtime.agentStore().recordOfAgent(snapshotAgent).map(r -> r.displayName).orElse("") : runtime.displayNameOf(avatar),
 			avatar == null ? 0
 				: dev.squire.server.runtime.SquirePersonalityService
 					.countShards(player, avatar),
 			professionView(runtime, player));
+		java.util.List<String> roster = new java.util.ArrayList<>();
+		for (var record : runtime.agentStore().recordsOfOwner(player.getUuid())) {
+			boolean active = runtime.agents().resolveByAgentId(record.agentId).isPresent();
+			var profession = record.profile.profession.profession();
+			roster.add(PanelState.encodeRosterEntry(record.agentId.toString(),
+				record.displayName, profession == null ? "" : profession.id(), active,
+				record.primary, record.agentId.equals(avatar == null ? snapshotAgent : avatar.agentId())));
+		}
 		synced = withConstruction(state, player, avatar)
-			.withBackpack(backpackSize(), backpackPage());
+			.withBackpack(backpackSize(), backpackPage()).withRoster(roster);
 		SquireScreens.sendState(player, syncId, synced);
 	}
 
@@ -617,20 +758,37 @@ public class SquireScreenHandler extends ScreenHandler {
 	 * 把当前工程接到状态包上。阶段编成 {@code KIND:STATE}，客户端拆开后
 	 * 查 lang key——文案在 lang 里，不在包里。
 	 */
-	private static PanelState withConstruction(PanelState base,
+	private PanelState withConstruction(PanelState base,
 			ServerPlayerEntity player, AvatarEntity avatar) {
 		var runtime = dev.squire.server.runtime.SquireRuntime.get();
+		var project = runtime.projects().activeOf(player.getUuid()).orElse(null);
 		var placement = runtime.blueprints().activeOf(player.getUuid()).orElse(null);
+        var target = avatar == null ? snapshotAgent : avatar.agentId();
+        if (target == null || project != null && project.agentId() != null && !project.agentId().equals(target)
+            || project == null && placement != null && !placement.agentId.equals(target)) return base;
+        if (avatar == null) return recoveryProjectSummary(base, project);
+		String liveMaterialReason = null;
 		if (placement != null && avatar != null
+				&& avatar.agentId().equals(placement.agentId)
 				&& avatar.getWorld() instanceof net.minecraft.server.world.ServerWorld world) {
 			var blueprint = runtime.blueprints().registry().byId(placement.blueprintId)
 				.orElse(null);
 			if (blueprint != null) {
-				var resolved = runtime.blueprints().resolve(placement).orElse(null);
-				if (resolved == null) return base;
+				var resolved = runtime.blueprints().preview(placement).orElse(null);
+				if (resolved == null) return recoveryProjectSummary(base, project);
 				java.util.List<String> materials = new java.util.ArrayList<>();
-				for (var entry : dev.squire.server.blueprint.BlueprintManager
-						.missingMaterials(world, resolved, avatar).entrySet()) {
+				boolean activeProject = project != null
+					&& project.placementId.equals(placement.placementId);
+				var missing = dev.squire.server.blueprint.BlueprintManager
+					.missingProjectMaterials(world, resolved, player, avatar,
+						activeProject ? project.reservedMaterials() : java.util.Map.of());
+				if (activeProject) {
+					var escrowMissing = project.missingFrom(dev.squire.server.blueprint.BlueprintManager.requiredProjectMaterials(world, resolved));
+					liveMaterialReason = missing.isEmpty()
+						? (escrowMissing.isEmpty() ? "工程池材料已齐，可继续施工。" : "材料已备齐，但尚未全部存入工程池；点击“存入本批材料”继续。")
+						: "已扣除工程池及双方背包的现有材料，下列为仍需带来的数量；可分批存入。";
+				}
+				for (var entry : missing.entrySet()) {
 					materials.add(entry.getValue() + " × "
 						+ runtime.itemAliases().displayName(entry.getKey().toString()));
 				}
@@ -641,39 +799,140 @@ public class SquireScreenHandler extends ScreenHandler {
 					var family = runtime.blueprints().registry().materials().byId(familyId)
 						.orElse(null);
 					if (family != null) {
-						materialChoices.add(slot.id() + "\\u001f" + slot.displayName()
-							+ "\\u001f" + family.id() + "\\u001f" + family.displayName()
-							+ "\\u001f" + family.representative(slot.type()));
+						String slotName = slot.displayName();
+						if (runtime.blueprints().registry().catalog().variant(blueprint.id()).isPresent()) {
+							var policy = dev.squire.server.blueprint.BuildingContentPolicy.current();
+							slotName += "（Lv" + (blueprint.materialSlots().indexOf(slot) == 0 ? policy.catalogMaterialLevel() : policy.catalogFullMaterialLevel()) + "）";
+						}
+						materialChoices.add(PanelState.encodeMaterialChoice(slot.id(),
+							slotName, family.id(), family.displayName(),
+							family.representative(slot.type())));
 					}
 				}
 				var assessment = dev.squire.server.blueprint.SiteAssessment.assess(world,
 					resolved, java.util.Set.of(player.getUuid(), avatar.getUuid()));
+				var issues = new java.util.ArrayList<>(assessment.issues());
+				boolean terrain = dev.squire.server.blueprint.TerrainLeveling.isTerrain(resolved);
+				if (terrain) {
+					var spec = dev.squire.server.blueprint.TerrainLeveling.parse(placement.blueprintId).orElseThrow();
+					issues.add("范围 " + spec.width() + "×" + spec.depth() + "；地面方块 Y=" + placement.origin.getY() + "（顶面 Y=" + (placement.origin.getY() + 1) + "）");
+					issues.add("X " + placement.origin.getX() + "～" + (placement.origin.getX() + spec.width() - 1)
+						+ "；Z " + placement.origin.getZ() + "～" + (placement.origin.getZ() + spec.depth() - 1));
+					issues.add("挖除 " + dev.squire.server.blueprint.BlueprintManager.pendingClear(world, resolved).size()
+						+ " 格；填补 " + resolved.toPlace().size() + " 格；高度随实际地形计算");
+					for (var entry : dev.squire.server.blueprint.BlueprintManager.requiredProjectMaterials(world, resolved).entrySet())
+						issues.add("填料：" + runtime.itemAliases().displayName(entry.getKey().toString()) + " × " + entry.getValue());
+				}
+				long fillCells = resolved.toPlace().stream().filter(c -> dev.squire.server.blueprint.GroundPreparation.FILL.equals(c.what())).count();
+				if (!terrain && fillCells > 0) issues.add("自动地基：" + fillCells + " 格，采样周边自然地面材料；填补与清理已计入工程，无需手动平整。");
+				if (!terrain && resolved.costPlan() != null) {
+					var cost = resolved.costPlan();
+					int real = cost.operations().stream().filter(op -> !op.fluid()).mapToInt(dev.squire.server.blueprint.ConstructionCostPlan.Operation::base).sum();
+					int payable = cost.operations().stream().filter(op -> !op.fluid()).mapToInt(dev.squire.server.blueprint.ConstructionCostPlan.Operation::total).sum();
+					issues.add("账单 Lv" + cost.level() + "：永久材料 " + real + (payable <= real ? " - 节省 " : " + 损耗 ") + Math.abs(payable - real)
+						+ " = 实付 " + payable + "（" + Math.abs(cost.wasteBasisPoints()) / 100.0 + "%）；确认后固定，通道、照明另计。");
+					long fills = cost.operations().stream().filter(dev.squire.server.blueprint.ConstructionCostPlan.Operation::fluid).count();
+					if (fills > 0) issues.add("另有注液操作 " + fills + " 次；满桶交付或循环取水按供水设置结算，不损耗空桶。");
+				}
+				resolved.siteRequirements().stream().filter(r -> !r.kind().equals("terrain_surface") && !r.kind().equals("terrain_air") && !r.satisfied(world)).limit(3)
+					.forEach(r -> issues.add("原始场地要求 " + r.kind() + "：" + r.pos().toShortString()));
+				boolean accessValid = resolved.access() == null || resolved.access().valid();
+				if (!terrain && !placement.committed() && resolved.access() == null)
+					issues.add("施工通路将在确认开工时检查；移动、旋转预览不再运行寻路。");
+				if (terrain) {
+					String permissionIssue = dev.squire.server.runtime.TerrainLevelingService.permissionIssue(player, resolved);
+					if (!permissionIssue.isEmpty()) { issues.add(permissionIssue); accessValid = false; }
+					if (dev.squire.server.blueprint.BlueprintManager.pendingClear(world, resolved).isEmpty()
+						&& dev.squire.server.blueprint.BlueprintManager.pendingPlacements(world, resolved).isEmpty()) {
+						issues.add("地面已平整，无需创建工程"); accessValid = false;
+					}
+				}
+				if (dev.squire.server.blueprint.ConstructionFluids.hasFluids(resolved) || resolved.siteRequirements().stream().anyMatch(q -> q.kind().equals("fluid"))) {
+					issues.add("水域：" + (placement.artificialWater() ? "人工挖池与永久围护已计入" : "沿用原有场地") + "；/squire project water artificial|existing 切换");
+					issues.add(placement.waterSource() == null ? "供水：分批交付满桶；看向水源后 /squire project water source 可指定循环取水" : "循环取水：" + placement.waterSource().toShortString() + "；准备至少一个空桶");
+					issues.add("液体无等级损耗；每次成功倒满桶返还 1 空桶，返还留在工程物资池；岩浆须交满桶。");
+				}
+				if (resolved.access() != null && !resolved.access().valid()) {
+					if (terrain) issues.addAll(java.util.List.of(resolved.access().failure.split("；")));
+					else issues.add(resolved.access().failure);
+				}
+				if (resolved.access() != null && resolved.access().excavationCount() > 0)
+					issues.add("橙色预览：自动开挖 " + resolved.access().excavationCount() + " 格；请准备工具，掉落物保留，通路不自动回填。");
+				if (resolved.access() != null && resolved.access().assistedCount() > 0)
+					issues.add("需要辅助施工 " + resolved.access().assistedCount() + " 步；会自动安全移动或逐格施工，材料仍按账单扣除。");
+				if (resolved.access() != null && resolved.access().assistance)
+					issues.add("已启用施工恢复；原始原因：" + resolved.access().recoveryReason + "，恢复 " + resolved.access().recoveries + " 次。");
+				if (resolved.access() != null && resolved.access().temporaryCount() > 0)
+					issues.add("蓝色预览：临时通道最多外扩 " + dev.squire.server.blueprint.ConstructionAccessPlan.MARGIN + " 格；可回收施工设施 " + resolved.access().temporaryCount()
+						+ "（未搭 " + resolved.access().remainingTemporary() + "），已计入备料。");
 				base = base.withConstruction("", blueprint.displayName(),
 					placement.state().name(), placement.blueprintId, materials,
-					materialChoices, assessment.issues(), assessment.executable());
+					materialChoices, issues, assessment.executable() && accessValid);
 			}
 		}
-		var project = runtime.projects().activeOf(player.getUuid()).orElse(null);
-		if (project == null) {
+		if (project == null || avatar == null || project.agentId() == null
+				|| !project.agentId().equals(avatar.agentId())) {
 			return base;
 		}
 		java.util.List<String> stages = new java.util.ArrayList<>();
-		String reason = "";
+		String pending = project.pendingMutation();
+		String reason = pending.isEmpty() ? "" : "结算恢复待核对：" + pending.substring(0, Math.min(120, pending.length())) + "；不能自动重建或退款，材料与记录已保留。";
 		for (var stage : project.stages()) {
 			stages.add(stage.kind.name() + ":" + stage.state().name());
 			if (stage.blockedReason() != null && reason.isEmpty()) {
 				reason = stage.blockedReason();
+				if (stage.blockerCode() == dev.squire.server.project.Stage.BlockerCode.MATERIALS_MISSING
+						&& liveMaterialReason != null) reason = liveMaterialReason;
 				base = base.withConstruction(stage.blockerCode().name(),
 					base.placementName(), base.placementState(),
 					base.placementBlueprintId(), base.materialLines(), base.siteIssues(),
 					base.siteExecutable());
 			}
 		}
+		if (reason.isEmpty() && project.state() == dev.squire.server.project.Project.State.RUNNING) {
+			var access = runtime.blueprints().placement(project.placementId).flatMap(runtime.blueprints()::resolve)
+				.map(dev.squire.server.blueprint.Blueprint.Resolved::access).orElse(null);
+			if (access != null && !access.work.isEmpty()) reason = access.cleanup
+				? "回收临时通道：剩余 " + access.placed.size() + " 格；仅回收本工程搭建的设施，新工程使用脚手架。"
+				: "通道与建筑施工：" + access.cursor + "/" + access.work.size() + " 步；已搭通道 " + access.placed.size() + " 格。";
+		}
 		return base.withProject(project.name, project.state().name(), stages, reason);
+	}
+
+	private static PanelState recoveryProjectSummary(PanelState base, dev.squire.server.project.Project project) {
+		if (project == null) return base;
+		return base.withProject(project.name, project.state().name(), project.stages().stream()
+			.map(stage -> stage.kind.name() + ":" + stage.state().name()).toList(),
+			"施工者不可用或施工记录缺失。可强制取消并释放工程；材料账目封存，不自动退款。");
 	}
 
 	public void applyState(PanelState state) {
 		this.synced = state == null ? PanelState.EMPTY : state;
+	}
+
+	private String catalogFamily = "";
+	public void selectBlueprint(ServerPlayerEntity player, String id, long version) {
+		var runtime = dev.squire.server.runtime.SquireRuntime.get();
+		if (avatar == null || !runtime.agents().isOwnerOf(player.getUuid(), avatar)) return;
+		var current = professionView(runtime, player);
+		var entry = current.catalog().stream().filter(e -> e.id().equals(id)).findFirst().orElse(null);
+		if (version != current.catalogVersion() || entry == null || !entry.allowed() && !"family".equals(entry.kind())) {
+			player.sendMessage(net.minecraft.text.Text.literal("建筑目录或等级已变化，请重新选择。"), false); syncState(player); return;
+		}
+		if ("family".equals(entry.kind())) {
+			catalogFamily = "catalog:root".equals(id) ? "" : id;
+		} else if ("parametric".equals(entry.kind())) {
+			var template = dev.squire.server.blueprint.ProjectSpec.Template.byId(id.substring("template:".length()));
+			if (template != null) onButtonClick(player, BUTTON_DESIGN_TEMPLATE_BASE + template.ordinal());
+		} else {
+			// Bind this panel's squire just like ordinary panel buttons do.
+			runtime.agents().withTarget(player.getUuid(), avatar.agentId(), () -> {
+				var result = runtime.projectStart(player, id);
+				player.sendMessage(net.minecraft.text.Text.literal(result.message()), false);
+				return result;
+			});
+		}
+		syncState(player);
 	}
 
 	/** 面板要显示的服务端事实。 */

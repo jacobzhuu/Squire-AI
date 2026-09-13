@@ -214,3 +214,42 @@ road planning, village finding, Create machinery design, redstone design, multi-
 loops, self-reflection after failure, autonomous world exploration, survival material
 consumption for construction, and a downed/revive system are all out of scope here and
 planned separately.
+
+### Basic training before choosing a profession
+
+Complete four activities: open the panel, equip the squire, issue a movement order, and defeat a hostile together. Construction is Engineer practice after choosing a profession and is no longer a prerequisite. Existing training records are preserved; legacy training thresholds above 80 are capped at 80 when loaded. Lower custom thresholds remain supported.
+
+
+## 职业战斗与护主（新增）
+
+工程师保留完整护甲、防御附魔和工程能力。近战保留自身基础伤害，武器及伤害附魔增量只获得45%；攻击间隔为同武器守卫的1.5倍，向上取整至游戏刻。工程师不能射箭，也不参与狩猎协同；自动自卫只在遇袭点4格内追击。显式近战命令仍受职业伤害和攻速限制。
+
+守卫保留现有技能，并追加：
+
+| 等级 | 技能 | 行为 |
+| --- | --- | --- |
+| Lv3 | 狩猎协同 | 开启“积极”、空闲且有护卫权限时，协同攻击主人刚打中的非友方生物；不攻击玩家、随从或主人宠物。 |
+| Lv6 | 守护图腾 | 消耗自己的背包图腾，给予主人原版图腾救命效果。 |
+| Lv9 | 舍身护主 | 无可用图腾时闪现救主，主人恢复1点生命并获得附魔金苹果效果，守卫阵亡。 |
+| Lv10 | 不灭誓约 | 升级舍身：在救援点无敌战斗15秒，持续吸引16格内怪物，随后必定阵亡。 |
+
+三个护主技能均为被动：同维度、已加载、16格内的存活守卫即可触发，不受自主程度或任务限制。优先使用玩家手持图腾，其次检查所有合格守卫的背包图腾，最后才舍身。同类候选按等级、距离、固定身份顺序选择，一次伤害只救援一次。不救虚空、/kill等绕过无敌的伤害。
+
+图腾保持原版效果；舍身提供生命恢复II 20秒、伤害吸收IV 2分钟、抗性提升I和抗火I各5分钟。誓约期间不能再次救援、召回、收起或转职，补放图腾或治疗不会取消最终阵亡。背包、装备和耐久按现有阵亡规则保存，沿用铃铛召回冷却。卸载和重启不会刷新誓约时长（以游戏世界总刻数计时）。
+
+救援会显示守卫姓名和技能名，伴随金绿色连接粒子、闪现或图腾效果；不灭誓约另有光环、诱敌粒子和主人可见的倒计时。
+
+`config/squire/profession.json` 可追加 `combat` 对象，省略字段使用默认值：
+
+```json
+{
+  "combat": {
+    "engineerWeaponDamageFactor": 0.45,
+    "engineerAttackIntervalFactor": 1.5,
+    "engineerSelfDefenceRadius": 4.0,
+    "guardRescueRadius": 16.0,
+    "guardOathTauntRadius": 16.0,
+    "guardOathDurationTicks": 300
+  }
+}
+```

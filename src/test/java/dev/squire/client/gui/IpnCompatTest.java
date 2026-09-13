@@ -42,6 +42,12 @@ class IpnCompatTest {
 			SquireScreen.TAB_RAIL_TOP,
 			SquireScreen.TAB_RAIL_X + SquireScreen.TAB_RAIL_W,
 			SquireScreen.TAB_RAIL_BOTTOM});
+		regions.add(new Object[] {"召回", SquireScreen.TAB_RAIL_X,
+			SquireScreen.RECALL_BUTTON_Y, SquireScreen.TAB_RAIL_X + SquireScreen.TAB_RAIL_W,
+			SquireScreen.RECALL_BUTTON_Y + 18});
+		regions.add(new Object[] {"自动装备", SquireScreen.TAB_RAIL_X,
+			SquireScreen.EQUIP_BUTTON_Y, SquireScreen.TAB_RAIL_X + SquireScreen.TAB_RAIL_W,
+			SquireScreen.EQUIP_BUTTON_Y + 18});
 		// 槽位三块：装备列、伙伴背包、玩家背包+快捷栏（含底色的 4px 外扩）。
 		regions.add(new Object[] {"装备列", 4, SquireScreenHandler.EQUIP_Y - 4, 30,
 			SquireScreenHandler.EQUIP_Y + 6 * 18 + 2});

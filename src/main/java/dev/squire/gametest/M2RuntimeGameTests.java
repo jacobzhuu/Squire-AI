@@ -343,6 +343,61 @@ public final class M2RuntimeGameTests implements FabricGameTest {
 		});
 	}
 
+	/** Requests remain bounded when two owners spam a provider that never completes. */
+	@GameTest(templateName = FLOOR, tickLimit = 180, batchId = "squire-convo-cap")
+	public void providerRequestsAndActiveTurnsAreBoundedPerPlayerAndServer(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		ServerWorld world = context.getWorld();
+		FakePlayer alice = fakeOwner(world, "m2-concurrency-alice");
+		FakePlayer bob = fakeOwner(world, "m2-concurrency-bob");
+		AtomicInteger requests = new AtomicInteger();
+		LlmProvider neverCompletes = new LlmProvider() {
+			@Override public String id() { return "bounded-never-completes"; }
+			@Override public ProviderCapabilities capabilities() {
+				return ProviderCapabilities.full(32_768);
+			}
+			@Override public CompletableFuture<AgentResponse> generate(AgentRequest request) {
+				requests.incrementAndGet();
+				return new CompletableFuture<>();
+			}
+			@Override public CompletableFuture<Boolean> healthCheck() {
+				return CompletableFuture.completedFuture(true);
+			}
+		};
+		ProviderRegistry.clear();
+		ProviderRegistry.register(neverCompletes);
+
+		context.runAtTick(5, () -> {
+			world.spawnEntity(alice);
+			world.spawnEntity(bob);
+			for (int i = 0; i < 20; i++) {
+				rt.conversations().beginTurn(alice, "alice request " + i);
+			}
+			for (int i = 0; i < 20; i++) {
+				rt.conversations().beginTurn(bob, "bob request " + i);
+			}
+			long aliceActive = rt.conversations().records().stream()
+				.filter(turn -> alice.getUuid().equals(turn.ownerId()) && !turn.isTerminal()).count();
+			long bobActive = rt.conversations().records().stream()
+				.filter(turn -> bob.getUuid().equals(turn.ownerId()) && !turn.isTerminal()).count();
+			context.assertTrue(aliceActive == 3 && bobActive == 3,
+				"each player can hold at most three active turns: " + aliceActive + ", " + bobActive);
+			context.assertTrue(requests.get() == 5
+					&& rt.conversations().activeProviderRequestCount() == 5,
+				"only five provider calls may run at once: " + requests.get());
+			context.assertTrue(rt.conversations().queuedProviderRequestCount() == 1,
+				"the sixth accepted provider request waits in the bounded FIFO");
+
+			rt.conversations().cancelFor(alice.getUuid(), null);
+			rt.conversations().cancelFor(bob.getUuid(), null);
+			context.assertTrue(rt.conversations().activeProviderRequestCount() == 0
+					&& rt.conversations().queuedProviderRequestCount() == 0,
+				"cancellation releases provider slots and queued turns");
+			ProviderRegistry.clear();
+			context.complete();
+		});
+	}
+
 	// ------------------------------------------------------------------ gateway security
 
 	@GameTest(templateName = FLOOR, tickLimit = 300)
@@ -682,11 +737,12 @@ public final class M2RuntimeGameTests implements FabricGameTest {
 	}
 
 	/** “保护我”: the runtime fights for the owner — the LLM is never in the loop. */
-	@GameTest(templateName = FLOOR, tickLimit = 1600)
+	@GameTest(templateName = FLOOR, tickLimit = 1600, batchId = "squire-runtime-guard-owner")
 	public void guardTaskDefendsOwnerFromZombie(TestContext context) {
 		SquireRuntime rt = runtime(context);
 		ServerWorld world = context.getWorld();
 		FakePlayer owner = fakeOwner(world, "m2-guard-owner");
+		AtomicReference<ZombieEntity> threat = new AtomicReference<>();
 
 		context.runAtTick(5, () -> {
 			world.spawnEntity(owner);
@@ -699,6 +755,7 @@ public final class M2RuntimeGameTests implements FabricGameTest {
 			avatar.setStayMode();
 			avatar.insertStack(new ItemStack(Items.DIAMOND_SWORD)); // quick, decisive kill
 			ZombieEntity zombie = (ZombieEntity) EntityType.ZOMBIE.create(world);
+			threat.set(zombie);
 			zombie.refreshPositionAndAngles(
 				context.getAbsolutePos(new BlockPos(2, 2, 2)).getX() + 0.5,
 				context.getAbsolutePos(new BlockPos(2, 2, 2)).getY(),
@@ -732,29 +789,22 @@ public final class M2RuntimeGameTests implements FabricGameTest {
 
 		AtomicBoolean done = new AtomicBoolean(false);
 		pollUntil(context,
-			() -> !zombiesAlive(world, context),
+			() -> threat.get() != null && !threat.get().isAlive(),
 			120, 20, () -> {
 				done.set(true);
 				context.assertTrue(finishedWith(rt, "guard.owner"),
 					"guard task must complete after the threat dies");
 				context.assertTrue(owner.isAlive(), "owner must survive the attack");
+				rt.executeControl(owner, SquireRuntime.ControlIntent.DISMISS); owner.discard();
 				context.complete();
 			}, done);
 		context.runAtTick(1550, () -> {
 			if (!done.get()) {
 				context.assertTrue(false, "guard stalled; zombie still alive="
-					+ zombiesAlive(world, context)
+					+ (threat.get() != null && threat.get().isAlive())
 					+ " ownerHp=" + owner.getHealth());
 			}
 		});
-	}
-
-	private static boolean zombiesAlive(ServerWorld world, TestContext context) {
-		net.minecraft.util.math.Box area = new net.minecraft.util.math.Box(
-			context.getAbsolutePos(new BlockPos(-4, -4, -4)),
-			context.getAbsolutePos(new BlockPos(14, 14, 14)));
-		return !world.getEntitiesByClass(ZombieEntity.class, area,
-			ZombieEntity::isAlive).isEmpty();
 	}
 
 	/**

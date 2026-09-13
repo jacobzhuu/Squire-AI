@@ -85,6 +85,7 @@ public final class SquireAgentStateStore extends PersistentState {
 		public long deathTick;
 		/** Absolute overworld game tick. Swapping or upgrading bells cannot shorten it. */
 		public long reviveAvailableTick;
+        public long oathDeadline;
 		/** 长期策略引用（如 GuardPolicy JSON），phase D 填充。 */
 		public final List<String> persistentPolicies = new ArrayList<>();
 		/**
@@ -234,8 +235,10 @@ public final class SquireAgentStateStore extends PersistentState {
 				+ "for agent {}", avatar.getUuid(), record.entityUuid, record.agentId);
 			return false;
 		}
-		record.entityUuid = avatar.getUuid();
+		if (record.deathPending && avatar.oathActive()) return false;
+        record.entityUuid = avatar.getUuid();
 		record.activeBody = activeBody;
+        record.oathDeadline = avatar.oathDeadline();
 		if (avatar.getWorld() instanceof ServerWorld world) {
 			record.lastPos = GlobalPos.create(world.getRegistryKey(), avatar.getBlockPos());
 		}
@@ -297,6 +300,7 @@ public final class SquireAgentStateStore extends PersistentState {
 		AgentRecord record = recordsByAgent.get(agentId);
 		if (record == null) return;
 		record.deathPending = true;
+        record.oathDeadline = 0;
 		record.deathTick = Math.max(0L, deathTick);
 		record.reviveAvailableTick = Math.max(record.deathTick, reviveAvailableTick);
 		record.activeBody = false;
@@ -459,7 +463,8 @@ public final class SquireAgentStateStore extends PersistentState {
 		if (r.primary) { // 只在非默认值时写（additive-optional 约定）
 			c.putBoolean("primary", true);
 		}
-		c.put("profile", r.profile.writeNbt(new NbtCompound()));
+		c.putLong("oathDeadline", r.oathDeadline);
+        c.put("profile", r.profile.writeNbt(new NbtCompound()));
 		return c;
 	}
 
@@ -504,6 +509,7 @@ public final class SquireAgentStateStore extends PersistentState {
 		r.deathPending = c.getBoolean("deathPending");
 		r.deathTick = Math.max(0L, c.getLong("deathTick"));
 		r.reviveAvailableTick = Math.max(0L, c.getLong("reviveAvailableTick"));
+        r.oathDeadline = Math.max(0L, c.getLong("oathDeadline"));
 		// Pre-feature death snapshots were inactive records with exactly zero health.
 		// They get one immediately eligible low-health revival rather than the old
 		// accidental full heal or an unknowable retroactive wait.

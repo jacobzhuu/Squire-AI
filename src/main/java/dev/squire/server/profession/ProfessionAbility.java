@@ -56,34 +56,43 @@ public enum ProfessionAbility {
 	GUARD_GUARDIAN_PROTOCOL("guard.guardian_protocol", SquireProfession.GUARD, 10,
 		"守护协议", "把选目标、换武器、举盾、治疗、护主合成一套连贯的打法", true),
 
+    GUARD_COOPERATIVE_HUNT("guard.cooperative_hunt", SquireProfession.GUARD, 3,
+        "狩猎协同", "开启积极且空闲时，协同攻击主人刚攻击的非友方生物", true),
+    GUARD_PROTECTIVE_TOTEM("guard.protective_totem", SquireProfession.GUARD, 6,
+        "守护图腾", "16格内被动消耗背包中的不死图腾，替主人免死", true),
+    GUARD_SELF_SACRIFICE("guard.self_sacrifice", SquireProfession.GUARD, 9,
+        "舍身护主", "无可用图腾时闪现舍身救主，给予附魔金苹果效果；阵亡后可冷却召回", true),
+    GUARD_IMMORTAL_OATH("guard.immortal_oath", SquireProfession.GUARD, 10,
+        "不灭誓约", "舍身时无敌战斗15秒，持续吸引附近怪物，随后阵亡", true),
+
 	// ---------------------------------------------------------------- 工程师
-	/** Lv.1 已经会的：挑模板、粒子预览、前后左右移动、确认后开工。 */
+	/** Lv.1：基础住宅和完整的预览—确认—施工闭环。 */
 	ENGINEER_BASIC_BLUEPRINT("engineer.basic_blueprint", SquireProfession.ENGINEER, 1,
-		"基础蓝图", "挑模板、粒子预览、前后左右挪、确认后开工", true),
-	/** Lv.2：更多模板 + 更大足印。 */
+		"基础蓝图", "使用等级允许的外部建筑目录；预览、挪动并确认施工", true),
+	/** Lv.2：民居、仓储和装饰入门。 */
 	ENGINEER_TEMPLATE_LIBRARY_1("engineer.template_library_1", SquireProfession.ENGINEER, 2,
-		"模板库 I", "解锁棚屋、小仓库、小屋，足印上限放宽", true),
-	/** Lv.3：旋转蓝图。 */
+		"模板库 I", "解锁云杉民居、梁架仓储屋和村庄小喷泉", true),
+	/** Lv.3：旋转蓝图，并进入生产建筑。 */
 	ENGINEER_BLUEPRINT_ROTATION("engineer.blueprint_rotation", SquireProfession.ENGINEER, 3,
-		"蓝图旋转", "把预览转到 90° / 180° / 270°", true),
-	/** Lv.4：按结构分区分别指定材料。 */
+		"蓝图旋转", "四向旋转预览；施工与材料统计使用同一份变换后的蓝图", true),
+	/** Lv.4：材料分区，并进入矿业与防御建筑。 */
 	ENGINEER_MATERIAL_REGIONS("engineer.material_regions", SquireProfession.ENGINEER, 4,
-		"材料分区", "地基 / 墙 / 地板 / 屋顶 / 窗 分别指定材料，而不是整栋一种", true),
-	/** Lv.5：预定义结构 Variant。 */
+		"材料主题", "基础材料主题替换；Lv10 可调整全部兼容材料分区", true),
+	/** Lv.5：结构变体与更完整的生产/公共建筑。 */
 	ENGINEER_STRUCTURAL_VARIANTS("engineer.structural_variants", SquireProfession.ENGINEER, 5,
-		"结构变体", "屋顶、地基、窗、入口各有几种预定义样式可挑", true),
-	/** Lv.6：多层。 */
+		"结构变体", "调整屋顶/地基/窗/入口；解锁工匠小屋和旅店", true),
+	/** Lv.6：多层和大型防御建筑。 */
 	ENGINEER_MULTI_FLOOR("engineer.multi_floor", SquireProfession.ENGINEER, 6,
-		"多层建筑", "1 / 2 / 3 层，楼板和楼梯由模板代码负责", true),
-	/** Lv.7：镜像。 */
+		"多层建筑", "设计 1/2/3 层建筑；解锁边境守望塔", true),
+	/** Lv.7：镜像和高级公共建筑。 */
 	ENGINEER_BLUEPRINT_MIRROR("engineer.blueprint_mirror", SquireProfession.ENGINEER, 7,
-		"蓝图镜像", "沿 X 或 Z 轴翻转整份蓝图", true),
+		"蓝图镜像", "沿 X/Z 轴镜像；解锁学者图书馆", true),
 	/** Lv.7：附属模块。 */
 	ENGINEER_OPTIONAL_MODULES("engineer.optional_modules", SquireProfession.ENGINEER, 7,
 		"附属模块", "门廊、烟囱、储藏侧翼、塔楼、阳台，只能接在合法连接点上", true),
-	/** Lv.8：模块化组合。 */
+	/** Lv.8：模块化组合和大型仓储。 */
 	ENGINEER_MODULAR_BLUEPRINT("engineer.modular_blueprint", SquireProfession.ENGINEER, 8,
-		"模块化蓝图", "主体 + 侧翼 + 塔楼 + 入口自由组合成一栋大建筑", true),
+		"模块化蓝图", "自由组合主体/侧翼/塔楼；解锁大型云杉仓库", true),
 	/** Lv.9：一次预览多栋。 */
 	ENGINEER_COMPOUND_BLUEPRINT("engineer.compound_blueprint", SquireProfession.ENGINEER, 9,
 		"复合蓝图", "一份蓝图里放下主屋 + 仓库 + 哨塔 + 围栏 + 大门", true),
@@ -160,6 +169,15 @@ public enum ProfessionAbility {
 			.sorted(Comparator.comparingInt(ProfessionAbility::unlockLevel)
 				.thenComparing(ProfessionAbility::id))
 			.toList();
+	}
+
+	/** Product-facing list; legacy capability gates and saved IDs remain intact. */
+	public static List<ProfessionAbility> playerVisible(SquireProfession profession) {
+		var retired = dev.squire.server.blueprint.BuildingContentPolicy.current().retiredAbilities();
+		return of(profession).stream().filter(a -> !retired.contains(a.id())).toList();
+	}
+	public static ProfessionAbility nextPlayerVisibleAfter(SquireProfession profession, int level) {
+		return playerVisible(profession).stream().filter(a -> a.unlockLevel() > level).findFirst().orElse(null);
 	}
 
 	/** 这一级<b>刚刚</b>解锁的那些（用来在晋升时发提示）。 */

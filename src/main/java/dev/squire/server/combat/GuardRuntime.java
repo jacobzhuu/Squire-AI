@@ -183,7 +183,7 @@ public final class GuardRuntime {
 	private void tickPolicy(GuardPolicy policy, long tick) {
 		AvatarEntity avatar = services.avatar(policy.agentId());
 		ServerPlayerEntity owner = services.requester(policy.ownerId());
-		if (avatar == null || !avatar.isAlive() || owner == null || !owner.isAlive()
+		if (avatar == null || !avatar.isAlive() || avatar.oathActive() || owner == null || !owner.isAlive()
 				|| avatar.getWorld() != owner.getWorld()) {
 			return; // 休眠：owner 离线或伙伴未物化，策略保留
 		}
@@ -195,6 +195,12 @@ public final class GuardRuntime {
 			services.profile(policy.agentId());
 		dev.squire.server.profession.ProfessionData profession =
 			services.professionData(policy.agentId());
+		if (profession != null && profession.profession()
+				== dev.squire.server.profession.SquireProfession.ENGINEER) {
+			avatar.setTarget(null);
+			lowerShield(avatar);
+			return;
+		}
 		dev.squire.server.profession.ProfessionConfig config =
 			services.professionConfig();
 		dev.squire.server.profession.CombatStance stance = stanceOf(profession, config);
@@ -236,6 +242,7 @@ public final class GuardRuntime {
 					engagement.ownerThreats()));
 		}
 
+		target = GuardSelfDefense.target(avatar, target);
 		if (target == null) {
 			lowerShield(avatar);
 			escort(avatar, owner, tick);

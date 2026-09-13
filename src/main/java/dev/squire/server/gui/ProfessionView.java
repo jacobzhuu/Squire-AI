@@ -9,6 +9,7 @@ import dev.squire.server.profession.ProfessionConfig;
 import dev.squire.server.profession.ProfessionData;
 import dev.squire.server.profession.SquireProfession;
 import dev.squire.server.profession.TrainingMilestone;
+import dev.squire.server.blueprint.Blueprint;
 import net.minecraft.network.PacketByteBuf;
 
 /**
@@ -32,7 +33,28 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 		List<String> nextUnlocks, int guardMaxHealth,
 		int food, int potions, int arrows, boolean bow, boolean shield,
 		int backupWeapons, int maxFootprint, List<String> templates,
-		List<String> templateLocks) {
+		List<String> templateLocks, List<BlueprintEntry> catalog, long catalogVersion, String constructionGrowth) {
+	public ProfessionView(String professionId, int level, int xp, int xpNeeded, int overflowXp,
+			boolean promotionReady, String stanceId, int trainingXp, int trainingRequired,
+			List<String> trainingDone, List<String> promotionCost, List<String> unlockedAbilities,
+			List<String> nextUnlocks, int guardMaxHealth, int food, int potions, int arrows,
+			boolean bow, boolean shield, int backupWeapons, int maxFootprint,
+			List<String> templates, List<String> templateLocks, List<BlueprintEntry> catalog, long catalogVersion) {
+		this(professionId, level, xp, xpNeeded, overflowXp, promotionReady, stanceId, trainingXp,
+			trainingRequired, trainingDone, promotionCost, unlockedAbilities, nextUnlocks, guardMaxHealth,
+			food, potions, arrows, bow, shield, backupWeapons, maxFootprint, templates, templateLocks, catalog, catalogVersion, "");
+	}
+	public ProfessionView(String professionId, int level, int xp, int xpNeeded, int overflowXp,
+			boolean promotionReady, String stanceId, int trainingXp, int trainingRequired,
+			List<String> trainingDone, List<String> promotionCost, List<String> unlockedAbilities,
+			List<String> nextUnlocks, int guardMaxHealth, int food, int potions, int arrows,
+			boolean bow, boolean shield, int backupWeapons, int maxFootprint,
+			List<String> templates, List<String> templateLocks) {
+		this(professionId, level, xp, xpNeeded, overflowXp, promotionReady, stanceId,
+			trainingXp, trainingRequired, trainingDone, promotionCost, unlockedAbilities,
+			nextUnlocks, guardMaxHealth, food, potions, arrows, bow, shield, backupWeapons,
+			maxFootprint, templates, templateLocks, List.of(), 0);
+	}
 
 	/** 一次也没同步到时用它，而不是显示一堆 0。 */
 	public static final ProfessionView EMPTY = new ProfessionView("", 0, 0, 0, 0, false,
@@ -40,10 +62,12 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 		List.of(), List.of(), 20, 0, 0, 0, false, false, 0, 0, List.of(), List.of());
 
 	/** 单条上限，和 {@code PanelState} 的约定一致：网络输入永远有上界。 */
-	private static final int MAX_ENTRIES = 24;
-	private static final int MAX_ENTRY_LENGTH = 64;
+	private static final int MAX_ENTRIES = 64;
+	private static final int MAX_ENTRY_LENGTH = 512;
 
 	public ProfessionView {
+		constructionGrowth = constructionGrowth == null ? "" : constructionGrowth;
+		catalog = catalog == null ? List.of() : List.copyOf(catalog);
 		professionId = professionId == null ? "" : professionId;
 		stanceId = stanceId == null ? CombatStance.BALANCED.id() : stanceId;
 		trainingDone = trainingDone == null ? List.of() : List.copyOf(trainingDone);
@@ -63,6 +87,52 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 		}
 	}
 
+	public record BlueprintEntry(String id, String displayName, String category,
+			int minLevel, int width, int height, int depth, String author, String style,
+			String source, String license, String kind, boolean allowed, String reason, int tier) {
+		public BlueprintEntry(String id, String displayName, String category, int minLevel, int width, int height, int depth,
+				String author, String style, String source, String license, String kind, boolean allowed, String reason) {
+			this(id, displayName, category, minLevel, width, height, depth, author, style, source, license, kind, allowed, reason, 0);
+		}
+		public boolean unlockedAt(int level) { return allowed && level >= minLevel; }
+	}
+	public List<BlueprintEntry> blueprintLibrary() { return catalog; }
+	/** One lightweight family page or one family's variants; never flattens the full library. */
+	public ProfessionView withBuildingCatalog(dev.squire.server.blueprint.BuildingCatalog buildings,
+			String familyId, long revision) {
+		List<BlueprintEntry> entries = new ArrayList<>();
+		var family = buildings.family(familyId).orElse(null);
+		if (family == null) {
+			for (var f : buildings.families()) {
+				var v = f.variants().get(0);
+				long available = f.variants().stream().filter(x -> x.allowed(level)).count();
+				entries.add(new BlueprintEntry(f.id(), f.name(), buildings.categoryName(f.category()), f.minLevel(), 0, 0, 0,
+					v.author(), v.style(), v.source(), v.license(), "family", available > 0,
+					available + "/" + f.variants().size() + " 个可施工版本；点击查看 Tier、平台与组件"));
+			}
+		} else {
+			entries.add(new BlueprintEntry("catalog:root", "← 返回建筑家族", buildings.categoryName(family.category()), 1, 0, 0, 0,
+				"", "", "", "", "family", true, ""));
+			for (var v : family.variants()) {
+				String reason = !v.buildable() ? v.reason() : level < v.requiredEngineerLevel()
+					? "需要工程师 Lv" + v.requiredEngineerLevel() : "";
+				entries.add(new BlueprintEntry(v.id(), v.displayName(), buildings.categoryName(v.category()), v.requiredEngineerLevel(),
+					v.width(), v.height(), v.depth(), v.author(), v.style(), v.source(), v.license(),
+					v.buildable() ? "fixed" : "unsupported", profession() == SquireProfession.ENGINEER && v.allowed(level), reason, v.tier()));
+			}
+		}
+		var growth = dev.squire.server.profession.EngineerProgression.current();
+		long available = buildings.variants().stream().filter(v -> v.allowed(level)).count();
+		long nextCount = buildings.variants().stream().filter(v -> v.buildable() && v.requiredEngineerLevel() == level + 1).count();
+		var retiredAbilities = dev.squire.server.blueprint.BuildingContentPolicy.current().retiredAbilities();
+		return new ProfessionView(professionId, level, xp, xpNeeded, overflowXp, promotionReady,
+			stanceId, trainingXp, trainingRequired, trainingDone, promotionCost, unlockedAbilities.stream().filter(id -> !retiredAbilities.contains(id)).toList(),
+			nextUnlocks.stream().filter(id -> !retiredAbilities.contains(id)).toList(), guardMaxHealth, food, potions, arrows, bow, shield, backupWeapons,
+			maxFootprint, List.of(), List.of(), entries, revision * 31 + Integer.toUnsignedLong(entries.hashCode()),
+			"工程师 Lv" + level + " · 可建 " + available + " 变体 · 放置间隔 " + growth.placementInterval(level)
+				+ " tick · 新工程" + growth.materialAdjustmentLabel(level)
+				+ (level < 10 ? " · 下级新增 " + nextCount + " 变体；Lv10 全材料分区" : " · 建筑大师：完整已验证目录与材料主题"));
+	}
 	/**
 	 * 整个模板库（含还没解锁的），按等级要求排序。
 	 *
@@ -73,6 +143,7 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 	public List<TemplateLock> templateLibrary() {
 		List<TemplateLock> out = new ArrayList<>();
 		for (String row : templateLocks) {
+			if (row.startsWith("b|")) continue;
 			int bar = row.indexOf('|');
 			if (bar <= 0) {
 				continue;
@@ -87,6 +158,34 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 		return List.copyOf(out);
 	}
 
+	public ProfessionView withBlueprintCatalog(List<Blueprint> blueprints) {
+		return withBlueprintCatalog(blueprints, ProfessionConfig.defaults());
+	}
+	public ProfessionView withBlueprintCatalog(List<Blueprint> blueprints, ProfessionConfig config) {
+		return withBlueprintCatalog(blueprints, config, 0);
+	}
+	public ProfessionView withBlueprintCatalog(List<Blueprint> blueprints, ProfessionConfig config, long revision) {
+		var data = new ProfessionData(); data.professionId = professionId; data.level = level;
+		List<BlueprintEntry> entries = new ArrayList<>();
+		for (Blueprint b : blueprints) entries.add(catalogEntry(b, data, config, "fixed", b.id()));
+		for (var template : dev.squire.server.blueprint.ProjectSpec.Template.values()) {
+			var b = dev.squire.server.blueprint.ProjectBlueprintFactory.compile(template.defaults());
+			entries.add(catalogEntry(b, data, config, "parametric", "template:" + template.id()));
+		}
+		entries.sort(java.util.Comparator.comparing(BlueprintEntry::category)
+			.thenComparingInt(BlueprintEntry::minLevel).thenComparing(BlueprintEntry::id));
+		return new ProfessionView(professionId, level, xp, xpNeeded, overflowXp, promotionReady,
+			stanceId, trainingXp, trainingRequired, trainingDone, promotionCost, unlockedAbilities,
+			nextUnlocks, guardMaxHealth, food, potions, arrows, bow, shield, backupWeapons,
+			maxFootprint, templates, templateLocks, entries.stream().limit(512).toList(), revision * 31 + Integer.toUnsignedLong(entries.hashCode()));
+	}
+	private static BlueprintEntry catalogEntry(Blueprint b, ProfessionData data, ProfessionConfig config, String kind, String id) {
+		var policy = dev.squire.server.runtime.EngineerBuildPolicy.evaluate(b, data, config);
+		var size = dev.squire.server.runtime.EngineerBuildPolicy.dimensions(b);
+		return new BlueprintEntry(id, b.displayName(), b.category().name(), policy.minLevel(),
+			size.width(), size.height(), size.depth(), b.metadata().author(), b.metadata().style(),
+			b.metadata().source(), b.metadata().license(), kind, policy.allowed(), policy.reason());
+	}
 	// ------------------------------------------------------------------ 派生
 
 	public SquireProfession profession() {
@@ -257,7 +356,7 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 			promotionReady, stanceId, trainingXp, trainingRequired, trainingDone,
 			promotionCost, unlockedAbilities, nextUnlocks, guardMaxHealth,
 			nextFood, nextPotions, nextArrows, nextBow, nextShield, nextBackupWeapons,
-			maxFootprint, templates, templateLocks);
+			maxFootprint, templates, templateLocks, catalog, catalogVersion);
 	}
 
 	// ------------------------------------------------------------------ wire
@@ -286,6 +385,16 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 		buf.writeVarInt(maxFootprint);
 		writeStrings(buf, templates);
 		writeStrings(buf, templateLocks);
+		buf.writeLong(catalogVersion);
+		buf.writeVarInt(catalog.size());
+		for (var e : catalog) {
+			buf.writeString(e.id(), 512); buf.writeString(e.displayName(), 256); buf.writeString(e.category(), 32);
+			buf.writeVarInt(e.minLevel()); buf.writeVarInt(e.width()); buf.writeVarInt(e.height()); buf.writeVarInt(e.depth());
+			buf.writeString(e.author(), 256); buf.writeString(e.style(), 256); buf.writeString(e.source(), 2048);
+			buf.writeString(e.license(), 128); buf.writeString(e.kind(), 32); buf.writeBoolean(e.allowed()); buf.writeString(e.reason(), 256);
+			buf.writeVarInt(e.tier());
+		}
+		buf.writeString(constructionGrowth, 512);
 	}
 
 	public static ProfessionView read(PacketByteBuf buf) {
@@ -294,7 +403,19 @@ public record ProfessionView(String professionId, int level, int xp, int xpNeede
 			buf.readVarInt(), buf.readVarInt(), readStrings(buf), readStrings(buf),
 			readStrings(buf), readStrings(buf), buf.readVarInt(), buf.readVarInt(),
 			buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean(),
-			buf.readVarInt(), buf.readVarInt(), readStrings(buf), readStrings(buf));
+			buf.readVarInt(), buf.readVarInt(), readStrings(buf), readStrings(buf)).readCatalog(buf);
+	}
+	private ProfessionView readCatalog(PacketByteBuf buf) {
+		long version = buf.readLong(); int size = buf.readVarInt();
+		if (size < 0 || size > 512) throw new IllegalArgumentException("invalid catalog size");
+		List<BlueprintEntry> entries = new ArrayList<>();
+		for (int i = 0; i < size; i++) entries.add(new BlueprintEntry(buf.readString(512), buf.readString(256), buf.readString(32),
+			buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readString(256), buf.readString(256),
+				buf.readString(2048), buf.readString(128), buf.readString(32), buf.readBoolean(), buf.readString(256), buf.readVarInt()));
+		return new ProfessionView(professionId, level, xp, xpNeeded, overflowXp, promotionReady,
+			stanceId, trainingXp, trainingRequired, trainingDone, promotionCost, unlockedAbilities,
+			nextUnlocks, guardMaxHealth, food, potions, arrows, bow, shield, backupWeapons,
+			maxFootprint, templates, templateLocks, entries, version, buf.readString(512));
 	}
 
 	private static void writeStrings(PacketByteBuf buf, List<String> values) {

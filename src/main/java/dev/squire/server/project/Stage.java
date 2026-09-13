@@ -7,10 +7,9 @@ import java.util.UUID;
  *
  * <p>阶段分两类，区别不在于难易，而在于<b>谁在推进它</b>：</p>
  * <ul>
- *   <li><b>任务型</b>（EXCAVATE / BUILD / LIGHT）——编译成真实任务交给调度器，
+ *   <li><b>任务型</b>（HAUL / EXCAVATE / BUILD / LIGHT）——编译成真实任务交给调度器，
  *       伙伴在干活；</li>
- *   <li><b>阻塞型</b>（FULFIL_MATERIALS / HAUL / VERIFY）——等一个条件成立，
- *       其中 HAUL 等的是<b>玩家</b>把料交出来。</li>
+ *   <li><b>阻塞型</b>（FULFIL_MATERIALS / VERIFY）——等一个条件成立。</li>
  * </ul>
  *
  * <p>「等玩家」这件事正是 {@code GoalCoordinator} 表达不了、因而需要 Project 这一层的
@@ -23,7 +22,7 @@ public final class Stage {
 	public enum Kind {
 		/** 用指令把材料兑现到<b>玩家</b>背包。 */
 		FULFIL_MATERIALS,
-		/** 等玩家把材料交给伙伴（丢在他脚边、或放进工地箱）。 */
+		/** 场地准备；名称为兼容旧存档保留，材料已在开工确认时预留。 */
 		HAUL,
 		/** 按蓝图挖出负空间。 */
 		EXCAVATE,
@@ -119,7 +118,7 @@ public final class Stage {
 	public String displayName() {
 		return switch (kind) {
 			case FULFIL_MATERIALS -> "备料";
-			case HAUL -> "交料";
+			case HAUL -> "场地准备";
 			case EXCAVATE -> "掘进";
 			case BUILD -> "施工";
 			case LIGHT -> "点灯";

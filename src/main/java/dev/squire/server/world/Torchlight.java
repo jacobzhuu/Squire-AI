@@ -1,6 +1,7 @@
 package dev.squire.server.world;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,11 +13,15 @@ import java.util.UUID;
 import dev.squire.server.blueprint.Blueprint;
 import dev.squire.server.body.avatar.AvatarEntity;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.SideShapeType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.LightType;
 
 /**
@@ -35,7 +40,7 @@ public final class Torchlight {
 	public static final Identifier TORCH = new Identifier("minecraft:torch");
 	/** 低于这个光照才值得插一根。 */
 	public static final int DARK_ENOUGH = 8;
-	/** Project lighting uses these values for both reservation and execution. */
+	/** Per-pass limit, NOT the whole project's material allowance. */
 	public static final int PROJECT_MAX_TORCHES = 24;
 	public static final int PROJECT_SPACING = 4;
 
@@ -58,6 +63,17 @@ public final class Torchlight {
 	public static int lightUp(ServerWorld world, Iterable<BlockPos> candidates,
 			int spacing, int max, UndoJournal journal, UUID operationId, long tick,
 			java.util.function.BooleanSupplier takeTorch) {
+		return lightUp(world, candidates, spacing, max, journal, operationId, tick, takeTorch, false);
+	}
+	/** A planned lamp may already be lit by its neighbour while its assigned far corner is dark. */
+	public static int lightUpPlanned(ServerWorld world, Iterable<BlockPos> candidates,
+			int max, UndoJournal journal, UUID operationId, long tick,
+			java.util.function.BooleanSupplier takeTorch) {
+		return lightUp(world, candidates, 1, max, journal, operationId, tick, takeTorch, true);
+	}
+	private static int lightUp(ServerWorld world, Iterable<BlockPos> candidates,
+			int spacing, int max, UndoJournal journal, UUID operationId, long tick,
+			java.util.function.BooleanSupplier takeTorch, boolean planned) {
 		if (world == null || takeTorch == null
 				|| !(Registries.ITEM.get(TORCH) instanceof BlockItem torchItem)) {
 			return 0;
@@ -68,7 +84,7 @@ public final class Torchlight {
 			if (placed >= max) {
 				break;
 			}
-			if (!suitable(world, pos)) {
+			if (!(planned ? world.getBlockState(pos).isAir() && Blocks.TORCH.getDefaultState().canPlaceAt(world, pos) : suitable(world, pos))) {
 				continue;
 			}
 			// 间距必须在“真正能插火把的格子”之间计算。石屋的负空间按从高到低
@@ -77,16 +93,17 @@ public final class Torchlight {
 			if (suitableIndex++ % Math.max(1, spacing) != 0) {
 				continue;
 			}
+			BlockState before = world.getBlockState(pos);
+			BlockState target = torchItem.getBlock().getDefaultState();
+			if (!world.setBlockState(pos, target, Block.NOTIFY_ALL)) continue;
 			if (!takeTorch.getAsBoolean()) {
-				break; // 没火把就不点，绝不凭空生成
+				world.setBlockState(pos, before, Block.NOTIFY_ALL);
+				break;
 			}
 			if (journal != null && operationId != null) {
 				journal.record(new UndoJournal.Entry(operationId, operationId,
-					pos.toImmutable(), world.getBlockState(pos), null,
-					torchItem.getBlock().getDefaultState(), tick));
+					pos.toImmutable(), before, null, target, tick));
 			}
-			world.setBlockState(pos, torchItem.getBlock().getDefaultState(),
-				Block.NOTIFY_ALL);
 			placed++;
 		}
 		return placed;
@@ -139,44 +156,76 @@ public final class Torchlight {
 	 */
 	public static int projectTorchRequirement(ServerWorld world,
 			Blueprint.Resolved resolved) {
-		if (world == null || resolved == null) return 0;
-		Map<BlockPos, Blueprint.Cell> planned = new HashMap<>();
-		for (Blueprint.Cell cell : resolved.toPlace()) {
-			if (!cell.optional()) planned.put(cell.pos(), cell);
-		}
-		Set<BlockPos> cleared = new HashSet<>(resolved.toClear());
-		int suitable = 0;
-		for (BlockPos pos : candidates(resolved)) {
-			if (!plannedAir(world, pos, planned, cleared)) continue;
-			BlockPos below = pos.down();
-			Blueprint.Cell support = planned.get(below);
-			boolean solid = support != null
-				? !dev.squire.server.blueprint.BlueprintManager.targetState(support)
-					.getCollisionShape(world, below).isEmpty()
-				: !cleared.contains(below)
-					&& !world.getBlockState(below).getCollisionShape(world, below).isEmpty();
-			if (solid) suitable++;
-		}
-		return Math.min(PROJECT_MAX_TORCHES,
-			(suitable + PROJECT_SPACING - 1) / PROJECT_SPACING);
+		return projectSpots(world, resolved).size();
 	}
 
 	/** Remaining real torches after existing placed lights have changed block light. */
 	public static int remainingProjectTorchRequirement(ServerWorld world,
 			Blueprint.Resolved resolved) {
 		if (world == null || resolved == null) return 0;
-		int suitable = 0;
-		for (BlockPos pos : candidates(resolved)) {
-			if (suitable(world, pos)) suitable++;
-		}
-		return Math.min(PROJECT_MAX_TORCHES,
-			(suitable + PROJECT_SPACING - 1) / PROJECT_SPACING);
+		if (brightEnough(world, candidates(resolved))) return 0;
+		return (int) projectSpots(world, resolved).stream()
+			.filter(pos -> world.getBlockState(pos).isAir() && Blocks.TORCH.getDefaultState().canPlaceAt(world, pos)).count();
 	}
 
-	private static boolean plannedAir(ServerWorld world, BlockPos pos,
-			Map<BlockPos, Blueprint.Cell> planned, Set<BlockPos> cleared) {
-		if (planned.containsKey(pos)) return false;
-		return cleared.contains(pos) || world.getBlockState(pos).isAir();
+	/**
+	 * Fixed, geometry-based lighting positions shared by the bill and the executor.
+	 * Sampling every fourth dark cell can miss isolated rooms and spend more on retries
+	 * than the upfront bill. Instead, greedily cover air paths within torch range. Walls
+	 * stop coverage; floors on other levels get their own lights. Only air/torches transmit
+	 * estimated light, making the estimate conservative for glass and other transparent blocks.
+	 */
+	public static List<BlockPos> projectSpots(ServerWorld world, Blueprint.Resolved resolved) {
+		if (world == null || resolved == null) return List.of();
+		Map<BlockPos, BlockState> planned = new HashMap<>();
+		for (BlockPos pos : resolved.toClear()) planned.put(pos, Blocks.AIR.getDefaultState());
+		for (Blueprint.Cell cell : resolved.toPlace()) {
+			if (!cell.optional()) planned.put(cell.pos(),
+				dev.squire.server.blueprint.BlueprintManager.targetState(cell));
+		}
+		java.util.function.Function<BlockPos, BlockState> stateAt = pos -> {
+			BlockState state = planned.get(pos);
+			if (state != null) return state;
+			state = world.getBlockState(pos);
+			// Auto lights must not change the geometry/ordering of the remaining plan.
+			return state.isOf(Blocks.TORCH) ? Blocks.AIR.getDefaultState() : state;
+		};
+		List<BlockPos> cells = candidates(resolved);
+		Set<BlockPos> air = new HashSet<>();
+		for (BlockPos pos : cells) {
+			BlockState state = stateAt.apply(pos);
+			if (state.isAir() || state.isOf(Blocks.TORCH)) air.add(pos);
+		}
+		Set<BlockPos> covered = new HashSet<>();
+		List<BlockPos> spots = new ArrayList<>();
+		for (BlockPos pos : cells) {
+			if (!air.contains(pos) || covered.contains(pos)
+					|| !stateAt.apply(pos).isAir()) continue;
+			BlockPos below = pos.down();
+			// This is TorchBlock.canPlaceAt's exact UP-face support rule (not merely
+			// a non-empty collision box, which incorrectly accepts bottom slabs).
+			if (!stateAt.apply(below).isSideSolid(world, below, Direction.UP,
+					SideShapeType.CENTER)) continue;
+			spots.add(pos);
+			ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
+			Set<BlockPos> visited = new HashSet<>();
+			frontier.add(pos);
+			visited.add(pos);
+			int range = Blocks.TORCH.getDefaultState().getLuminance() - DARK_ENOUGH;
+			for (int distance = 0; distance <= range && !frontier.isEmpty(); distance++) {
+				int count = frontier.size();
+				for (int i = 0; i < count; i++) {
+					BlockPos lit = frontier.removeFirst();
+					covered.add(lit);
+					if (distance == range) continue;
+					for (Direction direction : Direction.values()) {
+						BlockPos next = lit.offset(direction);
+						if (air.contains(next) && visited.add(next)) frontier.addLast(next);
+					}
+				}
+			}
+		}
+		return List.copyOf(spots);
 	}
 
 	/** 这份工程为了后续点灯还缺几根真实火把。 */
@@ -193,8 +242,7 @@ public final class Torchlight {
 	/** 空气、脚下踩得实、而且确实暗。悬空的火把会被相邻更新打掉，白扣一根。 */
 	public static boolean suitable(ServerWorld world, BlockPos pos) {
 		return world.getBlockState(pos).isAir()
-			&& !world.getBlockState(pos.down()).getCollisionShape(world, pos.down())
-				.isEmpty()
+			&& Blocks.TORCH.getDefaultState().canPlaceAt(world, pos)
 			&& world.getLightLevel(LightType.BLOCK, pos) < DARK_ENOUGH;
 	}
 

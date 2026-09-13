@@ -21,9 +21,12 @@ class BlueprintRegistryTest {
 	private final BlueprintRegistry registry = new BlueprintRegistry();
 
 	@Test
-	void shipsTheFiveBuiltinBlueprints() {
+	void shipsBundledBlueprintsFromTheResourceCatalog() {
 		assertEquals(List.of("shelter_wood", "shelter_stone", "storage_shed",
-			"watchtower", "mine_outpost"), registry.ids());
+			"watchtower", "mine_outpost", "field_smithy", "roadside_inn",
+			"keepitlevel_residence", "keepitlevel_fountain",
+			"keepitlevel_builder_lodge", "keepitlevel_guardtower",
+			"keepitlevel_library", "keepitlevel_warehouse"), registry.ids());
 		assertEquals(2, registry.byId("watchtower").orElseThrow().tier());
 		assertEquals(2, registry.byId("mine_outpost").orElseThrow().tier());
 	}
@@ -91,6 +94,51 @@ class BlueprintRegistryTest {
 			Set.of());
 		registry.register(replacement);
 		assertEquals("矮塔", registry.byId("watchtower").orElseThrow().displayName());
-		assertEquals(5, registry.size(), "覆盖同名 id，不是多出一份");
+		assertEquals(13, registry.size(), "覆盖同名 id，不是多出一份");
+	}
+
+	@Test
+	void bundledMetadataIsAvailableToUiAndFutureCatalogFilters() {
+		Blueprint smithy = registry.byId("field_smithy").orElseThrow();
+		assertEquals("Apache-2.0", smithy.metadata().license());
+		assertEquals("medieval_frontier", smithy.metadata().style());
+		assertTrue(smithy.metadata().tags().contains("workshop"));
+		assertEquals("squire:steps", smithy.metadata().format());
+		assertTrue(registry.supportedFormats().contains("minecraft:structure_nbt"));
+		assertTrue(registry.supportedFormats().contains("structurize:blueprint_v1"));
+	}
+
+	@Test
+	void redistributedKeepItLevelBuildingsKeepAttributionAndVanillaAdaptation() {
+		List<String> imported = List.of("keepitlevel_residence", "keepitlevel_fountain",
+			"keepitlevel_builder_lodge", "keepitlevel_guardtower",
+			"keepitlevel_library", "keepitlevel_warehouse");
+		for (String id : imported) {
+			Blueprint blueprint = registry.byId(id).orElseThrow();
+			assertEquals("MIT", blueprint.metadata().license());
+			assertTrue(blueprint.metadata().author().contains("alt_bier"));
+			assertEquals("structurize:blueprint_v1", blueprint.metadata().format());
+			assertTrue(blueprint.metadata().source().contains(
+				"74259e3da775f467275adb57b076caefdea84d99"));
+			assertEquals(registry.catalog().variant(id).orElseThrow().requiredEngineerLevel(), blueprint.minEngineerLevel());
+			for (Blueprint.Cell cell : blueprint.resolve(BlockPos.ORIGIN,
+					Direction.NORTH).toPlace()) {
+				assertTrue(cell.blockId().startsWith("minecraft:"),
+					() -> id + " still requires a third-party block: " + cell.blockId());
+			}
+		}
+	}
+
+	@Test
+	void categoriesAndEngineerUnlocksComeFromDescriptorMetadata() {
+		assertEquals(Blueprint.Category.HOUSING,
+			registry.byId("shelter_wood").orElseThrow().category());
+		assertEquals(Blueprint.Category.PRODUCTION,
+			registry.byId("field_smithy").orElseThrow().category());
+		assertEquals(Blueprint.Category.CIVIC,
+			registry.byId("roadside_inn").orElseThrow().category());
+		assertEquals(1, registry.byId("shelter_wood").orElseThrow().minEngineerLevel());
+		assertEquals(registry.catalog().variant("keepitlevel_warehouse").orElseThrow().requiredEngineerLevel(), registry.byId("keepitlevel_warehouse").orElseThrow()
+			.minEngineerLevel());
 	}
 }

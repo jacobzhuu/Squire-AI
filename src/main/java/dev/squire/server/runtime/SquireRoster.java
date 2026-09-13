@@ -36,19 +36,41 @@ final class SquireRoster {
 	}
 
 	AvatarEntity summonAt(ServerPlayerEntity owner, BlockPos spawnColumn) {
-		// one active squire per owner (M1 invariant): re-summon discards the old body,
-		// but its identity and belongings live on in the store
-		// 这里必须是权威答案：限频版若谎报「没有」，玩家就凭空多出第二只伙伴。
-		runtime.agents().resolveForOwnerNow(owner.getUuid()).ifPresent(existing -> {
+		dev.squire.server.agent.SquireAgentStateStore store = runtime.agentStore();
+		var existingRecord = store.recordOfOwner(owner.getUuid());
+		boolean firstSummon = existingRecord.isEmpty();
+		var record = existingRecord.orElseGet(() ->
+			store.createRecord(owner.getUuid(), "Squire"));
+		return materializeAt(owner, spawnColumn, record, firstSummon);
+	}
+
+	/** 创建第二份永久档案；现有身体不会被替换。数量/职业门槛由仪式层校验。 */
+	AvatarEntity summonNewAt(ServerPlayerEntity owner, BlockPos spawnColumn) {
+		var records = runtime.agentStore().recordsOfOwner(owner.getUuid());
+		var record = runtime.agentStore().createRecord(owner.getUuid(),
+			"Squire-" + (records.size() + 1));
+		return materializeAt(owner, spawnColumn, record, true);
+	}
+
+	/** 召回铃按永久 id 物化指定侍从。 */
+	AvatarEntity summonAgentAt(ServerPlayerEntity owner, BlockPos spawnColumn,
+			UUID agentId) {
+		var record = runtime.agentStore().recordOfAgent(agentId).orElse(null);
+		if (record == null || !record.ownerId.equals(owner.getUuid())) return null;
+		return materializeAt(owner, spawnColumn, record, false);
+	}
+
+	private AvatarEntity materializeAt(ServerPlayerEntity owner, BlockPos spawnColumn,
+			dev.squire.server.agent.SquireAgentStateStore.AgentRecord record,
+			boolean firstSummon) {
+		if (record.oathDeadline > 0) return null;
+        // 只替换同一个永久身份的旧身体，绝不碰同主人的另一名侍从。
+		runtime.agents().resolveByAgentId(record.agentId).ifPresent(existing -> {
 			runtime.persistSnapshot(existing);
 			runtime.agents().unregister(existing.getUuid());
 			existing.discard();
 		});
 		dev.squire.server.agent.SquireAgentStateStore store = runtime.agentStore();
-		var existingRecord = store.recordOfOwner(owner.getUuid());
-		boolean firstSummon = existingRecord.isEmpty();
-		dev.squire.server.agent.SquireAgentStateStore.AgentRecord record =
-			existingRecord.orElseGet(() -> store.createRecord(owner.getUuid(), "Squire"));
 
 		ServerWorld world = (ServerWorld) owner.getWorld(); // same dimension as the owner
 		AvatarEntity avatar = dev.squire.server.registry.SquireEntities.AVATAR.create(world);
@@ -227,7 +249,8 @@ final class SquireRoster {
 	 */
 	AvatarEntity controlledTeleport(AvatarEntity avatar, ServerWorld target,
 			net.minecraft.util.math.GlobalPos home) {
-		BlockPos pos = home.getPos();
+		if (avatar.oathActive()) return null;
+        BlockPos pos = home.getPos();
 		AvatarEntity.MovementMode mode = avatar.mode();
 		net.minecraft.util.math.GlobalPos anchor =
 			avatar.stayGlobalPos().orElse(null);

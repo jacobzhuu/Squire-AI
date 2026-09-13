@@ -1,0 +1,7 @@
+{
+  "parent": "squire:item/recall_bell_body",
+  "textures": {
+    "quality": "minecraft:block/diamond_block",
+    "badge": "minecraft:block/gold_block"
+  }
+}

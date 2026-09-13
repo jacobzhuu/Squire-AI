@@ -35,6 +35,14 @@ class BlueprintPlacementStoreTest {
 		return dir.resolve("blueprints.json");
 	}
 
+	@Test void geometryCheckpointFailureIsReportedBeforeFunding() throws IOException {
+		Path blocked = dir.resolve("not-a-directory"); Files.writeString(blocked, "retain this file");
+		var store = new BlueprintPlacementStore(() -> blocked.resolve("blueprints.json"));
+		assertFalse(store.save(List.of()));
+		assertEquals("retain this file", Files.readString(blocked));
+		assertTrue(new BlueprintPlacementStore(this::file).save(List.of()));
+	}
+
 	private BlueprintPlacement placement(String blueprintId, BlockPos origin,
 			Direction facing, BlueprintPlacement.State state) {
 		BlueprintPlacement p = new BlueprintPlacement(UUID.randomUUID(),
@@ -51,6 +59,8 @@ class BlueprintPlacementStoreTest {
 		assertTrue(original.setMaterial("roof", "squire:stone_bricks"));
 		assertTrue(original.setMaterial("frame", "squire:oak"));
 		original.setState(BlueprintPlacement.State.BUILDING);
+		original.authorizeLevel(7);
+		original.markLegacyFullPrice();
 		new BlueprintPlacementStore(this::file).save(List.of(original));
 
 		List<BlueprintPlacement> loaded = new BlueprintPlacementStore(this::file).load();
@@ -64,6 +74,8 @@ class BlueprintPlacementStoreTest {
 		assertEquals(Direction.EAST, back.facing, "朝向决定旋转，错一格门就开在墙里");
 		assertEquals(BlueprintPlacement.State.BUILDING, back.state());
 		assertEquals(1234L, back.createdTick);
+		assertEquals(7, back.authorizedLevel());
+		assertTrue(back.legacyFullPrice(), "pre-cost-plan projects retain their original zero-waste bill");
 		assertEquals(Map.of("roof", "squire:stone_bricks", "frame", "squire:oak"),
 			back.materials(), "每个摆放实例保留自己的材料调色板");
 	}
@@ -74,7 +86,7 @@ class BlueprintPlacementStoreTest {
 			BlockPos.ORIGIN, Direction.NORTH, BlueprintPlacement.State.GHOST);
 		new BlueprintPlacementStore(this::file).save(List.of(old));
 		Files.writeString(file(), Files.readString(file(), StandardCharsets.UTF_8)
-			.replace("\"version\":2", "\"version\":1"), StandardCharsets.UTF_8);
+			.replace("\"version\":9", "\"version\":1"), StandardCharsets.UTF_8);
 
 		assertTrue(new BlueprintPlacementStore(this::file).load().isEmpty(),
 			"旧坐标形状不能套到新版固定建筑上继续施工");
@@ -127,5 +139,24 @@ class BlueprintPlacementStoreTest {
 	@Test
 	void loadingNothingIsNotAnError() {
 		assertTrue(new BlueprintPlacementStore(this::file).load().isEmpty());
+	}
+
+	@Test
+	void committedGeometryIsContentAddressedAndCorruptionNeverOverwritesEscrowReferences() throws IOException {
+		var p = placement("keepitlevel_residence", BlockPos.ORIGIN, Direction.NORTH, BlueprintPlacement.State.BUILDING);
+		var bounds = new dev.squire.server.world.BoundedRegion(BlockPos.ORIGIN, new BlockPos(2, 3, 2));
+		var access = new ConstructionAccessPlan(List.of(), bounds, "", BlockPos.ORIGIN);
+		p.snapshot(new Blueprint.Resolved(bounds, List.of(), List.of(), access), true);
+		var store = new BlueprintPlacementStore(this::file); store.save(List.of(p));
+		var first = com.google.gson.JsonParser.parseString(Files.readString(file())).getAsJsonObject().getAsJsonArray("placements").get(0).getAsJsonObject();
+		assertTrue(first.has("snapshotRef")); assertFalse(first.has("snapshot"));
+		Path geometry = dir.resolve("blueprint_snapshots").resolve(first.get("snapshotRef").getAsString() + ".json.gz");
+		byte[] original = Files.readAllBytes(geometry);
+		access.cleanup = true; store.save(List.of(p));
+		org.junit.jupiter.api.Assertions.assertArrayEquals(original, Files.readAllBytes(geometry), "mutable progress never rewrites static geometry");
+		assertTrue(new BlueprintPlacementStore(this::file).load().get(0).snapshot().access().cleanup);
+		Files.write(geometry, new byte[]{1, 2, 3});
+		var broken = new BlueprintPlacementStore(this::file); assertTrue(broken.load().isEmpty()); assertFalse(broken.isWritable());
+		String protectedFile = Files.readString(file()); broken.save(List.of()); assertEquals(protectedFile, Files.readString(file()));
 	}
 }

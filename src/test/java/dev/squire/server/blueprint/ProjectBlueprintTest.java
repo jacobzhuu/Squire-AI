@@ -169,9 +169,52 @@ class ProjectBlueprintTest {
 	void thereIsAStairwell() {
 		ProjectSpec spec = house().withFloors(2);
 		int ceiling = spec.wallHeight() + 1;
-		BlockPos hole = new BlockPos(1, ceiling, 1);
+		// 默认 9×9、高 4 的直梯在 x=4 留头部净空，x=5 是最后一级。
+		BlockPos hole = new BlockPos(4, ceiling, 1);
 		assertTrue(resolve(spec).toPlace().stream().noneMatch(c -> c.pos().equals(hole)),
 			"二层楼板上必须留出楼梯口");
+	}
+
+	@Test
+	@DisplayName("层间楼梯逐级相邻、逐级上升，而且每一级都有明确朝向")
+	void stairsFormOneOrderedWalkablePath() {
+		for (int size : new int[] {5, 7, 13}) {
+			ProjectSpec spec = house().withSize(size, size).withWallHeight(6).withFloors(2);
+			var stairs = resolve(spec).toPlace().stream()
+				.filter(cell -> cell.what().equals("楼梯"))
+				.sorted(java.util.Comparator.comparingInt(cell -> cell.pos().getY()))
+				.toList();
+			assertEquals(spec.wallHeight() + 1, stairs.size(), "尺寸 " + size);
+			for (int i = 0; i < stairs.size(); i++) {
+				assertTrue(stairs.get(i).properties().containsKey("facing"),
+					"楼梯方向不能交给方块默认值");
+				if (i == 0) continue;
+				BlockPos before = stairs.get(i - 1).pos();
+				BlockPos current = stairs.get(i).pos();
+				assertEquals(1, current.getY() - before.getY());
+				assertEquals(1, Math.abs(current.getX() - before.getX())
+					+ Math.abs(current.getZ() - before.getZ()),
+					"相邻两级必须在水平方向接壤");
+			}
+		}
+	}
+
+	@Test
+	@DisplayName("三种屋顶都有完整密封层，人字顶楼梯随建筑旋转")
+	void roofsAreSealedAndDirectional() {
+		for (ProjectSpec.Roof roof : ProjectSpec.Roof.values()) {
+			ProjectSpec spec = house().withRoof(roof);
+			long sealed = resolve(spec).toPlace().stream()
+				.filter(cell -> cell.what().equals("屋顶密封层")).count();
+			assertEquals(spec.width() * spec.depth(), sealed, roof.id());
+		}
+		ProjectSpec gable = house().withRoof(ProjectSpec.Roof.GABLE);
+		var north = compile(gable).resolve(BlockPos.ORIGIN, Direction.NORTH).toPlace()
+			.stream().filter(cell -> cell.what().equals("斜屋顶")).findFirst().orElseThrow();
+		var east = compile(gable).resolve(BlockPos.ORIGIN, Direction.EAST).toPlace()
+			.stream().filter(cell -> cell.what().equals("斜屋顶")).findFirst().orElseThrow();
+		assertFalse(north.properties().get("facing").equals(east.properties().get("facing")),
+			"建筑转向后屋顶楼梯也必须跟着转");
 	}
 
 	@Test

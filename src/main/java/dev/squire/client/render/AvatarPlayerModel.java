@@ -9,7 +9,7 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 
 /**
- * 玩家模型 + 手臂姿势。只为了一件事：让伙伴拉弓时手臂真的摆出拉弓的样子。
+ * 玩家模型、物品使用姿势和按实际位移驱动的方向性地面步态。
  *
  * <p>{@code PlayerEntityModel} 自己<b>不</b>设 {@code rightArmPose} —— 玩家的姿势是
  * {@code PlayerEntityRenderer} 从 {@code AbstractClientPlayerEntity} 上读出来的，
@@ -23,6 +23,7 @@ import net.minecraft.util.Hand;
  * 忘了就会永远卡在拉弓姿势（正是这次要修的那类毛病）。</p>
  */
 public class AvatarPlayerModel extends PlayerEntityModel<AvatarEntity> {
+	private float gaitTickDelta;
 
 	public AvatarPlayerModel(ModelPart root, boolean slim) {
 		super(root, slim);
@@ -31,6 +32,7 @@ public class AvatarPlayerModel extends PlayerEntityModel<AvatarEntity> {
 	@Override
 	public void animateModel(AvatarEntity entity, float limbAngle, float limbDistance,
 			float tickDelta) {
+		gaitTickDelta = tickDelta;
 		// 每帧先复位，再按当前状态赋值——省掉"忘了复位"这一整类 bug。
 		this.rightArmPose = BipedEntityModel.ArmPose.EMPTY;
 		this.leftArmPose = BipedEntityModel.ArmPose.EMPTY;
@@ -44,6 +46,44 @@ public class AvatarPlayerModel extends PlayerEntityModel<AvatarEntity> {
 			this.rightArmPose = offPose;
 		}
 		super.animateModel(entity, limbAngle, limbDistance, tickDelta);
+	}
+
+	@Override
+	public void setAngles(AvatarEntity entity, float limbAngle, float limbDistance,
+			float animationProgress, float headYaw, float headPitch) {
+		boolean ground = entity.usesGroundGait();
+		sneaking = entity.isInSneakingPose() || ground && entity.isSneaking();
+		// Keep vanilla swimming/riding/flight and all item/attack poses. On the
+		// ground replace only the vanilla forward-only locomotion contribution.
+		super.setAngles(entity, ground ? 0 : limbAngle, ground ? 0 : limbDistance,
+			animationProgress, headYaw, headPitch);
+		if (!ground) return;
+		float bodyYaw = net.minecraft.util.math.MathHelper.lerpAngleDegrees(
+			gaitTickDelta, entity.prevBodyYaw, entity.bodyYaw);
+		var gait = entity.locomotionGait().frame(gaitTickDelta, bodyYaw);
+		applyGroundGait(gait, !entity.isUsingItem() && handSwingProgress <= 0);
+	}
+
+	/** Also used by the bone-level regression tests; equipment overlays follow the same pose. */
+	void applyGroundGait(dev.squire.common.animation.LocomotionGait.Frame gait, boolean swingArms) {
+		rightLeg.pitch += gait.pitch();
+		leftLeg.pitch -= gait.pitch();
+		rightLeg.roll += gait.roll();
+		leftLeg.roll -= gait.roll();
+		if (swingArms) {
+			if (rightArmPose == ArmPose.EMPTY || rightArmPose == ArmPose.ITEM) {
+				rightArm.pitch -= gait.pitch() * (rightArmPose == ArmPose.ITEM ? .35f : .65f);
+				rightArm.roll -= gait.roll() * .25f;
+			}
+			if (leftArmPose == ArmPose.EMPTY || leftArmPose == ArmPose.ITEM) {
+				leftArm.pitch += gait.pitch() * (leftArmPose == ArmPose.ITEM ? .35f : .65f);
+				leftArm.roll += gait.roll() * .25f;
+			}
+		}
+		leftPants.copyTransform(leftLeg);
+		rightPants.copyTransform(rightLeg);
+		leftSleeve.copyTransform(leftArm);
+		rightSleeve.copyTransform(rightArm);
 	}
 
 	/**

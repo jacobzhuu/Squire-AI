@@ -30,6 +30,7 @@ public final class SquireMod implements ModInitializer {
 		dev.squire.server.summon.SummoningService.register();
 		dev.squire.server.guide.SquireCompactService.register();
 		SquireCommands.register();
+        dev.squire.server.command.CompanionCommands.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> SquireRuntime.init(server));
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -77,6 +78,7 @@ public final class SquireMod implements ModInitializer {
 
 		// 侍从的箭飞在半空时主人走进弹道——瞄准那一层拦不住的最后一种误伤。
 		dev.squire.server.combat.OwnerFriendlyFire.register();
+        dev.squire.server.combat.GuardRescue.register();
 
 		LOGGER.info("[Squire] initialized");
 	}

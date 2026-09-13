@@ -42,6 +42,8 @@ public final class BackpackCompat {
 
 	private static final String LOOKUP_CLASS =
 		"io.github.fabricators_of_create.porting_lib.transfer.item.ItemItemStorages";
+	private static final String SOPHISTICATED_LOOKUP_INITIALIZER =
+		"net.p3pp3rf1y.sophisticatedbackpacks.common.BackpackWrapperLookup";
 
 	/** 解析结果的缓存。null = 还没解析或解析失败（每次调用会再试一次，代价只是一次反射）。 */
 	private static Lookup lookup;
@@ -66,6 +68,14 @@ public final class BackpackCompat {
 			return lookup;
 		}
 		try {
+			// Sophisticated Backpacks 3.x registers its item storage provider when this
+			// lookup class initializes. Squire can be the first mod to query the table.
+			try {
+				Class.forName(SOPHISTICATED_LOOKUP_INITIALIZER, true,
+					BackpackCompat.class.getClassLoader());
+			} catch (ClassNotFoundException optionalModAbsent) {
+				// Keep the Porting Lib lookup available for other item-storage providers.
+			}
 			Object table = Class.forName(LOOKUP_CLASS).getField("ITEM").get(null);
 			if (table instanceof ItemApiLookup<?, ?> raw) {
 				@SuppressWarnings("unchecked")

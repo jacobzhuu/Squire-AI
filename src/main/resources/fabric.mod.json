@@ -10,6 +10,7 @@
 	"contact": {},
 	"license": "Apache-2.0",
 	"environment": "*",
+    "mixins": ["squire.mixins.json"],
 	"entrypoints": {
 		"main": [
 			"dev.squire.SquireMod"
@@ -31,6 +32,7 @@
 			"dev.squire.gametest.M5CbpGameTests",
 			"dev.squire.gametest.M6AgentLifecycleGameTests",
 			"dev.squire.gametest.M7LogisticsGameTests",
+			"dev.squire.gametest.SophisticatedBackpackIntegrationGameTests",
 			"dev.squire.gametest.M8WorldEditGameTests",
 			"dev.squire.gametest.M9AutomationLightsGameTests",
 			"dev.squire.gametest.M10CbpProjectGameTests",
@@ -47,10 +49,26 @@
 			"dev.squire.gametest.M22ToolGateGameTests",
 			"dev.squire.gametest.M23GuardCombatBalanceGameTests",
 			"dev.squire.gametest.M24ImmersiveSummonGameTests",
+			"dev.squire.server.summon.SummoningProtectionGameTests",
 			"dev.squire.gametest.M25CombatStyleGameTests",
 			"dev.squire.gametest.M26IdentityPersonalityGameTests",
 			"dev.squire.gametest.M27RecallBellAndHuntGameTests",
-			"dev.squire.gametest.M28SquireCompactGameTests"
+			"dev.squire.gametest.M28SquireCompactGameTests",
+      "dev.squire.gametest.M29BuildingCatalogGameTests",
+      "dev.squire.gametest.M30CatalogQualificationGameTests",
+      "dev.squire.gametest.M31EngineerEfficiencyGameTests",
+      "dev.squire.gametest.M32NativeCatalogBuildGameTests",
+      "dev.squire.gametest.M33ScaffoldingGameTests",
+      "dev.squire.gametest.M34FluidConstructionGameTests",
+      "dev.squire.gametest.M35GroundPreparationGameTests",
+      "dev.squire.gametest.M36TerrainLevelingGameTests",
+      "dev.squire.gametest.M37EngineerTravelGameTests",
+      "dev.squire.gametest.M38CompanionRoutingGameTests",
+      "dev.squire.gametest.M39GuardRescueGameTests",
+      "dev.squire.gametest.M40ConstructionRecoveryGameTests",
+      "dev.squire.gametest.M41ConstructionMatrixGameTests",
+      "dev.squire.server.task.executors.ConstructionRecoveryGameTests",
+      "dev.squire.server.task.executors.EngineerLocomotionGameTests"
 		]
 	},
 	"depends": {

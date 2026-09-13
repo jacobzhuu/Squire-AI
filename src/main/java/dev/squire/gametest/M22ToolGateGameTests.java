@@ -103,6 +103,7 @@ public final class M22ToolGateGameTests implements FabricGameTest {
 	 */
 	private static void assertBasicBuildWorks(TestContext context, SquireRuntime rt,
 			FakePlayer owner, String who) {
+		registerFixed(rt); // Each test owns its fixture; reload tests may reset the registry between batches.
 		var placed = rt.blueprintPlace(owner, FIXED);
 		context.assertTrue(placed.success(),
 			who + " 盖不了固定模板了：" + placed.message());
@@ -115,8 +116,10 @@ public final class M22ToolGateGameTests implements FabricGameTest {
 			FakePlayer owner, String who) {
 		var refused = rt.blueprintPlace(owner, parametricId());
 		context.assertFalse(refused.success(), who + " 拿到了参数化蓝图");
-		context.assertTrue(refused.message().contains("工程师"),
-			who + " 被拒了，但没说是职业问题：" + refused.message());
+		context.assertTrue(refused.message().contains("停止新建"), who + " must receive the explicit retirement reason: " + refused.message());
+		var catalog = rt.blueprintPlace(owner, "keepitlevel_residence");
+		context.assertFalse(catalog.success(), who + " cannot build Engineer-only catalog assets");
+		context.assertTrue(catalog.message().contains("工程师"), "catalog admission still enforces profession");
 	}
 
 	private static void cleanUp(SquireRuntime rt, FakePlayer owner) {
@@ -190,8 +193,7 @@ public final class M22ToolGateGameTests implements FabricGameTest {
 				.map(ToolDescriptor::name).toList();
 			context.assertFalse(atTwo.contains("blueprint.rotate"),
 				"Lv.2 的目录里出现了旋转");
-			context.assertTrue(atTwo.contains("blueprint.design"),
-				"Lv.1 就该有的参数化蓝图不见了");
+			context.assertFalse(atTwo.contains("blueprint.design"), "retired designer must not be offered to the model");
 
 			// 晋升之后<b>下一次</b>取目录就该变——不需要重登、不需要重召唤。
 			rt.professionOf(avatar).level = 3;
@@ -399,8 +401,7 @@ public final class M22ToolGateGameTests implements FabricGameTest {
 				"工程师仍然要能照顾自己");
 			context.assertTrue(engineer.contains("blueprint.place"),
 				"工程师当然要有基础蓝图");
-			context.assertTrue(engineer.contains("blueprint.design"),
-				"参数化设计是工程师这条线的东西");
+			context.assertFalse(engineer.contains("blueprint.design"), "master does not resurrect a retired content tool");
 			// 工程师不该在<b>分档</b>这一步被挡。后面的几何校验能不能过是另一回事，
 			// 所以这里只验「不是因为职业被拒」。
 			var parametric = rt.blueprintPlace(owner, parametricId());

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/decks/deck_md1",
+  "format": "minecraft:structure_nbt",
+  "displayName": "平台 · Tier 1 · deck_md",
+  "tier": 1,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/infrastructure/decks/deck_md1",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/decks/deck_md1.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    23,
+    5,
+    11
+  ],
+  "primaryOffset": {
+    "x": 18,
+    "y": 3,
+    "z": 4
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "log",
+        "planks"
+      ]
+    },
+    {
+      "id": "spruce_roof",
+      "displayName": "云杉梯板",
+      "type": "ROOF",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_log",
+      "slot": "spruce_structure",
+      "variant": "log"
+    },
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "spruce_structure",
+      "variant": "planks"
+    },
+    {
+      "block": "minecraft:spruce_slab",
+      "slot": "spruce_roof",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {}
+}

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/rail/rail_x_curve1",
+  "format": "minecraft:structure_nbt",
+  "displayName": "铁路组件 · Tier 1 · rail_x_curve",
+  "tier": 1,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/infrastructure/rail/rail_x_curve1",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/rail/rail_x_curve1.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    5,
+    26,
+    5
+  ],
+  "primaryOffset": {
+    "x": 3,
+    "y": 2,
+    "z": 0
+  },
+  "groundY": 1,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "fence",
+        "planks"
+      ]
+    },
+    {
+      "id": "spruce_roof",
+      "displayName": "云杉梯板",
+      "type": "ROOF",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_planks",
+      "slot": "spruce_structure",
+      "variant": "planks"
+    },
+    {
+      "block": "minecraft:spruce_fence",
+      "slot": "spruce_structure",
+      "variant": "fence"
+    },
+    {
+      "block": "minecraft:spruce_slab",
+      "slot": "spruce_roof",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:spruce_fence": [
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

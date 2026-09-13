@@ -60,9 +60,9 @@ class GuardProfessionBehaviourTest {
 		}
 
 		@Test
-		@DisplayName("工程师不受守卫的选武器限制")
-		void otherProfessionsAreNotGated() {
-			assertSame(CombatStyle.Gates.EVERYTHING,
+		@DisplayName("工程师始终不能用弓或自动切换远程武器")
+		void engineersNeverUnlockBows() {
+			assertEquals(CombatStyle.Gates.of(false, false),
 				GuardRuntime.weaponGates(engineer(10)));
 		}
 
@@ -107,7 +107,7 @@ class GuardProfessionBehaviourTest {
 					CombatStyle.gatesFor(guard(level)), "Lv" + level);
 			}
 			assertSame(CombatStyle.Gates.EVERYTHING, CombatStyle.gatesFor(null));
-			assertSame(CombatStyle.Gates.EVERYTHING, CombatStyle.gatesFor(engineer(10)));
+			assertEquals(CombatStyle.Gates.of(false, false), CombatStyle.gatesFor(engineer(10)));
 		}
 	}
 

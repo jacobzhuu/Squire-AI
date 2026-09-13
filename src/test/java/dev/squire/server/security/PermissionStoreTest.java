@@ -77,6 +77,39 @@ class PermissionStoreTest {
 	}
 
 	@Test
+	void playerPreferenceCannotGrantOrOverrideServerDenialAndPersists() {
+		PermissionManager manager = new PermissionManager();
+		manager.attachStore(new PermissionStore(this::file));
+		UUID player = UUID.randomUUID();
+		assertFalse(manager.setPlayerEnabled(player, PermissionNodes.WORLD_EDIT, true),
+			"players cannot grant nodes outside server policy");
+		assertTrue(manager.setPlayerEnabled(player, PermissionNodes.COMMAND_GIVE, false));
+		assertFalse(manager.has(player, false, PermissionNodes.COMMAND_GIVE));
+		manager.grant(player, PermissionNodes.WORLD_EDIT);
+		assertTrue(manager.setPlayerEnabled(player, PermissionNodes.WORLD_EDIT, false));
+		manager.revoke(player, PermissionNodes.COMMAND_GIVE);
+		assertFalse(manager.setPlayerEnabled(player, PermissionNodes.COMMAND_GIVE, true),
+			"a player cannot re-enable a node denied by the server");
+		PermissionManager restored = new PermissionManager();
+		restored.attachStore(new PermissionStore(this::file));
+		assertEquals(1, restored.loadFromDisk());
+		assertFalse(restored.has(player, false, PermissionNodes.COMMAND_GIVE));
+		assertFalse(restored.has(player, false, PermissionNodes.WORLD_EDIT));
+	}
+
+	@Test
+	void legacyUnauthenticatedGrantDoesNotBecomeAnAdminOverride() throws IOException {
+		UUID player = UUID.randomUUID();
+		Files.writeString(file(), "{\"version\":1,\"granted\":{\"" + player
+			+ "\":[\"" + PermissionNodes.WORLD_EDIT + "\"]},\"revoked\":{}}",
+			StandardCharsets.UTF_8);
+		PermissionManager restored = new PermissionManager();
+		restored.attachStore(new PermissionStore(this::file));
+		restored.loadFromDisk();
+		assertFalse(restored.has(player, false, PermissionNodes.WORLD_EDIT));
+	}
+
+	@Test
 	void secondPlayerRoundTripsIndependently() {
 		PermissionManager original = new PermissionManager();
 		original.attachStore(new PermissionStore(this::file));

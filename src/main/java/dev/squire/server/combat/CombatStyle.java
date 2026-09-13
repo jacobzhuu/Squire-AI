@@ -179,6 +179,8 @@ public final class CombatStyle {
 	 * 于是一只 Lv.1 守卫在这两条路上照样会掏弓——等级限制只拦住了三条路里的一条。</p>
 	 */
 	public static Gates gatesFor(dev.squire.server.profession.ProfessionData profession) {
+        if (profession != null && profession.profession()
+                == dev.squire.server.profession.SquireProfession.ENGINEER) return Gates.of(false, false);
 		if (profession == null || profession.profession()
 				!= dev.squire.server.profession.SquireProfession.GUARD) {
 			return Gates.EVERYTHING; // 没职业／不是守卫：职业系统出现之前的行为
@@ -198,6 +200,7 @@ public final class CombatStyle {
 		}
 		Gates open = gates == null ? Gates.EVERYTHING : gates;
 		Style style = preference == null ? Style.AUTO : preference;
+		if (GuardSelfDefense.prepare(avatar, target, style, open)) return false;
 		double distSq = avatar.squaredDistanceTo(target);
 		HandKind hand = classifyHand(avatar);
 
@@ -381,8 +384,7 @@ public final class CombatStyle {
 
 	/** 拉不动弓时的降级：唯一一个无条件把主手换成近战武器的入口。 */
 	public static void degradeToMelee(AvatarEntity avatar) {
-		avatar.cancelDraw();
-		equipBest(avatar, false);
+		holsterBow(avatar);
 	}
 
 	/** 玩家下令换打法之后实际发生了什么。存在的理由是<b>任何输入都要有出路</b>。 */
@@ -419,6 +421,7 @@ public final class CombatStyle {
 		}
 		Gates open = gates == null ? Gates.EVERYTHING : gates;
 		avatar.releaseWeaponChoice();
+		GuardSelfDefense.reset(avatar);
 		switch (style) {
 			case RANGED -> {
 				if (!open.bow()) {

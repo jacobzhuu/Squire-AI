@@ -342,6 +342,12 @@ public final class SquireRuntime {
 				return SquireRuntime.this.projectCoordinator == null ? 0
 					: SquireRuntime.this.projectCoordinator.reservedCount(projectId, itemId);
 			}
+			@Override public dev.squire.server.project.Project project(UUID id) {
+				return SquireRuntime.this.projectCoordinator.project(id).orElse(null);
+			}
+			@Override public void saveProjects() { SquireRuntime.this.projectCoordinator.save(); }
+			@Override public boolean beginProjectMutation(UUID id, String operation) { return projectCoordinator.beginMutation(id, operation); }
+			@Override public boolean completeProjectMutation(UUID id) { return projectCoordinator.completeMutation(id); }
 
 			@Override
 			public dev.squire.server.profile.SquireProfile profile(UUID agentId) {
@@ -351,7 +357,7 @@ public final class SquireRuntime {
 
 	private SquireRuntime(MinecraftServer server) {
 		this.server = server;
-		// 权限页的勾选跨重启存活（PermissionStore 只存显式 grant/revoke）。
+		// 管理员策略和玩家自己的权限开关均跨重启存活；默认值仍由代码决定。
 		this.permissions.attachStore(new dev.squire.server.security.PermissionStore(
 			() -> server.getSavePath(net.minecraft.util.WorldSavePath.ROOT)
 				.resolve("squire").resolve("permissions.json")));
@@ -378,7 +384,7 @@ public final class SquireRuntime {
 			.getSavePath(net.minecraft.util.WorldSavePath.ROOT)
 			.resolve("squire").resolve("undo.nbt"));
 		this.protectionAdapter =
-			new dev.squire.server.world.VanillaSpawnProtection(server);
+			dev.squire.server.world.ProtectionAdapterRegistry.load(server);
 		this.agents = new AgentRegistry(server);
 		this.gateway = new dev.squire.server.tool.ToolGateway(tools);
 		this.compiler = new dev.squire.server.task.TaskCompiler(runtimeServices, scheduler);
@@ -394,6 +400,7 @@ public final class SquireRuntime {
 					.resolve("squire").resolve("blueprints.json")),
 			() -> this.server);
 		// 幽灵预览的颜色要看伙伴真实背包里有多少料。
+		this.blueprints.attachAvatarLookup(agentId -> this.agents.resolveByAgentId(agentId).orElse(null));
 		this.blueprints.attachInventoryLookup(agentId -> {
 			AvatarEntity avatar = agents.resolveByAgentId(agentId).orElse(null);
 			return avatar == null ? null : avatar.items();
@@ -403,8 +410,10 @@ public final class SquireRuntime {
 			new dev.squire.server.project.ProjectStore(
 				() -> server.getSavePath(net.minecraft.util.WorldSavePath.ROOT)
 					.resolve("squire").resolve("projects.json")),
-			ownerId -> agents.resolveForOwner(ownerId).orElse(null),
+			agentId -> agents.resolveByAgentId(agentId).orElse(null),
 			this::profileOfAgent, protectionAdapter);
+		this.blueprints.attachProjectSupplyLookup(
+			this.projectCoordinator::reservedForPlacement);
 		wireSecurity();
 		registerExecutors();
 		// 第 2 期：熟练度只在任务终态成功时记一次。这是唯一的记账入口。
@@ -728,7 +737,7 @@ public final class SquireRuntime {
 				}
 				AvatarEntity avatar = agents.resolveForOwner(ownerId).orElse(null);
 				if (avatar == null || !avatar.isAlive()
-						|| avatar.mode() != AvatarEntity.MovementMode.FOLLOW
+						|| avatar.oathActive() || avatar.mode() != AvatarEntity.MovementMode.FOLLOW
 						|| avatar.taskDriven() || avatar.inCombat()
 						|| ownerWorld == avatar.getWorld()) {
 					continue;
@@ -764,6 +773,7 @@ public final class SquireRuntime {
 
 	/** Advance the task runtime by one tick; called from the server tick event. */
 	public void tickScheduler() {
+        settleUnloadedOaths();
 		long tick = currentTick();
 		long mark = profiler.now();
 		if (!killswitch.isActive()) {
@@ -809,7 +819,12 @@ public final class SquireRuntime {
 			undoJournal.expireAllBefore(tick);
 		}
 		mark = profiler.mark(Section.EXPIRY, mark);
-		scheduler.tick(tick, agentId -> new dev.squire.server.task.TaskEvaluationContext() {
+		for (var ownerId : agents.knownOwners()) {
+            for (var avatar : agents.resolveAllForOwner(ownerId)) {
+                if (avatar.oathActive()) scheduler.cancelAgent(avatar.agentId(), "immortal oath");
+            }
+        }
+        scheduler.tick(tick, agentId -> new dev.squire.server.task.TaskEvaluationContext() {
 			@Override
 			public long tick() {
 				return tick;
@@ -941,6 +956,10 @@ public final class SquireRuntime {
 
 	public dev.squire.server.security.PermissionManager permissions() {
 		return permissions;
+	}
+
+	public dev.squire.server.world.ProtectionAdapter protectionAdapter() {
+		return protectionAdapter;
 	}
 
 	/** Deterministic GameTest entry; production ticks use {@link #tickScheduler()}. */
@@ -1397,7 +1416,7 @@ public final class SquireRuntime {
 			dev.squire.server.security.PendingOperation stored) {
 		AvatarEntity avatar = stored.agentId() == null ? null
 			: agents.resolveByAgentId(stored.agentId()).orElse(null);
-		if (avatar == null) {
+		if (stored.agentId() == null) {
 			avatar = agents.resolveForOwner(confirmer.getUuid()).orElse(null);
 		}
 		if (avatar == null || !avatar.isAlive()) {
@@ -1434,10 +1453,10 @@ public final class SquireRuntime {
 			};
 		var call = new dev.squire.common.protocol.ToolCall(UUID.randomUUID(),
 			stored.operationType(), stored.canonicalArguments());
-		var result = gateway.dispatch(call,
+		var result = agents().withTarget(confirmer.getUuid(), body.agentId(), () -> gateway.dispatch(call,
 			dev.squire.server.tool.CallerIdentity.model(confirmer.getUuid(),
 				body.agentId()),
-			ctx, capabilitiesOf(body.agentId()));
+			ctx, capabilitiesOf(body.agentId())));
 		if (result.status() == dev.squire.common.protocol.ToolResult.Status.RUNNING
 				|| result.status() == dev.squire.common.protocol.ToolResult.Status.SUCCESS) {
 			Object taskId = result.data().get("taskId");
@@ -1519,6 +1538,13 @@ public final class SquireRuntime {
 		}
 		// 职业经验和熟练度是<b>两条独立</b>的账：一个选了工程师但还没选 Role 的随从，
 		// 照样该拿到工程经验。所以这一句在熟练度的门禁之外。
+		Object terrainPlacementId = task.parameters().get("placementId");
+		if (terrainPlacementId != null) {
+			try {
+				var terrainPlacement = blueprints.placement(UUID.fromString(terrainPlacementId.toString())).orElse(null);
+				if (terrainPlacement != null && dev.squire.server.blueprint.TerrainLeveling.parse(terrainPlacement.blueprintId).isPresent()) return;
+			} catch (IllegalArgumentException ignored) { }
+		}
 		settleEngineerProject(task, ownerId, profile);
 		if (dev.squire.server.task.executors.BlueprintBuildExecutor.TYPE
 				.equals(task.type())) {
@@ -1600,6 +1626,10 @@ public final class SquireRuntime {
 	 */
 	private dev.squire.server.profession.EngineerXp.Project describeProject(
 			dev.squire.server.blueprint.BlueprintPlacement placement) {
+		var definition = blueprints.registry().catalog().variant(placement.blueprintId).orElse(null);
+		if (definition != null) return new dev.squire.server.profession.EngineerXp.Project(definition.id(),
+			dev.squire.server.profession.EngineerXp.sizeClassFor(definition.width(), definition.depth()),
+			1, false, 0, false, Math.max(1, definition.tier()), definition.family());
 		var spec = dev.squire.server.blueprint.ProjectSpec.parse(placement.blueprintId)
 			.orElse(null);
 		if (spec != null) {
@@ -2109,12 +2139,23 @@ public final class SquireRuntime {
 	}
 
 	/** 实现见 {@link SquireProjectService}。 */
+    private ExecutionResult projectTargetFailure(ServerPlayerEntity sender) {
+        var placement=blueprints().activeOf(sender.getUuid()).orElse(null);
+        var project=projects().activeOf(sender.getUuid()).orElse(null);
+        java.util.UUID assigned=placement!=null?placement.agentId:project==null?null:project.agentId();
+        if(assigned==null)return null;
+        var selected=agents().resolveForOwner(sender.getUuid()).orElse(null);
+        return selected!=null && assigned.equals(selected.agentId())?null:ExecutionResult.refused("This project belongs to another or unavailable companion.");
+    }
+
 	public ExecutionResult projectStart(ServerPlayerEntity sender, String blueprintId) {
 		return projectService.start(sender, blueprintId);
 	}
 
 	/** Confirm the currently adjusted blueprint ghost as a durable project. */
 	public ExecutionResult projectConfirm(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return projectService.confirm(sender);
 	}
 
@@ -2131,17 +2172,32 @@ public final class SquireRuntime {
 
 	/** 实现见 {@link SquireProjectService}。 */
 	public ExecutionResult projectPause(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return projectService.pause(sender);
 	}
 
 	/** 实现见 {@link SquireProjectService}。 */
 	public ExecutionResult projectResume(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return projectService.resume(sender);
 	}
 
 	/** 实现见 {@link SquireProjectService}。 */
 	public ExecutionResult projectCancel(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return projectService.cancel(sender);
+	}
+
+	/** Owner-scoped recovery escape hatch; does not require a live avatar or intact geometry. */
+	public ExecutionResult projectForceCancel(ServerPlayerEntity sender) {
+		var project = projects().activeOf(sender.getUuid()).orElse(null);
+		var target = agents().explicitTarget(sender.getUuid()).orElse(null);
+		if (project != null && target != null && project.agentId() != null && !target.equals(project.agentId()))
+			return ExecutionResult.refused("当前工程属于另一名侍从，请指定负责施工的侍从。");
+		return projectService.forceCancel(sender);
 	}
 
 	/** 实现见 {@link SquireProfileService}。 */
@@ -2182,29 +2238,44 @@ public final class SquireRuntime {
 	}
 
 	public ExecutionResult blueprintRotate(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.rotate(sender);
 	}
 
 	public ExecutionResult blueprintNudge(ServerPlayerEntity sender, int forward,
 			int right) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.nudge(sender, forward, right);
 	}
 
 	public ExecutionResult blueprintConfigureHouse(ServerPlayerEntity sender,
 			dev.squire.server.blueprint.HouseSpec spec) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.configureHouse(sender, spec);
 	}
 
 	public ExecutionResult blueprintCycleMaterial(ServerPlayerEntity sender,
 			int slotIndex, int delta) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.cycleMaterial(sender, slotIndex, delta);
 	}
 
 	public ExecutionResult blueprintResetMaterials(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.resetMaterials(sender);
 	}
 
 	public ExecutionResult blueprintTransferMissing(ServerPlayerEntity sender) {
+        var recipient=agents().resolveForOwner(sender.getUuid()).orElse(null);
+        if(recipient==null || recipient.getWorld()!=sender.getWorld() || recipient.squaredDistanceTo(sender)>64)
+            return ExecutionResult.refused(net.minecraft.text.Text.translatable("squire.gui.panel.remote_items").getString());
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.transferMissing(sender);
 	}
 
@@ -2212,19 +2283,33 @@ public final class SquireRuntime {
 	public ExecutionResult blueprintStatus(ServerPlayerEntity sender) {
 		return blueprintService.status(sender);
 	}
+	public ExecutionResult blueprintDiagnose(ServerPlayerEntity sender) {
+		var mismatch = projectTargetFailure(sender);
+		return mismatch == null ? blueprintService.diagnose(sender) : mismatch;
+	}
+	public ExecutionResult blueprintRecover(ServerPlayerEntity sender) {
+		var mismatch = projectTargetFailure(sender);
+		return mismatch == null ? blueprintService.recover(sender) : mismatch;
+	}
 
 	/** 实现见 {@link SquireBlueprintService}。 */
 	public ExecutionResult blueprintFulfil(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.fulfil(sender);
 	}
 
 	/** 实现见 {@link SquireBlueprintService}。 */
 	public ExecutionResult blueprintBuild(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.build(sender);
 	}
 
 	/** 实现见 {@link SquireBlueprintService}。 */
 	public ExecutionResult blueprintCancel(ServerPlayerEntity sender) {
+        var mismatch = projectTargetFailure(sender);
+        if (mismatch != null) return mismatch;
 		return blueprintService.cancel(sender);
 	}
 
@@ -2525,6 +2610,7 @@ public final class SquireRuntime {
 		recoverTasks(); // notifier must load first so restart failures are not cleared
 		try {
 			int recoveredGoals = instance.goals.load();
+			instance.projectCoordinator.reconcileForceCancelled();
 			if (recoveredGoals > 0) {
 				dev.squire.SquireMod.LOGGER.info(
 					"[Squire] recovered {} goal record(s)", recoveredGoals);
@@ -2626,6 +2712,11 @@ public final class SquireRuntime {
 		var agentRecord = store.recordOfAgent(avatar.agentId());
 		if (agentRecord.isPresent()) {
 			var authoritative = agentRecord.get();
+            if (authoritative.deathPending || (avatar.oathActive() && authoritative.oathDeadline == 0)) {
+                avatar.discard();
+                return;
+            }
+            if (authoritative.oathDeadline > 0 && !avatar.oathActive()) avatar.beginOath(authoritative.oathDeadline);
 			// 同一 agentId 的重复实体实例：保留档案当前指向的那个。
 			boolean staleBody = authoritative.activeBody
 				&& authoritative.entityUuid != null
@@ -2896,7 +2987,25 @@ public final class SquireRuntime {
 		}
 	}
 
-	public static void onAvatarDeath(AvatarEntity avatar) {
+	/** Settle unloaded commitments without loading chunks or creating a replacement body. */
+    private void settleUnloadedOaths() {
+        long now = server.getOverworld().getTime();
+        for (var record : agentStore().allRecords()) {
+            if (record.oathDeadline <= 0 || record.oathDeadline > now
+                    || agents.resolveByAgentId(record.agentId).isPresent()) continue;
+            record.oathDeadline = 0;
+            long tick = currentTick();
+            long cooldown = bellReviveConfig.reviveCooldown(dev.squire.server.item.BellTier.byId(record.bellTier));
+            agentStore().markDeath(record.agentId, tick, tick + cooldown);
+            var owner = server.getPlayerManager().getPlayer(record.ownerId);
+            if (owner != null) {
+                owner.sendMessage(net.minecraft.text.Text.translatable("squire.rescue.oath_end", record.displayName), false);
+                feedback(owner, "[Squire] 背包与装备已保存；死亡召回将在 " + formatBellTime(cooldown) + " 后可用。");
+            }
+        }
+    }
+
+    public static void onAvatarDeath(AvatarEntity avatar) {
 		if (instance == null || avatar == null || avatar.ownerId() == null) {
 			return;
 		}
@@ -2981,6 +3090,7 @@ public final class SquireRuntime {
 		if (agentId != null) {
 			out = new java.util.ArrayList<>(dev.squire.server.tool.ToolGate.filter(
 				out, professionOfAgent(agentId)));
+			out.removeIf(d -> dev.squire.server.blueprint.BuildingContentPolicy.current().retiredTools().contains(d.name()));
 		}
 		return java.util.List.copyOf(out);
 	}
@@ -3325,6 +3435,7 @@ public final class SquireRuntime {
 				"[Squire] 侍从不在场。请右键召集铃；首次召唤方法可按 K 查看。");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		var gates = weaponGatesOf(avatar);
 		avatar.setCombatStyle(style);
 		// 明确下令时当场换一次手——这正是玩家说「用弓打」时期待的。换不成（没弓、
@@ -3350,6 +3461,7 @@ public final class SquireRuntime {
 				"[Squire] 侍从不在场。请右键召集铃；首次召唤方法可按 K 查看。");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		var gates = weaponGatesOf(avatar);
 		var outcome = dev.squire.server.combat.CombatStyle.cycleMode(avatar, gates);
 		persistSnapshot(avatar);
@@ -3400,6 +3512,7 @@ public final class SquireRuntime {
 				"[Squire] 我没有战斗权限（面板 → 权限页 → 「护卫」）。");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		java.util.Map<String, Object> params = new java.util.LinkedHashMap<>();
 		if (entityId != null) {
 			params.put(dev.squire.server.task.executors.AttackTargetExecutor
@@ -3998,6 +4111,13 @@ public final class SquireRuntime {
 				"[Squire] 你不能修改别人的侍从身份。");
 		}
 		String trimmed = validation.value();
+		boolean duplicate = agentStore().recordsOfOwner(record.get().ownerId).stream()
+			.anyMatch(other -> !other.agentId.equals(avatar.agentId())
+				&& other.displayName.equalsIgnoreCase(trimmed));
+		if (duplicate) {
+			return ExecutionResult.fail("feedback.name_duplicate",
+				"[Squire] 两名侍从不能使用相同名字，否则聊天点名无法判断目标。");
+		}
 		record.get().setDisplayName(trimmed);
 		agentStore().put(record.get());
 		avatar.setBaseName(net.minecraft.text.Text.literal("[Squire] " + trimmed));
@@ -4115,6 +4235,7 @@ public final class SquireRuntime {
 				"[Squire] Your squire is absent. Use a recall bell, or press K for the first-summon guide.");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		if (persistent) {
 			// 方案 D1：“保护我”创建长期 Policy，而不是一次性 24000 tick 任务
 			var policy = guards.enable(sender.getUuid(), avatar.agentId(), radius);
@@ -4136,6 +4257,7 @@ public final class SquireRuntime {
 				"[Squire] Your squire is absent. Use a recall bell, or press K for the first-summon guide.");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		scheduler.cancelAgent(avatar.agentId(), "GUARD_STOPPED");
 		boolean had = guards.disable(avatar.agentId());
 		return had
@@ -4151,6 +4273,7 @@ public final class SquireRuntime {
 				"[Squire] Your squire is absent. Use a recall bell, or press K for the first-summon guide.");
 		}
 		AvatarEntity avatar = found.get();
+		if (!isGuardProfession(avatar)) return guardOnly();
 		var remedy = dev.squire.server.task.executors.OwnerAidExecutor.bestRemedy(
 			avatar, Math.max(0f, sender.getMaxHealth() - sender.getHealth()));
 		if (remedy == null) {
@@ -4176,6 +4299,19 @@ public final class SquireRuntime {
 		scheduler.submit(task, currentTick());
 		return ExecutionResult.ok("feedback.aid_started",
 			"[Squire] 正在用 " + remedy.itemId() + " 救你。");
+	}
+
+	private boolean isGuardProfession(AvatarEntity avatar) {
+		var profile = profileOf(avatar);
+		// Keep the pre-profession companion compatible while training.  The hard
+		// boundary is ENGINEER: once that role is chosen it only self-defends.
+		return profile != null && profile.profession.profession()
+			!= dev.squire.server.profession.SquireProfession.ENGINEER;
+	}
+
+	private static ExecutionResult guardOnly() {
+		return ExecutionResult.fail("feedback.guard_only",
+			"[Squire] 主动攻击、护主、巡逻战斗和作战姿态是守卫职责；工程师只在自己受袭时自卫。");
 	}
 
 	// ------------------------------------------------------------------ 位置记忆（方案 E）
@@ -4564,7 +4700,9 @@ public final class SquireRuntime {
 				: "[Squire] Your squire is absent. Use a recall bell, or press K for the first-summon guide.");
 		}
 		AvatarEntity avatar = found.get();
-		SenderRole role = resolveRole(sender, avatar);
+		if (avatar.oathActive() && intent != ControlIntent.STATUS)
+            return ExecutionResult.refused("[Squire] 不灭誓约期间守卫正在舍身护主，无法改变行动。");
+        SenderRole role = resolveRole(sender, avatar);
 		if (role == SenderRole.PUBLIC || role == SenderRole.TRUSTED) {
 			return ExecutionResult.fail("feedback.not_owner", "[Squire] Only the owner can do that.");
 		}
@@ -4654,7 +4792,8 @@ public final class SquireRuntime {
 				return ExecutionResult.ok("feedback.status", text);
 			}
 			case DISMISS -> { // 方案 A1：实体消失，身份与家当留在 Store 里
-				persistSnapshot(avatar);
+				if (avatar.oathActive()) return ExecutionResult.refused("[Squire] 不灭誓约期间无法收起。");
+                persistSnapshot(avatar);
 				agentStore().setActiveBody(avatar.agentId(), false);
 				scheduler.cancelAgent(avatar.agentId(), "dismiss");
 				agents.unregister(avatar.getUuid());
@@ -4800,9 +4939,31 @@ public final class SquireRuntime {
 		return roster.summonAt(owner, feet);
 	}
 
+	/** Creates one additional identity without replacing either live body. */
+	public AvatarEntity summonAdditionalAt(ServerPlayerEntity owner, BlockPos feet) {
+		if (owner == null || feet == null
+				|| agentStore().recordsOfOwner(owner.getUuid()).size() >= 2) return null;
+		return roster.summonNewAt(owner, feet);
+	}
+
 	/** Owner-bound, non-command recall path used by the recall bell. */
+    public ExecutionResult recallSelectedWithBell(ServerPlayerEntity owner, UUID id) {
+        var item=dev.squire.server.registry.SquireItems.RECALL_BELL;
+        if(owner.getItemCooldownManager().isCoolingDown(item)) return ExecutionResult.refused("Recall bell is cooling down.");
+        for(int slot=0;slot<owner.getInventory().size();slot++) {
+            var stack=owner.getInventory().getStack(slot);var nbt=stack.getNbt();
+            if(!stack.isOf(item) || nbt==null || !nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)
+                || !id.equals(nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)))continue;
+            var result=recallWithBell(owner,stack);
+            if(result.success())owner.getItemCooldownManager().set(item,100);
+            return result;
+        }
+        return ExecutionResult.refused("Carry the recall bell bound to this companion.");
+    }
+
 	public ExecutionResult recallWithBell(ServerPlayerEntity owner,
-			net.minecraft.item.ItemStack bell) {
+            net.minecraft.item.ItemStack bell) {
+        settleUnloadedOaths();
 		var nbt = bell.getOrCreateNbt();
 		if (nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_OWNER)
 				&& !owner.getUuid().equals(nbt.getUuid(
@@ -4810,16 +4971,19 @@ public final class SquireRuntime {
 			return ExecutionResult.fail("feedback.not_owner",
 				"[Squire] 这枚召集铃不属于你。");
 		}
-		var record = agentStore().recordOfOwner(owner.getUuid()).orElse(null);
+		if (!nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)) {
+			return ExecutionResult.fail("feedback.bell_unbound",
+				"[Squire] 这枚召集铃尚未绑定。请手持它右键你的侍从。");
+		}
+		UUID requestedAgent = nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_AGENT);
+		var record = agentStore().recordOfAgent(requestedAgent).orElse(null);
 		if (record == null) {
 			return ExecutionResult.fail("feedback.no_agent",
 				"[Squire] 你还没有侍从。按 K 查看训练人偶的搭建方法。");
 		}
-		if (nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)
-				&& !record.agentId.equals(nbt.getUuid(
-					dev.squire.server.registry.SquireItems.NBT_AGENT))) {
-			return ExecutionResult.fail("feedback.wrong_agent",
-				"[Squire] 这枚召集铃绑定的是另一名侍从。");
+		if (!record.ownerId.equals(owner.getUuid())) {
+			return ExecutionResult.fail("feedback.not_owner",
+				"[Squire] 这枚召集铃绑定的侍从不属于你。");
 		}
 		dev.squire.server.item.BellTier tier =
 			dev.squire.server.item.BellTier.byId(record.bellTier);
@@ -4833,7 +4997,8 @@ public final class SquireRuntime {
 				"[Squire] 死亡复苏尚未准备好，还需 "
 					+ formatBellTime(record.reviveAvailableTick - now) + "。");
 		}
-		AvatarEntity existing = agents.resolveForOwnerNow(owner.getUuid()).orElse(null);
+		if (record.oathDeadline > 0) return ExecutionResult.refused("[Squire] 不灭誓约尚未结算，无法召回。");
+        AvatarEntity existing = agents.resolveByAgentId(record.agentId).orElse(null);
 		if (existing != null && existing.isAlive()
 				&& existing.getWorld() == owner.getWorld()
 				&& existing.squaredDistanceTo(owner) <= 64.0) {
@@ -4846,7 +5011,9 @@ public final class SquireRuntime {
 		if (existing != null) {
 			ownerOverride(existing);
 		}
-		AvatarEntity arrived = roster.summonFor(owner);
+		AvatarEntity arrived = roster.summonAgentAt(owner,
+			SquireRoster.findSpawnColumn((ServerWorld) owner.getWorld(), owner),
+			record.agentId);
 		if (arrived == null) {
 			return ExecutionResult.fail("feedback.recall_failed",
 				"[Squire] 这里没有足够的空间让我回来。");
@@ -4871,6 +5038,36 @@ public final class SquireRuntime {
 		return ExecutionResult.ok(deathRecall ? "feedback.revived" : "feedback.recalled",
 			deathRecall ? "[Squire] 我从铃声中复苏了，但仍需要休整。"
 				: "[Squire] 我听见铃声了。");
+	}
+
+	/** Bind a genuinely unbound bell to the exact body the player right-clicked. */
+	public ExecutionResult bindRecallBell(ServerPlayerEntity owner, AvatarEntity avatar,
+			net.minecraft.item.ItemStack bell) {
+		if (owner == null || avatar == null || bell == null
+				|| !bell.isOf(dev.squire.server.registry.SquireItems.RECALL_BELL)
+				|| !owner.getUuid().equals(avatar.ownerId())) {
+			return ExecutionResult.fail("feedback.not_owner",
+				"[Squire] 只能把铃铛绑定给你自己的侍从。");
+		}
+		var nbt = bell.getOrCreateNbt();
+		if (nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)) {
+			UUID bound = nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_AGENT);
+			return bound.equals(avatar.agentId())
+				? ExecutionResult.ok("feedback.bell_already_bound",
+					"[Squire] 这枚铃铛已经绑定给我了。")
+				: ExecutionResult.fail("feedback.wrong_agent",
+					"[Squire] 这枚铃铛已经绑定给另一名侍从，不能覆盖。");
+		}
+		var record = agentStore().recordOfAgent(avatar.agentId()).orElse(null);
+		if (record == null || !record.ownerId.equals(owner.getUuid())) {
+			return ExecutionResult.fail("feedback.no_agent", "[Squire] 找不到这名侍从的档案。");
+		}
+		var tier = dev.squire.server.item.BellTier.byId(record.bellTier);
+		dev.squire.server.registry.SquireItems.bind(bell, owner.getUuid(),
+			avatar.agentId(), tier);
+		syncRecallBellDisplay(bell, tier);
+		return ExecutionResult.ok("feedback.bell_bound",
+			"[Squire] 召集铃已绑定给「" + displayNameOf(avatar) + "」。");
 	}
 
 	/** Server-side commit for the NBT-preserving workbench recipe. */
@@ -4915,6 +5112,17 @@ public final class SquireRuntime {
 			dev.squire.server.item.BellTier tier) {
 		dev.squire.server.registry.SquireItems.writeDisplayRule(bell,
 			bellReviveConfig.rule(tier));
+        var nbt = bell.getOrCreateNbt();
+        if (nbt.containsUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)) {
+            var record = agentStore().recordOfAgent(nbt.getUuid(dev.squire.server.registry.SquireItems.NBT_AGENT)).orElse(null);
+            nbt.putString("SquireDisplayName", record == null ? "" : record.displayName);
+            var profession = record == null ? null : record.profile.profession.profession();
+            nbt.putString("SquireDisplayProfession", profession == null ? "" : profession.id());
+        } else {
+            nbt.remove("SquireDisplayName");
+            nbt.remove("SquireDisplayProfession");
+        }
+
 	}
 
 	private static void applyReviveBuff(AvatarEntity avatar,
@@ -4946,7 +5154,14 @@ public final class SquireRuntime {
 		return avatar.getWorld().getRegistryKey().getValue().toString();
 	}
 
+    public String namedMessage(UUID owner, String message) {
+        if(message==null || message.isBlank())return "";
+        var id=agents().explicitTarget(owner).orElseGet(() -> agentStore().recordOfOwner(owner).map(r -> r.agentId).orElse(null));
+        var record=agentStore().recordOfAgent(id).orElse(null);
+        return record==null?message:message.replace("[Squire]","["+record.displayName+"]");
+    }
+
 	void feedback(PlayerEntity player, String message) {
-		player.sendMessage(Text.literal(message), false);
+		player.sendMessage(Text.literal(namedMessage(player.getUuid(),message)), false);
 	}
 }

@@ -55,15 +55,13 @@ final class SquireBlueprintService {
 
 	public SquireRuntime.ExecutionResult list() {
 		StringBuilder text = new StringBuilder("[Squire] 可用蓝图：");
-		for (Blueprint blueprint : manager().registry().all()) {
-			text.append("\n  · ").append(blueprint.id()).append(" —— ")
-				.append(blueprint.displayName())
-				.append("（tier ").append(blueprint.tier()).append("，")
-				.append(blueprint.placedWidth(Direction.NORTH)).append("×")
-				.append(blueprint.depth()).append("×").append(blueprint.height())
-				.append("）");
+		var catalog = manager().registry().catalog();
+		for (var family : catalog.families()) {
+			long available = family.variants().stream().filter(dev.squire.server.blueprint.BuildingCatalog.BuildingVariantDefinition::buildable).count();
+			text.append("\n  · ").append(catalog.categoryName(family.category())).append(" / ").append(family.name())
+				.append("：").append(available).append("/").append(family.variants().size()).append(" 个已验证变体");
 		}
-		text.append("\n可在侍从面板的工程页选择并摆放。");
+		text.append("\n工程页按家族选择 Tier / 组件；命令补全只显示可建变体，等级仍由工程师校验。");
 		return SquireRuntime.ExecutionResult.ok("feedback.blueprint_list",
 			text.toString());
 	}
@@ -78,9 +76,55 @@ final class SquireBlueprintService {
 	}
 
 	// ------------------------------------------------------------------ 摆放
+	public SquireRuntime.ExecutionResult diagnose(ServerPlayerEntity sender) {
+		var placement = manager().activeOf(sender.getUuid()).orElse(null);
+		if (placement == null) return SquireRuntime.ExecutionResult.fail("feedback.blueprint_none", "当前没有工地。");
+		var project = runtime.projects().activeOf(sender.getUuid()).filter(p -> p.placementId.equals(placement.placementId)).orElse(null);
+		var snapshot = placement.snapshot(); var access = snapshot == null ? null : snapshot.access();
+		String text = "工程：" + placement.blueprintId + "\n位置：" + placement.origin.toShortString() + " / " + placement.facing
+			+ "\n状态：" + (project == null ? "未确认预览" : project.state())
+			+ "\n阶段：" + (project == null ? "待开工" : project.currentStage().map(s -> s.displayName() + " / " + s.blockedReason()).orElse("已完成"))
+			+ "\n结算：" + (project == null || project.pendingMutation().isEmpty() ? "无待恢复写入" : project.pendingMutation());
+		if (access != null) {
+			text += "\n施工步骤：" + access.cursor + "/" + access.work.size() + "；待回收：" + access.placed.size()
+				+ "\n辅助步骤：" + access.assistedCount() + "；恢复次数：" + access.recoveries
+				+ "\n规划原因：" + access.routeFailure + "；恢复原因：" + access.recoveryReason;
+			if (access.cursor < access.work.size()) {
+				var work = access.work.get(access.cursor);
+				text += "\n目标：" + work.cell().pos().toShortString() + " / " + work.cell().blockId()
+					+ "\n原站位：" + work.station().toShortString() + "；方式：" + (access.assistance ? "AUTO_ASSIST" : work.mode());
+			}
+		} else text += "\n尚未生成通路计划。";
+		return SquireRuntime.ExecutionResult.ok("feedback.blueprint_status", text);
+	}
+
+	public SquireRuntime.ExecutionResult recover(ServerPlayerEntity sender) {
+		var placement = manager().activeOf(sender.getUuid()).orElse(null);
+		if (placement == null) return SquireRuntime.ExecutionResult.fail("feedback.blueprint_none", "当前没有工地。");
+		var project = runtime.projects().activeOf(sender.getUuid()).filter(p -> p.placementId.equals(placement.placementId)).orElse(null);
+		if (project != null && !project.pendingMutation().isEmpty()) return SquireRuntime.ExecutionResult.fail(
+			"feedback.project_failed", "结算尚未确定，恢复指令不能跳过：" + project.pendingMutation());
+		if (!placement.committed()) {
+			placement.invalidatePreview();
+			var reviewed = manager().resolve(placement).orElse(null);
+			if (reviewed == null) return SquireRuntime.ExecutionResult.fail("feedback.blueprint_unknown", "蓝图无法解析。");
+			if (!manager().save()) return SquireRuntime.ExecutionResult.fail("feedback.project_failed", "施工计划暂不可写，未开工。");
+			return SquireRuntime.ExecutionResult.ok("feedback.blueprint_status", "已重新检查预览。请使用原有确认开工入口。\n" + diagnose(sender).message());
+		}
+		var access = placement.snapshot() == null ? null : placement.snapshot().access();
+		if (access != null) {
+			access.assistance = true; access.recoveries++; access.recoveryReason = "MANUAL_RECOVER";
+			if (!manager().save()) return SquireRuntime.ExecutionResult.fail("feedback.project_failed", "恢复状态暂不可写，未继续施工。");
+		}
+		return runtime.projectResume(sender);
+	}
 
 	public SquireRuntime.ExecutionResult place(ServerPlayerEntity sender,
 			String blueprintId) {
+		if (dev.squire.server.blueprint.TerrainLeveling.parse(blueprintId).isPresent())
+			return SquireRuntime.ExecutionResult.fail("feedback.terrain_blocked", "请从工程师面板的“平整地基”入口创建和调整范围。");
+		if (dev.squire.server.blueprint.BuildingContentPolicy.current().retired(blueprintId))
+			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_retired", "这份旧自有模板已停止新建；请在工程页选择开源建筑家族。旋转、材料替换及旧档解析能力仍保留。");
 		Optional<AvatarEntity> found = runtime.agents().resolveForOwner(sender.getUuid());
 		if (found.isEmpty()) {
 			return SquireRuntime.ExecutionResult.fail("feedback.no_agent",
@@ -92,11 +136,11 @@ final class SquireBlueprintService {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_unknown",
 				"[Squire] 没有叫「" + blueprintId + "」的蓝图。可在工程页查看模板。");
 		}
-		// 基础施工 / 参数化设计的那条线。放在这里是因为这个方法是<b>所有</b>摆放路径
+		// 资源蓝图等级 / 参数化设计权限。放在这里是因为这个方法是<b>所有</b>摆放路径
 		// 的唯一漏斗——面板按钮、聊天、命令、模型工具都要从这儿过，所以四条路
 		// 不可能再各说各话。分档规则见 BuildTier，判据见 checkBuildTier。
 		SquireRuntime.ExecutionResult tier =
-			runtime.engineer().checkBuildTier(sender, blueprint.id());
+			runtime.engineer().checkBuildTier(sender, blueprint);
 		if (tier != null) {
 			return tier;
 		}
@@ -142,7 +186,7 @@ final class SquireBlueprintService {
 				"[Squire] 这块地不让动：" + decision.reason());
 		}
 		manager().put(placement);
-		Site site = new Site(placement, blueprint, resolved, world, avatar, null);
+		Site site = new Site(placement, blueprint, resolved, world, avatar, sender, null, null);
 		return SquireRuntime.ExecutionResult.ok("feedback.blueprint_placed",
 			describe(site, "摆好了（世界还没有任何改变，你看到的是粒子轮廓）"));
 	}
@@ -156,7 +200,7 @@ final class SquireBlueprintService {
 	public SquireRuntime.ExecutionResult rotate(ServerPlayerEntity sender) {
 		Site site = siteOf(sender);
 		if (site.failure() != null) return site.failure();
-		if (site.placement().state() == BlueprintPlacement.State.BUILDING) {
+		if (site.placement().committed() || site.placement().state() == BlueprintPlacement.State.BUILDING) {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_committed",
 				"[Squire] 已经开工，不能再旋转工地。");
 		}
@@ -184,7 +228,7 @@ final class SquireBlueprintService {
 			int right) {
 		Site site = siteOf(sender);
 		if (site.failure() != null) return site.failure();
-		if (site.placement().state() == BlueprintPlacement.State.BUILDING) {
+		if (site.placement().committed() || site.placement().state() == BlueprintPlacement.State.BUILDING) {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_committed",
 				"[Squire] 已经开工，不能再移动工地。");
 		}
@@ -216,15 +260,20 @@ final class SquireBlueprintService {
 	public SquireRuntime.ExecutionResult reshape(ServerPlayerEntity sender,
 			String blueprintId,
 			java.util.function.Supplier<SquireRuntime.ExecutionResult> whenNothingPlaced) {
+		if (dev.squire.server.blueprint.BuildingContentPolicy.current().retired(blueprintId))
+			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_retired", "旧自有模板已停止新建和改形；当前开源蓝图预览没有改变。");
+		Blueprint nextBlueprint = manager().registry().byId(blueprintId).orElse(null);
+		if (nextBlueprint == null) return SquireRuntime.ExecutionResult.fail("feedback.blueprint_unknown", "新蓝图不可用，当前预览没有改变。");
+		var locked = runtime.engineer().checkBuildTier(sender, nextBlueprint);
+		if (locked != null) return locked;
 		Optional<BlueprintPlacement> active = manager().activeOf(sender.getUuid());
 		if (active.isEmpty()) return whenNothingPlaced.get();
 		BlueprintPlacement placement = active.get();
-		Blueprint.Resolved before = manager().resolve(placement).orElse(null);
+		Blueprint.Resolved before = manager().preview(placement).orElse(null);
 		if (!placement.changeBlueprint(blueprintId)) {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_committed",
 				"[Squire] 已经开工，蓝图参数不能再改。");
 		}
-		Blueprint nextBlueprint = manager().registry().byId(blueprintId).orElse(null);
 		if (before != null && nextBlueprint != null) {
 			Blueprint.Resolved after = nextBlueprint.resolve(placement.origin,
 				placement.facing);
@@ -243,13 +292,20 @@ final class SquireBlueprintService {
 			int slotIndex, int delta) {
 		Site site = siteOf(sender);
 		if (site.failure() != null) return site.failure();
-		if (site.placement().state() == BlueprintPlacement.State.BUILDING) {
+		if (site.placement().committed() || site.placement().state() == BlueprintPlacement.State.BUILDING) {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_committed",
 				"[Squire] 已经开工，不能再更换材料。");
 		}
 		if (slotIndex < 0 || slotIndex >= site.blueprint().materialSlots().size()) {
 			return SquireRuntime.ExecutionResult.fail("feedback.blueprint_material_slot",
 				"[Squire] 这份蓝图没有该材料槽位。");
+		}
+		if (manager().registry().catalog().variant(site.blueprint().id()).isPresent()) {
+			var policy = dev.squire.server.blueprint.BuildingContentPolicy.current();
+			int needed = slotIndex == 0 ? policy.catalogMaterialLevel() : policy.catalogFullMaterialLevel();
+			var profile = runtime.professionOf(site.avatar());
+			if (profile == null || profile.profession() != dev.squire.server.profession.SquireProfession.ENGINEER || profile.level < needed)
+				return SquireRuntime.ExecutionResult.fail("feedback.design_locked", "该材料分区需要工程师 Lv" + needed + "；Lv10 开放全部材料主题分区。");
 		}
 		// 分区换材料是工程师 Lv.4 的能力——但只在<b>真的分了区</b>的蓝图上收费：
 		// 只有一个槽的老蓝图等于「整栋一种材料」，那是 Lv.1 就有的事。
@@ -297,10 +353,14 @@ final class SquireBlueprintService {
 	public SquireRuntime.ExecutionResult transferMissing(ServerPlayerEntity sender) {
 		Site site = siteOf(sender);
 		if (site.failure() != null) return site.failure();
-		Map<Identifier, Integer> missing = site.missing();
+		// Once confirmed, handover goes straight into durable escrow. A full backpack
+		// must never prevent another batch or strand supplies outside the project.
+		if (site.project() != null) return runtime.projectResume(sender);
+		Map<Identifier, Integer> missing = BlueprintManager.missingMaterials(
+			site.world(), site.resolved(), site.avatar());
 		if (missing.isEmpty()) {
 			return SquireRuntime.ExecutionResult.ok("feedback.blueprint_ready",
-				"[Squire] 侍从背包里的材料已经齐了。");
+				"[Squire] 负责施工的侍从材料已齐，可以确认开工。");
 		}
 		int movedTotal = 0;
 		for (Map.Entry<Identifier, Integer> entry : missing.entrySet()) {
@@ -357,8 +417,12 @@ final class SquireBlueprintService {
 			return SquireRuntime.ExecutionResult.fail("feedback.permission_denied",
 				"[Squire] 你没有使用物品指令兑现的权限。");
 		}
+		if (site.project() != null && !site.project().pendingMutation().isEmpty())
+			return runtime.projectResume(sender);
 		Map<Identifier, Integer> missing = site.missing();
 		if (missing.isEmpty()) {
+			if (site.project() != null && site.project().state() == dev.squire.server.project.Project.State.PAUSED)
+				return runtime.projectResume(sender);
 			return SquireRuntime.ExecutionResult.ok("feedback.blueprint_ready",
 				"[Squire] 材料已经齐了，可以在工程页确认开工。");
 		}
@@ -385,16 +449,24 @@ final class SquireBlueprintService {
 		// 立刻收进背包。等每 10 tick 一次的自动捡拾，下一句 build 会当场判缺料。
 		dev.squire.server.task.executors.ContainerExecutors.PickupNearby
 			.sweep(site.avatar(), 4.0);
+		if (site.project() != null && site.project().state() == dev.squire.server.project.Project.State.PAUSED) {
+			var deposited = runtime.projectResume(sender);
+			return new SquireRuntime.ExecutionResult(deposited.success(), deposited.feedbackKey(), deposited.errorCode(),
+				"[Squire] 兑现了 " + fulfilled + " 件材料。\n" + deposited.message());
+		}
 		return SquireRuntime.ExecutionResult.ok("feedback.blueprint_fulfilled",
-			"[Squire] 兑现了 " + fulfilled + " 件材料到我背包里。"
-				+ "可以在工程页确认开工。");
+			"[Squire] 兑现了 " + fulfilled + " 件材料。"
+				+ (site.missing().isEmpty() ? "材料已齐，可在工程页开工或存入本批材料。"
+					: "背包装不下的物品仍在地面，请拾取后分批存入工程。仍缺："
+						+ describeMissing(site.missing())));
 	}
 
 	// ------------------------------------------------------------------ 开工
 
 	public SquireRuntime.ExecutionResult build(ServerPlayerEntity sender) {
 		// All construction now goes through Project so pause/resume/blockers are durable.
-		if (sender != null) return runtime.projectConfirm(sender);
+		if (sender != null) return runtime.projects().activeOf(sender.getUuid()).isPresent()
+			? runtime.projectResume(sender) : runtime.projectConfirm(sender);
 		Site site = siteOf(sender);
 		if (site.failure() != null) {
 			return site.failure();
@@ -596,6 +668,7 @@ final class SquireBlueprintService {
 	/** 一次操作要用到的全部上下文；{@code failure} 非空时其余字段都不可用。 */
 	private record Site(BlueprintPlacement placement, Blueprint blueprint,
 			Blueprint.Resolved resolved, ServerWorld world, AvatarEntity avatar,
+			ServerPlayerEntity owner, dev.squire.server.project.Project project,
 			SquireRuntime.ExecutionResult failure) {
 
 		BillOfMaterials bill() {
@@ -603,7 +676,8 @@ final class SquireBlueprintService {
 		}
 
 		Map<Identifier, Integer> missing() {
-			return BlueprintManager.missingMaterials(world, resolved, avatar);
+			return BlueprintManager.missingProjectMaterials(world, resolved, owner, avatar,
+				project == null ? Map.of() : project.reservedMaterials());
 		}
 	}
 
@@ -634,7 +708,7 @@ final class SquireBlueprintService {
 					+ "」已经不在注册表里了（数据包换过？）。"
 					+ "可在工程页撤掉这个工地。"));
 		}
-		Optional<AvatarEntity> found = runtime.agents().resolveForOwner(sender.getUuid());
+		Optional<AvatarEntity> found = runtime.agents().resolveByAgentId(placement.agentId);
 		if (found.isEmpty()) {
 			return fail(SquireRuntime.ExecutionResult.fail("feedback.no_agent",
 				"[Squire] 侍从不在场。请右键召集铃；首次召唤方法可按 K 查看。"));
@@ -648,11 +722,14 @@ final class SquireBlueprintService {
 				"[Squire] 工地在 " + placement.dimensionId + "，伙伴不在那个维度。"));
 		}
 		return new Site(placement, blueprint,
-			manager().resolve(placement).orElseThrow(), world, avatar, null);
+			manager().preview(placement).orElseThrow(), world, avatar, sender,
+			runtime.projects().activeOf(sender.getUuid())
+				.filter(project -> project.placementId.equals(placement.placementId))
+				.orElse(null), null);
 	}
 
 	private static Site fail(SquireRuntime.ExecutionResult failure) {
-		return new Site(null, null, null, null, null, failure);
+		return new Site(null, null, null, null, null, null, null, failure);
 	}
 
 	private String describe(Site site, String headline) {
@@ -676,9 +753,14 @@ final class SquireBlueprintService {
 			text.append("\n场地检查：");
 			for (String issue : assessment.issues()) text.append("\n  · ").append(issue);
 		}
+		if (!site.placement().committed() && site.resolved().access() == null)
+			text.append("\n通路检查：确认开工时执行；移动和旋转预览不会反复寻路。");
+		if (site.resolved().access() != null && site.resolved().access().assistedCount() > 0)
+			text.append("\n辅助施工：").append(site.resolved().access().assistedCount()).append(" 步；原因：").append(site.resolved().access().routeFailure);
 		text.append(missing.isEmpty()
-			? "\n材料齐了，可在工程页确认开工。"
-			: "\n请在工程页一键从你的背包转交材料。");
+			? (site.project() == null ? "\n材料齐了，可在工程页确认开工（届时检查施工通路）。"
+				: "\n工程池与双方背包合计已够，请在工程页存入本批材料并继续。")
+			: "\n已计算工程池及双方背包，请在工程页分批存入材料。");
 		text.append("\n不要了也可以在工程页取消。");
 		return text.toString();
 	}

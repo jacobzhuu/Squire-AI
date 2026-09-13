@@ -90,6 +90,12 @@ public final class SquireEngineerService {
 			text.append("我还不是工程师。可以在职业页选择工程师。");
 			return text.toString();
 		}
+		if (dev.squire.server.blueprint.BuildingContentPolicy.current().retired(ProjectSpec.ID_PREFIX)) {
+			var growth = dev.squire.server.profession.EngineerProgression.current();
+			long count = runtime.blueprints().registry().catalog().variants().stream().filter(v -> v.allowed(level)).count();
+			return "工程师 Lv" + level + "：已开放 " + count + " 个建筑变体；放置间隔 " + growth.placementInterval(level)
+				+ " tick，新工程" + growth.materialAdjustmentLabel(level) + "；Lv10 开放完整已验证目录与材料分区。旧参数化模板仅保留解析，不再创建。";
+		}
 		text.append("工程师 Lv").append(level).append(" 能调的：")
 			.append("\n  尺寸上限 ").append(config().maxFootprint(level)).append("×")
 			.append(config().maxFootprint(level));
@@ -521,50 +527,26 @@ public final class SquireEngineerService {
 	// ------------------------------------------------------------------ 等级闸
 
 	/**
-	 * 基础施工 vs 参数化设计——这条线只在这里判一次。
+	 * 资源蓝图等级与参数化设计权限——这条线只在这里判一次。
 	 *
 	 * <p>{@link dev.squire.server.runtime.SquireBlueprintService#place} 是所有摆放路径
-	 * 的唯一漏斗：面板的「基础施工」按钮、聊天里的「盖个仓库」、{@code /squire} 命令、
+	 * 的唯一漏斗：面板的蓝图库按钮、聊天里的「盖个仓库」、{@code /squire} 命令、
 	 * 模型的 {@code blueprint.place} / {@code project.start} 全部经过它。判断放在这里，
 	 * 四条路就<b>不可能</b>再给出不同的答案——在此之前面板不判、ToolGate 整条判给
 	 * 工程师，于是同一个守卫「按钮能盖、说话被拒」。</p>
 	 *
-	 * <p>固定模板一律放行。参数化蓝图要求工程师，并且那一份规格不能超出他的等级：
-	 * 「超没超」直接问 {@link #clampToLevel}——夹过之后不等于原样，就是他还调不动
-	 * 这一份。这样等级规则只有一份，设计页和这里读的是同一段代码。</p>
+	 * <p>每份资源蓝图先读取自己的 {@code minEngineerLevel}；0 只作为旧数据包的兼容
+	 * 值。参数化蓝图仍要求工程师，而且规格不能超出等级：夹过之后不等于原样，
+	 * 就是他还调不动这一份。这样 UI 锁、聊天、命令和实际开工读的是同一条规则。</p>
 	 *
 	 * @return {@code null} 表示放行
 	 */
-	SquireRuntime.ExecutionResult checkBuildTier(ServerPlayerEntity sender,
-			String blueprintId) {
-		if (BuildTier.of(blueprintId).isBasic()) {
-			return null;
-		}
-		ProfessionData data = dataOf(sender);
-		if (data == null || data.profession() != SquireProfession.ENGINEER
-				|| !data.can(ProfessionAbility.ENGINEER_BASIC_BLUEPRINT)) {
-			return SquireRuntime.ExecutionResult.fail("feedback.design_not_engineer",
-				"[Squire] 参数化蓝图要工程师才做得了。"
-					+ "\n现成的固定模板我照样能盖——工程页「基础施工」里那几份都行。"
-					+ "\n想调尺寸、加层、换结构、挂模块，可以在职业页让我成为工程师。");
-		}
-		ProjectSpec spec = ProjectSpec.parse(blueprintId).orElse(null);
-		if (spec == null) {
-			return null; // 参数化户型：尺寸由 checkFootprint 管
-		}
-		SquireRuntime.ExecutionResult template = checkTemplate(data, spec.template());
-		if (template != null) {
-			return template;
-		}
-		if (!clampToLevel(data, spec).equals(spec)) {
-			return SquireRuntime.ExecutionResult.fail("feedback.design_locked",
-				"[Squire] 这份蓝图用到了我这一级还调不动的参数（工程师 Lv"
-					+ data.level + "）。"
-					+ "\n设计页会显示目前能调的项目，超出的会自动收回到我做得到的范围。");
-		}
-		return null;
+	SquireRuntime.ExecutionResult checkBuildTier(ServerPlayerEntity sender, Blueprint blueprint) {
+		if (blueprint == null) return null;
+		var decision = EngineerBuildPolicy.evaluate(blueprint, dataOf(sender), config());
+		return decision.allowed() ? null : SquireRuntime.ExecutionResult.fail(
+			"feedback.design_locked", "[Squire] " + blueprint.displayName() + "：" + decision.reason());
 	}
-
 	/** 旋转（Lv.3）。蓝图服务在真的转之前问这一句。 */
 	SquireRuntime.ExecutionResult checkRotation(ServerPlayerEntity sender) {
 		return checkAbility(dataOf(sender), ProfessionAbility.ENGINEER_BLUEPRINT_ROTATION);
@@ -583,6 +565,9 @@ public final class SquireEngineerService {
 	 */
 	SquireRuntime.ExecutionResult checkFootprint(ServerPlayerEntity sender,
 			Blueprint blueprint) {
+		if (blueprint != null && (blueprint.metadata().tags().contains("catalog")
+				|| blueprint.metadata().source().startsWith("https://github.com/gowenrw/keepitlevel_mc_style/")))
+			return checkBuildTier(sender, blueprint);
 		ProfessionData data = dataOf(sender);
 		if (data == null || data.profession() != SquireProfession.ENGINEER
 				|| blueprint == null) {

@@ -1,186 +1,302 @@
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/WARN]: [automation] refused 'over-cap': owner hit the 16 graph cap
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] recovered 2 graphs
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [task] submit 55a2bec8-f823-4ad0-baba-c4215b485201 type=test:auto agent=d5214afa-003b-4220-901f-6af8a737e161 tick=4
-[16:41:48] [Test worker/INFO]: [automation] 'bad-spawner' no executor for task type: NO_EXECUTOR
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] 'breaker' tool call failed: INTERNAL_ERROR
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] recovered 1 graphs
-[16:41:48] [Test worker/ERROR]: [automation] schema 99 is newer than supported 2; starting empty rather than downgrading data
-[16:41:48] [Test worker/INFO]: [automation] migrated 1 recurring graph(s) from the legacy two-week TTL to run indefinitely
-[16:41:48] [Test worker/INFO]: [automation] recovered 1 graphs
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] ENABLED
-[16:41:48] [Test worker/INFO]: [automation] recovered 2 graphs
-[16:41:48] [Test worker/ERROR]: [blueprint] future schema 99; refusing recovery and writes
-[16:41:48] [Test worker/WARN]: [blueprint] legacy placement schema 1 is incompatible with fixed-layout templates; active sites were not restored
-[16:41:48] [Test worker/WARN]: [blueprint] skipped corrupt row: java.lang.IllegalArgumentException: Invalid UUID string: not-a-uuid
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [confirm] issued 41fcf320-450c-48d7-8a30-e9cdd775489f for cbp.materialize by owner b3a95337-cc5c-4f70-b334-36c4f4383583
-[16:41:48] [Test worker/INFO]: [cbp] 'welcome-gate' refused: dimension not loaded (NO_DIMENSION)
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [confirm] issued cc72959e-99f6-47ec-a3e7-646436ad8b6d for cbp.materialize by owner 1a2db409-b4ca-41ba-acd1-5da6c77ac238
-[16:41:48] [Test worker/WARN]: [confirm] FORGED attempt: player e10f402b-40f7-4e16-a420-2cbb10dd0d96 tried to confirm cc72959e-99f6-47ec-a3e7-646436ad8b6d owned by 1a2db409-b4ca-41ba-acd1-5da6c77ac238
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [confirm] issued eef4b817-d9ef-4a8d-b9e8-89c1c54bbd18 for cbp.materialize by owner 31129ccc-3146-41de-9037-7d26851094a8
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [confirm] issued cbd17a84-7e92-44f4-99f3-97cab8dcf5ac for cbp.materialize by owner c24654d5-1190-4b32-ac4c-425ebb04fbb9
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:48] [Test worker/INFO]: [cbp] materialization disabled
-[16:41:48] [Test worker/INFO]: [cbp] materialization ENABLED
-[16:41:49] [Test worker/INFO]: [ext] imported tool example:echo from mod:example trust=UNTRUSTED
-[16:41:49] [Test worker/INFO]: [ext] imported tool example:mystery from mod:x trust=UNTRUSTED
-[16:41:49] [Test worker/INFO]: [ext] imported task type extt:bad from mod:t
-[16:41:49] [Test worker/INFO]: [task] submit d9ec96f0-a41a-41c4-b10a-f814504369c5 type=ext:extt:bad agent=f75c5edf-28c7-4afc-80fe-9576471f88fe tick=3000
-[16:41:49] [Test worker/INFO]: [task] start d9ec96f0-a41a-41c4-b10a-f814504369c5 type=ext:extt:bad agent=f75c5edf-28c7-4afc-80fe-9576471f88fe
-[16:41:49] [Test worker/INFO]: [task] fail d9ec96f0-a41a-41c4-b10a-f814504369c5 type=ext:extt:bad code=CUSTOM_FAIL
-[16:41:49] [Test worker/INFO]: [task] terminal d9ec96f0-a41a-41c4-b10a-f814504369c5 type=ext:extt:bad state=FAILED code=CUSTOM_FAIL
-[16:41:49] [Test worker/INFO]: [ext] imported tool example:longdesc from mod:x trust=UNTRUSTED
-[16:41:49] [Test worker/WARN]: [ext] refused tool 'example:sneaky' from mod:x: permission node rejected: squire.admin
-[16:41:49] [Test worker/INFO]: [ext] imported task type extt:async from mod:t
-[16:41:49] [Test worker/INFO]: [task] submit b2aa434e-2b91-4333-b63d-e3b327ae74d1 type=ext:extt:async agent=56e7ac41-b222-4f5a-af50-fb13a4d951c7 tick=2000
-[16:41:49] [Test worker/INFO]: [task] start b2aa434e-2b91-4333-b63d-e3b327ae74d1 type=ext:extt:async agent=56e7ac41-b222-4f5a-af50-fb13a4d951c7
-[16:41:49] [Test worker/INFO]: [task] terminal b2aa434e-2b91-4333-b63d-e3b327ae74d1 type=ext:extt:async state=COMPLETED code=-
-[16:41:49] [Test worker/INFO]: [ext] imported tool example:echo from mod:a trust=UNTRUSTED
-[16:41:49] [Test worker/WARN]: [ext] refused tool 'example:echo' from mod:b: duplicate tool id
-[16:41:49] [Test worker/WARN]: [ext] refused tool 'example:huge' from mod:x: too many args: 33 > 32
-[16:41:49] [Test worker/INFO]: [ext] imported tool example:gated from mod:x trust=UNTRUSTED
-[16:41:49] [Test worker/WARN]: [ext] refused tool '<null>' from mod:x: null tool
-[16:41:49] [Test worker/WARN]: [ext] refused tool 'example:echo' from null: blank origin
-[16:41:49] [Test worker/INFO]: [ext] imported task type extt:dup from mod:a
-[16:41:49] [Test worker/WARN]: [ext] refused task 'extt:dup' from mod:b: duplicate task type
-[16:41:49] [Test worker/INFO]: [ext] imported task type extt:ok from mod:t
-[16:41:49] [Test worker/INFO]: [task] submit 3df3f115-b9a3-473a-be0f-12c1c5a1e546 type=ext:extt:ok agent=c35058f5-7cdb-49c1-826e-02e9f1a8cd9e tick=1000
-[16:41:49] [Test worker/INFO]: [task] start 3df3f115-b9a3-473a-be0f-12c1c5a1e546 type=ext:extt:ok agent=c35058f5-7cdb-49c1-826e-02e9f1a8cd9e
-[16:41:49] [Test worker/INFO]: [task] terminal 3df3f115-b9a3-473a-be0f-12c1c5a1e546 type=ext:extt:ok state=COMPLETED code=-
-[16:41:49] [Test worker/ERROR]: [goal] future schema 999; refusing recovery
-[16:41:49] [Test worker/WARN]: [mcp] refusing call fae461fc-bf36-4044-bba4-f028aaf5b305 to s: 256 already in flight
-[16:41:49] [Test worker/WARN]: [mcp] circuit for 'bad' OPEN after 5 consecutive failures
-[16:41:49] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
-[16:41:49] [Test worker/INFO]: [mcp] circuit for 's' closed again after a successful probe
-[16:41:49] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
-[16:41:49] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
-[16:41:50] [Test worker/INFO]: [mcp] 1 external call(s) passed their deadline
-[16:41:50] [Test worker/WARN]: [mcp] config load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected ':' at line 1 column 9 path $.this
-[16:41:50] [Test worker/INFO]: [ext] imported tool ok:server_time from mcp:ok trust=UNTRUSTED
-[16:41:50] [Test worker/INFO]: [mcp] server 'ok' ready: 1 tools imported
-[16:41:50] [Test worker/INFO]: [ext] imported tool huge:firehose from mcp:huge trust=UNTRUSTED
-[16:41:50] [Test worker/INFO]: [mcp] server 'huge' ready: 1 tools imported
-[16:41:50] [Test worker/INFO]: [ext] imported tool malicious:destroy_world from mcp:malicious trust=UNTRUSTED
-[16:41:50] [Test worker/WARN]: [mcp] refused tool 'forty_args' from malicious: oversized schema: 40 properties
-[16:41:50] [Test worker/INFO]: [mcp] server 'malicious' ready: 1 tools imported
-[16:41:50] [Test worker/WARN]: [mcp] refused tool 'destroy_world' from minecraft: namespace is reserved: minecraft
-[16:41:50] [Test worker/WARN]: [mcp] refused tool 'forty_args' from minecraft: oversized schema: 40 properties
-[16:41:50] [Test worker/INFO]: [mcp] server 'minecraft' ready: 0 tools imported
-[16:41:50] [Test worker/INFO]: [ext] imported tool safe:server_time from mcp:safe trust=UNTRUSTED
-[16:41:50] [Test worker/INFO]: [mcp] server 'safe' ready: 1 tools imported
-[16:41:50] [Test worker/INFO]: [ext] imported tool slow:endless_query from mcp:slow trust=UNTRUSTED
-[16:41:50] [Test worker/INFO]: [mcp] server 'slow' ready: 1 tools imported
-[16:41:51] [CompletableFutureDelayScheduler/INFO]: [mcp] call slow/endless_query failed: remote call exceeded 1s
-[16:41:51] [Test worker/INFO]: [ext] imported tool gone:server_time from mcp:gone trust=UNTRUSTED
-[16:41:51] [Test worker/INFO]: [mcp] server 'gone' ready: 1 tools imported
-[16:41:51] [Test worker/WARN]: [mcp] refused tool 'broken_tool' from broken-schema: java.io.EOFException: End of input at line 1 column 23 path $.properties[1]
-[16:41:51] [Test worker/INFO]: [mcp] server 'broken-schema' ready: 0 tools imported
-[16:41:51] [Test worker/INFO]: [ext] imported tool inject:helpful_notes from mcp:inject trust=UNTRUSTED
-[16:41:51] [Test worker/INFO]: [mcp] server 'inject' ready: 1 tools imported
-[16:41:51] [Test worker/WARN]: [cbp] workspace recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unexpected value at line 1 column 2 path $
-[16:41:51] [Test worker/WARN]: [automation] skipped corrupt entry during recovery
-[16:41:51] [Test worker/WARN]: [automation] skipped corrupt entry during recovery: java.lang.IllegalStateException: Not a JSON Object: "just a string"
-[16:41:51] [Test worker/INFO]: [automation] recovered 1 graphs
-[16:41:51] [Test worker/WARN]: [cbp] skipped corrupt registry entry: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonArray.iterator()" because the return value of "com.google.gson.JsonObject.getAsJsonArray(String)" is null
-[16:41:51] [Test worker/WARN]: [cbp] registry recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected name at line 1 column 2 path $.
-[16:41:51] [Test worker/WARN]: [automation] recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Use JsonReader.setLenient(true) to accept malformed JSON at line 1 column 6 path $
-[16:41:51] [Test worker/INFO]: [automation] recovered 0 graphs
-[16:41:51] [Test worker/WARN]: [cbp] skipped corrupt workspace entry version-two: java.lang.IllegalArgumentException: Invalid UUID string: version-two
-[16:41:51] [Test worker/WARN]: [automation] recovery failed (starting empty): java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonArray.iterator()" because the return value of "com.google.gson.JsonObject.getAsJsonArray(String)" is null
-[16:41:51] [Test worker/INFO]: [automation] recovered 0 graphs
-[16:41:51] [Test worker/ERROR]: [project] future schema 99; refusing recovery and writes
-[16:41:51] [Test worker/WARN]: [project] skipped corrupt row: java.lang.IllegalArgumentException: Invalid UUID string: not-a-uuid
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl 必须以 http:// 或 https:// 开头
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用："type" 必须是 "openai-compatible"
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用："type" 必须是 "openai-compatible"
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl 必须以 http:// 或 https:// 开头
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
-[16:41:51] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
-[16:41:51] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
-[16:41:51] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
-[16:41:51] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
-[16:41:51] [Test worker/INFO]: [replay] disabled
-[16:41:51] [Test worker/INFO]: [replay] session 2 started (privacy notice: redacted, local only)
-[16:41:52] [Test worker/ERROR]: [turn] future schema 999; recovery and writes refused
-[16:41:52] [Test worker/INFO]: [confirm] issued a1224bff-2caa-473a-84ae-ffa1fac00d20 for minecraft.command.fill by owner 43900874-9d0c-43e8-b33c-623072078716
-[16:41:52] [Test worker/INFO]: [confirm] issued ec5c464b-e484-4c5e-a40b-c101f9b451d2 for minecraft.command.fill by owner b520d1ff-9de4-4db4-9650-23972ce232e7
-[16:41:52] [Test worker/INFO]: [confirm] issued 3f078255-08cf-405f-87dc-517bd49bf9c8 for minecraft.command.fill by owner f46a3525-5674-4298-8e56-4c463b7f59f8
-[16:41:52] [Test worker/INFO]: [confirm] issued 9e799b2f-394e-4065-a7a2-dd87cfec205d for minecraft.command.fill by owner 9d574a80-e202-42d0-9100-b1d6b5235906
-[16:41:52] [Test worker/WARN]: [confirm] FORGED attempt: player d86ce349-3df7-4dbf-96d5-4dd1910e3edd tried to confirm 9e799b2f-394e-4065-a7a2-dd87cfec205d owned by 9d574a80-e202-42d0-9100-b1d6b5235906
-[16:41:52] [Test worker/WARN]: [confirm] load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected ':' at line 1 column 7 path $.not
-[16:41:52] [Test worker/ERROR]: [confirm] future schema 99; pending operations READ-ONLY
-[16:41:52] [Test worker/WARN]: [squire-permissions] load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected name at line 1 column 2 path $.
-[16:41:52] [Test worker/ERROR]: [squire-permissions] future schema 999; stored grants IGNORED, falling back to defaults
-[16:41:52] [Test worker/WARN]: [killswitch] ACTIVATED at tick 42 — world writes and commands denied
-[16:41:52] [Test worker/WARN]: [killswitch] deactivated
-[16:41:52] [Test worker/INFO]: [capability] issued 7c03dae9-284b-4f56-b5a3-c9bb65d5cb6b type=op owner=3da5b143-3bd9-4087-bf15-6c156dce1ff7 impact<= 8 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=1, y=1, z=1}]
-[16:41:52] [Test worker/INFO]: [capability] issued 60c2625b-16de-41d1-ae21-34167fac349e type=op2 owner=4c1ca993-2f87-48a9-bff7-686aa5644b10 impact<= 8 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=1, y=1, z=1}]
-[16:41:52] [Test worker/INFO]: [capability] consumed 60c2625b-16de-41d1-ae21-34167fac349e by task 7d4e1104-b665-496f-9fc2-9a7578c0550b
-[16:41:52] [Test worker/INFO]: [capability] issued 5b7a92c0-868d-427c-ac05-2feb8d1f4dd0 type=world.fill owner=cd2dfc17-eea6-447f-b200-3a3345d4a927 impact<= 500 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=9, y=9, z=9}]
-[16:41:52] [Test worker/INFO]: [capability] consumed 5b7a92c0-868d-427c-ac05-2feb8d1f4dd0 by task 6e478ea0-175b-43a3-9e55-1c07ebca90fe
-[16:41:52] [Test worker/INFO]: [capability] issued 66ec714f-14f2-4cfb-84e8-71889d5df03a type=op owner=16eb2df3-600c-4f71-b3a1-8cd02314bbc9 impact<= 64 region=BoundedRegion[min=BlockPos{x=-10, y=-10, z=-10}, max=BlockPos{x=10, y=10, z=10}]
-[16:41:52] [Test worker/INFO]: [task] submit ddc4c9fc-6bcc-434e-9e6c-c58f94c24279 type=blocking agent=800fa015-905e-4a56-a2c8-d653d02b8ec8 tick=0
-[16:41:52] [Test worker/INFO]: [task] submit 6f6570ce-38ee-4752-848d-77e4fa868443 type=blocking agent=b7e7fdfb-9e69-4a05-a82e-f553582f9754 tick=0
-[16:41:52] [Test worker/INFO]: [task] submit 24483f24-9be2-42bd-8fcc-969d967a6320 type=blocking agent=8c95d4ae-0357-4c03-bb3a-c6d25b62d54e tick=0
-[16:41:52] [Test worker/INFO]: [task] submit 950dd185-a804-46ee-b7bf-34e34de888d9 type=blocking agent=311cd9ee-9d62-4f5a-bd04-68850ce59fbc tick=0
-[16:41:52] [Test worker/INFO]: [task] start ddc4c9fc-6bcc-434e-9e6c-c58f94c24279 type=blocking agent=800fa015-905e-4a56-a2c8-d653d02b8ec8
-[16:41:52] [Test worker/INFO]: [task] dependency-cascade failed 24483f24-9be2-42bd-8fcc-969d967a6320 (dep ddc4c9fc-6bcc-434e-9e6c-c58f94c24279)
-[16:41:52] [Test worker/INFO]: [task] dependency-cascade failed 6f6570ce-38ee-4752-848d-77e4fa868443 (dep ddc4c9fc-6bcc-434e-9e6c-c58f94c24279)
-[16:41:52] [Test worker/INFO]: [task] dependency-cascade failed 950dd185-a804-46ee-b7bf-34e34de888d9 (dep 6f6570ce-38ee-4752-848d-77e4fa868443)
-[16:41:52] [Test worker/INFO]: [task] cancelAgent 800fa015-905e-4a56-a2c8-d653d02b8ec8 dropped 1 task(s): test
-[16:41:52] [Test worker/INFO]: [task] start e846a8c0-d1e1-492f-a201-44a49d584d57 type=recoverable agent=cb8c556b-f1cc-4dc0-b4b9-22c00cede587
-[16:41:52] [Test worker/INFO]: [task] terminal e846a8c0-d1e1-492f-a201-44a49d584d57 type=recoverable state=COMPLETED code=-
-[16:41:52] [Test worker/INFO]: [task] start 2e662859-760f-49ff-95b3-54ce9236189a type=recoverable agent=cb8c556b-f1cc-4dc0-b4b9-22c00cede587
-[16:41:52] [Test worker/INFO]: [task-state] recovered 1 task snapshot(s)
-[16:41:52] [Test worker/INFO]: [task-state] recovered 0 task snapshot(s)
-[16:41:52] [Test worker/INFO]: [task-state] recovered 1 task snapshot(s)
-[16:41:52] [Test worker/INFO]: [gateway] world.danger by ADMIN -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] player.teleport.test by FAST_PATH -> REJECTED permission_denied (player lacks node squire.command.teleport)
-[16:41:52] [Test worker/INFO]: [gateway] player.teleport.test by FAST_PATH -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED permission_denied (capability QUERY not granted)
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED policy_denied (nighttime)
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument (missing required argument 'target')
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument (unknown argument 'evil')
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument ('count' must be an integer)
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED loop_detected (maxEquivalentCalls=3 exceeded for test.ping|target=same)
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] no.such by MODEL -> REJECTED tool_not_found (unknown tool 'no.such')
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
-[16:41:52] [Test worker/INFO]: [gateway] internal.plan by MODEL -> REJECTED tool_not_visible (tool 'internal.plan' not exposed to MODEL)
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/WARN]: [automation] refused 'over-cap': owner hit the 16 graph cap
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] recovered 2 graphs
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [task] submit 758418cd-a547-48bb-87d6-384b8bd73b94 type=test:auto agent=e5525884-7b00-440a-85eb-681f0f4d2f0f tick=4
+[18:31:15] [Test worker/INFO]: [automation] 'bad-spawner' no executor for task type: NO_EXECUTOR
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] 'breaker' tool call failed: INTERNAL_ERROR
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] recovered 1 graphs
+[18:31:15] [Test worker/ERROR]: [automation] schema 99 is newer than supported 2; starting empty rather than downgrading data
+[18:31:15] [Test worker/INFO]: [automation] migrated 1 recurring graph(s) from the legacy two-week TTL to run indefinitely
+[18:31:15] [Test worker/INFO]: [automation] recovered 1 graphs
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] ENABLED
+[18:31:15] [Test worker/INFO]: [automation] recovered 2 graphs
+[18:31:15] [Test worker/WARN]: [blueprint] save failed: java.nio.file.FileAlreadyExistsException: C:\Users\86133\AppData\Local\Temp\junit15399248779334481739\not-a-directory
+[18:31:15] [Test worker/ERROR]: [blueprint] future schema 99; refusing recovery and writes
+[18:31:15] [Test worker/WARN]: [blueprint] legacy placement schema 1 is incompatible with fixed-layout templates; active sites were not restored
+[18:31:15] [Test worker/WARN]: [blueprint] skipped corrupt row: java.util.zip.ZipException: Not in GZIP format
+[18:31:15] [Test worker/WARN]: [blueprint] skipped corrupt row: java.lang.IllegalArgumentException: Invalid UUID string: not-a-uuid
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [confirm] issued 36fedf87-8745-4ae8-8d13-95e50789ea80 for cbp.materialize by owner 83564c16-91c6-4f3a-87f8-80988c9e4c14
+[18:31:17] [Test worker/INFO]: [cbp] 'welcome-gate' refused: dimension not loaded (NO_DIMENSION)
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [confirm] issued 8332c5bd-ae87-4589-bbfc-df8f698a70af for cbp.materialize by owner bf8fca94-dd75-4064-8bb6-b8b063c02954
+[18:31:17] [Test worker/WARN]: [confirm] FORGED attempt: player 17241c45-0046-4f72-b670-2253e467a3da tried to confirm 8332c5bd-ae87-4589-bbfc-df8f698a70af owned by bf8fca94-dd75-4064-8bb6-b8b063c02954
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:17] [Test worker/INFO]: [confirm] issued ce14e122-6b4e-4dd0-b916-7fb7fed01ab4 for cbp.materialize by owner d1fb8b74-2e05-4754-a0ee-3016a316abeb
+[18:31:18] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:18] [Test worker/INFO]: [confirm] issued c2e0d13b-79c9-4591-b6da-32d29d611267 for cbp.materialize by owner be01e90c-d843-4426-ab5b-3430ea76b83d
+[18:31:18] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:18] [Test worker/INFO]: [cbp] materialization disabled
+[18:31:18] [Test worker/INFO]: [cbp] materialization ENABLED
+[18:31:18] [Test worker/INFO]: [ext] imported tool example:echo from mod:example trust=UNTRUSTED
+[18:31:18] [Test worker/INFO]: [ext] imported tool example:mystery from mod:x trust=UNTRUSTED
+[18:31:18] [Test worker/INFO]: [ext] imported task type extt:bad from mod:t
+[18:31:18] [Test worker/INFO]: [task] submit aecd2b21-aee7-4b80-b1fd-a01809c258cc type=ext:extt:bad agent=22d86245-248a-48dc-a0ee-0161e68fa567 tick=3000
+[18:31:18] [Test worker/INFO]: [task] start aecd2b21-aee7-4b80-b1fd-a01809c258cc type=ext:extt:bad agent=22d86245-248a-48dc-a0ee-0161e68fa567
+[18:31:18] [Test worker/INFO]: [task] fail aecd2b21-aee7-4b80-b1fd-a01809c258cc type=ext:extt:bad code=CUSTOM_FAIL
+[18:31:18] [Test worker/INFO]: [task] terminal aecd2b21-aee7-4b80-b1fd-a01809c258cc type=ext:extt:bad state=FAILED code=CUSTOM_FAIL
+[18:31:18] [Test worker/INFO]: [ext] imported tool example:longdesc from mod:x trust=UNTRUSTED
+[18:31:18] [Test worker/WARN]: [ext] refused tool 'example:sneaky' from mod:x: permission node rejected: squire.admin
+[18:31:18] [Test worker/INFO]: [ext] imported task type extt:async from mod:t
+[18:31:18] [Test worker/INFO]: [task] submit e127a34b-699e-4fd4-a2b8-fb8ee5e1d540 type=ext:extt:async agent=8e8eca23-4419-4b4a-83f2-31a602ee6161 tick=2000
+[18:31:18] [Test worker/INFO]: [task] start e127a34b-699e-4fd4-a2b8-fb8ee5e1d540 type=ext:extt:async agent=8e8eca23-4419-4b4a-83f2-31a602ee6161
+[18:31:18] [Test worker/INFO]: [task] terminal e127a34b-699e-4fd4-a2b8-fb8ee5e1d540 type=ext:extt:async state=COMPLETED code=-
+[18:31:18] [Test worker/INFO]: [ext] imported tool example:echo from mod:a trust=UNTRUSTED
+[18:31:18] [Test worker/WARN]: [ext] refused tool 'example:echo' from mod:b: duplicate tool id
+[18:31:18] [Test worker/WARN]: [ext] refused tool 'example:huge' from mod:x: too many args: 33 > 32
+[18:31:18] [Test worker/INFO]: [ext] imported tool example:gated from mod:x trust=UNTRUSTED
+[18:31:18] [Test worker/WARN]: [ext] refused tool '<null>' from mod:x: null tool
+[18:31:18] [Test worker/WARN]: [ext] refused tool 'example:echo' from null: blank origin
+[18:31:18] [Test worker/INFO]: [ext] imported task type extt:dup from mod:a
+[18:31:18] [Test worker/WARN]: [ext] refused task 'extt:dup' from mod:b: duplicate task type
+[18:31:18] [Test worker/INFO]: [ext] imported task type extt:ok from mod:t
+[18:31:18] [Test worker/INFO]: [task] submit 18581616-9e65-4b43-89f8-ed8a2e498182 type=ext:extt:ok agent=baf7d279-9a1b-4bfe-85e7-060859f57942 tick=1000
+[18:31:18] [Test worker/INFO]: [task] start 18581616-9e65-4b43-89f8-ed8a2e498182 type=ext:extt:ok agent=baf7d279-9a1b-4bfe-85e7-060859f57942
+[18:31:18] [Test worker/INFO]: [task] terminal 18581616-9e65-4b43-89f8-ed8a2e498182 type=ext:extt:ok state=COMPLETED code=-
+[18:31:18] [Test worker/ERROR]: [goal] future schema 999; refusing recovery
+[18:31:19] [Test worker/WARN]: [squire-bell] cannot load C:\Users\86133\AppData\Local\Temp\junit2585160327842432623\bad.json (java.lang.IllegalArgumentException: revive effect is not defensive: minecraft:strength); using complete defaults
+[18:31:19] [Test worker/WARN]: [mcp] refusing call 9143e821-e58c-44d7-9435-4579cca48a99 to s: 256 already in flight
+[18:31:19] [Test worker/WARN]: [mcp] circuit for 'bad' OPEN after 5 consecutive failures
+[18:31:19] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
+[18:31:19] [Test worker/INFO]: [mcp] circuit for 's' closed again after a successful probe
+[18:31:19] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
+[18:31:19] [Test worker/WARN]: [mcp] circuit for 's' OPEN after 5 consecutive failures
+[18:31:19] [Test worker/INFO]: [mcp] 1 external call(s) passed their deadline
+[18:31:19] [Test worker/WARN]: [mcp] config load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected ':' at line 1 column 9 path $.this
+[18:31:19] [Test worker/INFO]: [ext] imported tool ok:server_time from mcp:ok trust=UNTRUSTED
+[18:31:19] [Test worker/INFO]: [mcp] server 'ok' ready: 1 tools imported
+[18:31:19] [Test worker/INFO]: [ext] imported tool huge:firehose from mcp:huge trust=UNTRUSTED
+[18:31:19] [Test worker/INFO]: [mcp] server 'huge' ready: 1 tools imported
+[18:31:19] [Test worker/INFO]: [ext] imported tool malicious:destroy_world from mcp:malicious trust=UNTRUSTED
+[18:31:19] [Test worker/WARN]: [mcp] refused tool 'forty_args' from malicious: oversized schema: 40 properties
+[18:31:19] [Test worker/INFO]: [mcp] server 'malicious' ready: 1 tools imported
+[18:31:19] [Test worker/WARN]: [mcp] refused tool 'destroy_world' from minecraft: namespace is reserved: minecraft
+[18:31:19] [Test worker/WARN]: [mcp] refused tool 'forty_args' from minecraft: oversized schema: 40 properties
+[18:31:19] [Test worker/INFO]: [mcp] server 'minecraft' ready: 0 tools imported
+[18:31:19] [Test worker/INFO]: [ext] imported tool safe:server_time from mcp:safe trust=UNTRUSTED
+[18:31:19] [Test worker/INFO]: [mcp] server 'safe' ready: 1 tools imported
+[18:31:19] [Test worker/INFO]: [ext] imported tool slow:endless_query from mcp:slow trust=UNTRUSTED
+[18:31:19] [Test worker/INFO]: [mcp] server 'slow' ready: 1 tools imported
+[18:31:20] [CompletableFutureDelayScheduler/INFO]: [mcp] call slow/endless_query failed: remote call exceeded 1s
+[18:31:20] [Test worker/INFO]: [ext] imported tool gone:server_time from mcp:gone trust=UNTRUSTED
+[18:31:20] [Test worker/INFO]: [mcp] server 'gone' ready: 1 tools imported
+[18:31:20] [Test worker/WARN]: [mcp] refused tool 'broken_tool' from broken-schema: java.io.EOFException: End of input at line 1 column 23 path $.properties[1]
+[18:31:20] [Test worker/INFO]: [mcp] server 'broken-schema' ready: 0 tools imported
+[18:31:20] [Test worker/INFO]: [ext] imported tool inject:helpful_notes from mcp:inject trust=UNTRUSTED
+[18:31:20] [Test worker/INFO]: [mcp] server 'inject' ready: 1 tools imported
+[18:31:20] [Test worker/WARN]: [cbp] workspace recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Unexpected value at line 1 column 2 path $
+[18:31:20] [Test worker/WARN]: [automation] skipped corrupt entry during recovery
+[18:31:20] [Test worker/WARN]: [automation] skipped corrupt entry during recovery: java.lang.IllegalStateException: Not a JSON Object: "just a string"
+[18:31:20] [Test worker/INFO]: [automation] recovered 1 graphs
+[18:31:20] [Test worker/WARN]: [cbp] skipped corrupt registry entry: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonArray.iterator()" because the return value of "com.google.gson.JsonObject.getAsJsonArray(String)" is null
+[18:31:20] [Test worker/WARN]: [cbp] registry recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected name at line 1 column 2 path $.
+[18:31:20] [Test worker/WARN]: [automation] recovery failed (starting empty): com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Use JsonReader.setLenient(true) to accept malformed JSON at line 1 column 6 path $
+[18:31:20] [Test worker/INFO]: [automation] recovered 0 graphs
+[18:31:20] [Test worker/WARN]: [cbp] skipped corrupt workspace entry version-two: java.lang.IllegalArgumentException: Invalid UUID string: version-two
+[18:31:20] [Test worker/WARN]: [automation] recovery failed (starting empty): java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonArray.iterator()" because the return value of "com.google.gson.JsonObject.getAsJsonArray(String)" is null
+[18:31:20] [Test worker/INFO]: [automation] recovered 0 graphs
+[18:31:21] [Test worker/INFO]: [task] submit 6fedfd23-6bac-4105-aea5-c4836a2bdcca type=test agent=f3b2f304-76da-4035-8d0c-026ae826e88f tick=0
+[18:31:21] [Test worker/INFO]: [task] start 6fedfd23-6bac-4105-aea5-c4836a2bdcca type=test agent=f3b2f304-76da-4035-8d0c-026ae826e88f
+[18:31:21] [Test worker/INFO]: [task] cancelled 1 workflow task(s): PROJECT_FORCE_CANCELLED
+[18:31:21] [Test worker/WARN]: [project] force-cancelled owner=cbbc5354-8d05-40c8-b591-73cabdb75fe6 agent=f3b2f304-76da-4035-8d0c-026ae826e88f project=5940e942-1749-454c-913a-87aebee6fdeb pending= ownerSupply={} agentSupply={}
+[18:31:21] [Test worker/INFO]: [project] 1 active project(s) restored
+[18:31:21] [Test worker/WARN]: [project] force-cancelled owner=fa00d91d-36ad-42af-b6bf-814d42350e8a agent=2df5f32f-70a9-439a-a9c2-796c1fbe50f4 project=f2204331-96e5-4915-bc57-83cf586b9fd6 pending=RECOVERY_GEOMETRY_MISSING ownerSupply={minecraft:stone=12} agentSupply={}
+[18:31:21] [Test worker/INFO]: [task] submit 268864a0-0bec-4cc0-b2b9-af0fe3f32537 type=test agent=2df5f32f-70a9-439a-a9c2-796c1fbe50f4 tick=0
+[18:31:21] [Test worker/INFO]: [task] submit 5dd44edb-0a44-4814-bd01-95b98df54b84 type=test agent=2df5f32f-70a9-439a-a9c2-796c1fbe50f4 tick=0
+[18:31:21] [Test worker/INFO]: [task] cancelled 1 workflow task(s): PROJECT_FORCE_CANCELLED
+[18:31:21] [Test worker/INFO]: [task] submit 37cb1866-4062-49fc-9279-ad9b2cec2be2 type=test agent=161c759e-980f-438c-8296-3905c2180ece tick=0
+[18:31:21] [Test worker/INFO]: [task] submit e0bd5b7d-ecb6-4e21-a0ae-358c3c5fffce type=test agent=161c759e-980f-438c-8296-3905c2180ece tick=0
+[18:31:21] [Test worker/INFO]: [task] cancelled 1 workflow task(s): PROJECT_FORCE_CANCELLED
+[18:31:21] [Test worker/WARN]: [project] force-cancelled owner=9dd02ca5-d80f-4d43-b040-fa5ad88eaa03 agent=161c759e-980f-438c-8296-3905c2180ece project=9d7c9319-efb6-4b61-b233-a85ed409bef5 pending=RECOVERY_GEOMETRY_MISSING ownerSupply={minecraft:stone=12} agentSupply={}
+[18:31:21] [Test worker/INFO]: [project] 1 active project(s) restored
+[18:31:22] [Test worker/ERROR]: [project] future schema 99; refusing recovery and writes
+[18:31:22] [Test worker/WARN]: [project] skipped corrupt row: java.lang.IllegalArgumentException: Invalid UUID string: not-a-uuid
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl 必须以 http:// 或 https:// 开头
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用："type" 必须是 "openai-compatible"
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用："type" 必须是 "openai-compatible"
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl 必须以 http:// 或 https:// 开头
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：不是合法的 JSON 对象
+[18:31:22] [Test worker/WARN]: [Squire] llm.json 不可用：baseUrl / apiKey / model 三项必填，缺少或为空（apiKey 用 ${ENV} 形式时，该环境变量必须存在）
+[18:31:22] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
+[18:31:22] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
+[18:31:22] [Test worker/INFO]: [replay] session 1 started (privacy notice: redacted, local only)
+[18:31:22] [Test worker/INFO]: [replay] disabled
+[18:31:22] [Test worker/INFO]: [replay] session 2 started (privacy notice: redacted, local only)
+[18:31:22] [Test worker/ERROR]: [turn] future schema 999; recovery and writes refused
+[18:31:22] [Test worker/INFO]: [confirm] issued f0855006-bfef-4dea-95e3-addd7b4deb3e for minecraft.command.fill by owner e72b3d20-cc03-450c-a7b0-46bf15091df9
+[18:31:22] [Test worker/INFO]: [confirm] issued a161592e-f59d-4c5b-b05a-3663e81eda9d for minecraft.command.fill by owner 41db340d-c007-4ef1-9ace-1b080cec864b
+[18:31:22] [Test worker/INFO]: [confirm] issued fc10ed5f-9dd7-4db4-900c-3d381d047729 for minecraft.command.fill by owner 026733fd-2d7a-4342-a9de-08dffb5f8262
+[18:31:22] [Test worker/INFO]: [confirm] issued 5a629e68-e697-4cb7-be2c-309877e3258d for minecraft.command.fill by owner 6f12ec4d-aa96-4319-8d51-f4df3e86ebfa
+[18:31:22] [Test worker/WARN]: [confirm] FORGED attempt: player e6e607a7-6c7d-41eb-af6d-d7ae33d77378 tried to confirm 5a629e68-e697-4cb7-be2c-309877e3258d owned by 6f12ec4d-aa96-4319-8d51-f4df3e86ebfa
+[18:31:22] [Test worker/WARN]: [confirm] load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected ':' at line 1 column 7 path $.not
+[18:31:22] [Test worker/ERROR]: [confirm] future schema 99; pending operations READ-ONLY
+[18:31:23] [Test worker/WARN]: [squire-permissions] load failed: com.google.gson.JsonSyntaxException: com.google.gson.stream.MalformedJsonException: Expected name at line 1 column 2 path $.
+[18:31:23] [Test worker/ERROR]: [squire-permissions] future schema 999; stored grants IGNORED, falling back to defaults
+[18:31:23] [Test worker/WARN]: [squire-permissions] discarded 1 legacy grant row(s): v1 grants were not admin-authorized
+[18:31:23] [Test worker/WARN]: [killswitch] ACTIVATED at tick 42 — world writes and commands denied
+[18:31:23] [Test worker/WARN]: [killswitch] deactivated
+[18:31:23] [Test worker/INFO]: [capability] issued c8d8886c-9974-404d-9a28-4dd01f0b34cf type=op owner=a34ecfcb-8950-4219-9427-1a42d66a7db8 impact<= 8 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=1, y=1, z=1}]
+[18:31:23] [Test worker/INFO]: [capability] issued 47695c56-6457-42e0-8f46-43edfff6967c type=op2 owner=e9980665-8700-4041-9805-1266a3bcf90b impact<= 8 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=1, y=1, z=1}]
+[18:31:23] [Test worker/INFO]: [capability] consumed 47695c56-6457-42e0-8f46-43edfff6967c by task db516a51-5c86-467c-bf3b-7eed5c1069f9
+[18:31:23] [Test worker/INFO]: [capability] issued a68b32a3-3846-4e46-8442-c8b247bf023e type=world.fill owner=8bf6c513-c62b-4b83-82c0-4f208f33287e impact<= 500 region=BoundedRegion[min=BlockPos{x=0, y=0, z=0}, max=BlockPos{x=9, y=9, z=9}]
+[18:31:23] [Test worker/INFO]: [capability] consumed a68b32a3-3846-4e46-8442-c8b247bf023e by task 31930973-d626-469f-aad1-91bb101fe4a7
+[18:31:23] [Test worker/INFO]: [capability] issued 47081db2-a65d-458c-911a-b72f558b2a74 type=op owner=11579f74-a33b-4dd5-8392-1bcd7288cdb6 impact<= 64 region=BoundedRegion[min=BlockPos{x=-10, y=-10, z=-10}, max=BlockPos{x=10, y=10, z=10}]
+[18:31:23] [Test worker/INFO]: [task] submit 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails agent=8c2e0c08-75df-42e5-82c6-b0d39a021732 tick=0
+[18:31:23] [Test worker/INFO]: [task] start 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails agent=8c2e0c08-75df-42e5-82c6-b0d39a021732
+[18:31:23] [Test worker/INFO]: [task] retry 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails cause=ACCESS_ROUTE_BLOCKED
+[18:31:23] [Test worker/INFO]: [task] start 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails agent=8c2e0c08-75df-42e5-82c6-b0d39a021732
+[18:31:23] [Test worker/INFO]: [task] retry 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails cause=ACCESS_ROUTE_BLOCKED
+[18:31:23] [Test worker/INFO]: [task] start 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails agent=8c2e0c08-75df-42e5-82c6-b0d39a021732
+[18:31:23] [Test worker/INFO]: [task] retry 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails cause=ACCESS_ROUTE_BLOCKED
+[18:31:23] [Test worker/INFO]: [task] start 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails agent=8c2e0c08-75df-42e5-82c6-b0d39a021732
+[18:31:23] [Test worker/INFO]: [task] fail 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails code=ACCESS_ROUTE_BLOCKED
+[18:31:23] [Test worker/INFO]: [task] terminal 31f8e4af-a0fb-4664-8360-1311c4aa0f82 type=fails state=FAILED code=ACCESS_ROUTE_BLOCKED
+[18:31:23] [Test worker/INFO]: [task] submit 3895ed50-b112-442a-9190-8a7662948d65 type=blocking agent=dc15a4a5-aa12-45d6-9ccb-c6597ebf83d2 tick=0
+[18:31:23] [Test worker/INFO]: [task] submit 78f12055-0d87-4876-b11b-0cef3e6e1272 type=blocking agent=da36cdf5-5b69-4de5-b59f-2107261edd0b tick=0
+[18:31:23] [Test worker/INFO]: [task] submit 6e8cd966-dcf4-444f-a4ed-c399914c6290 type=blocking agent=9cff9b7d-9fee-4246-988c-362092245ee7 tick=0
+[18:31:23] [Test worker/INFO]: [task] submit 3daf5bc2-ae5f-41b0-b4da-e87243bdfe17 type=blocking agent=ae37cb52-add2-4748-be3a-6702dc6bd8cd tick=0
+[18:31:23] [Test worker/INFO]: [task] start 3895ed50-b112-442a-9190-8a7662948d65 type=blocking agent=dc15a4a5-aa12-45d6-9ccb-c6597ebf83d2
+[18:31:23] [Test worker/INFO]: [task] dependency-cascade failed 6e8cd966-dcf4-444f-a4ed-c399914c6290 (dep 3895ed50-b112-442a-9190-8a7662948d65)
+[18:31:23] [Test worker/INFO]: [task] dependency-cascade failed 78f12055-0d87-4876-b11b-0cef3e6e1272 (dep 3895ed50-b112-442a-9190-8a7662948d65)
+[18:31:23] [Test worker/INFO]: [task] dependency-cascade failed 3daf5bc2-ae5f-41b0-b4da-e87243bdfe17 (dep 78f12055-0d87-4876-b11b-0cef3e6e1272)
+[18:31:23] [Test worker/INFO]: [task] cancelAgent dc15a4a5-aa12-45d6-9ccb-c6597ebf83d2 dropped 1 task(s): test
+[18:31:23] [Test worker/INFO]: [task] start 1e048d1e-08c1-4fe9-a839-67eafb023cc6 type=recoverable agent=a1b23751-eaf6-4045-997b-5d97167de778
+[18:31:23] [Test worker/INFO]: [task] terminal 1e048d1e-08c1-4fe9-a839-67eafb023cc6 type=recoverable state=COMPLETED code=-
+[18:31:23] [Test worker/INFO]: [task] start a9601703-a6be-49ba-b304-9d3fcf5b1ffc type=recoverable agent=a1b23751-eaf6-4045-997b-5d97167de778
+[18:31:23] [Test worker/INFO]: [task-state] recovered 1 task snapshot(s)
+[18:31:23] [Test worker/INFO]: [task-state] recovered 0 task snapshot(s)
+[18:31:23] [Test worker/INFO]: [task-state] recovered 1 task snapshot(s)
+[18:31:23] [Test worker/INFO]: [gateway] world.danger by ADMIN -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] player.teleport.test by FAST_PATH -> REJECTED permission_denied (player lacks node squire.command.teleport)
+[18:31:23] [Test worker/INFO]: [gateway] player.teleport.test by FAST_PATH -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED permission_denied (capability QUERY not granted)
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED policy_denied (nighttime)
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument (missing required argument 'target')
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument (unknown argument 'evil')
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED invalid_argument ('count' must be an integer)
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> REJECTED loop_detected (maxEquivalentCalls=3 exceeded for test.ping|target=same)
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] no.such by MODEL -> REJECTED tool_not_found (unknown tool 'no.such')
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] test.ping by MODEL -> SUCCESS ok
+[18:31:23] [Test worker/INFO]: [gateway] internal.plan by MODEL -> REJECTED tool_not_visible (tool 'internal.plan' not exposed to MODEL)
+[18:31:23] [Test worker/ERROR]: [protection] adapter failed during permission check; denying world mutation
+java.lang.IllegalStateException: integration unavailable
+	at dev.squire.server.world.ProtectionAdapterRegistryTest$2.canBreak(ProtectionAdapterRegistryTest.java:45) ~[test/:?]
+	at dev.squire.server.world.ProtectionAdapterRegistry$1.lambda$canBreak$0(ProtectionAdapterRegistry.java:54) ~[main/:?]
+	at dev.squire.server.world.ProtectionAdapterRegistry$1.check(ProtectionAdapterRegistry.java:43) ~[main/:?]
+	at dev.squire.server.world.ProtectionAdapterRegistry$1.canBreak(ProtectionAdapterRegistry.java:54) ~[main/:?]
+	at dev.squire.server.world.ProtectionAdapterRegistryTest.brokenAdapterFailsClosed(ProtectionAdapterRegistryTest.java:52) ~[test/:?]
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728) ~[junit-platform-commons-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.util.ArrayList.forEach(ArrayList.java:1596) ~[?:?]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.util.ArrayList.forEach(ArrayList.java:1596) ~[?:?]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.processAllTestClasses(JUnitPlatformTestClassProcessor.java:124) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor$CollectAllTestClassesExecutor.access$000(JUnitPlatformTestClassProcessor.java:99) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestClassProcessor.stop(JUnitPlatformTestClassProcessor.java:94) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.stop(SuiteTestClassProcessor.java:63) ~[?:?]
+	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[?:?]
+	at java.lang.reflect.Method.invoke(Method.java:580) ~[?:?]
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36) ~[?:?]
+	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24) ~[?:?]
+	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33) ~[?:?]
+	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:92) ~[?:?]
+	at jdk.proxy1.$Proxy4.stop(Unknown Source) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker$3.run(TestWorker.java:200) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:132) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:103) ~[?:?]
+	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:63) ~[?:?]
+	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56) ~[?:?]
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:122) ~[?:?]
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:72) ~[?:?]
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69) ~[gradle-worker.jar:?]
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74) ~[gradle-worker.jar:?]

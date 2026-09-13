@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/decorations/misc/spruce_tree_small",
+  "format": "minecraft:structure_nbt",
+  "displayName": "云杉景观树 · spruce_tree_small",
+  "tier": 1,
+  "category": "DECORATION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/decorations/misc/spruce_tree_small",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/misc/spruce_tree_small.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "decorations"
+    ]
+  },
+  "sourceFrame": [
+    5,
+    8,
+    5
+  ],
+  "primaryOffset": {
+    "x": 2,
+    "y": 0,
+    "z": 2
+  },
+  "groundY": 1,
+  "siteRequirements": [
+    {
+      "pos": [
+        2,
+        -1,
+        2
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "spruce_structure",
+      "displayName": "云杉结构",
+      "type": "FRAME",
+      "defaultFamily": "squire:spruce",
+      "requiredVariants": [
+        "log"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:spruce_log",
+      "slot": "spruce_structure",
+      "variant": "log"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:spruce_leaves": [
+      "distance"
+    ]
+  }
+}

@@ -68,6 +68,11 @@ public interface RuntimeServices {
 		return 0;
 	}
 
+	default dev.squire.server.project.Project project(java.util.UUID id) { return null; }
+	default void saveProjects() { }
+	default boolean beginProjectMutation(java.util.UUID projectId, String operation) { return false; }
+	default boolean completeProjectMutation(java.util.UUID projectId) { return false; }
+
 	/**
 	 * 这只随从的档案（第 2 期）；最小/测试运行时返回 null。
 	 *

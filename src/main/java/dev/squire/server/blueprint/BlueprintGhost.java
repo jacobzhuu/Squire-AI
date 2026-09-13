@@ -20,8 +20,8 @@ import org.joml.Vector3f;
  * {@code ServerWorld.spawnParticles(player, ...)}，零新封包、零客户端代码——这个
  * 模组的客户端只有一个 Screen 和一个 Renderer，预览不该打破这一点。</p>
  *
- * <p>只画<b>轮廓</b>：包围盒十二条棱 + 地面一圈 + 要挖掉的负空间。逐格画会把屏幕
- * 糊成一片，反而看不出形状。</p>
+ * <p>从共享的 {@link Blueprint.Resolved} 里抽样实际建筑格，再补包围盒和要挖掉的
+ * 负空间。抽样受总粒子预算约束，既能看出门窗和屋顶，也不会把屏幕糊成一片。</p>
  */
 public final class BlueprintGhost {
 
@@ -42,6 +42,26 @@ public final class BlueprintGhost {
 	private BlueprintGhost() {
 	}
 
+	public static void drawAccess(ServerWorld world, ServerPlayerEntity viewer, ConstructionAccessPlan access) {
+		if (access.temporaryCount() == 0 && access.excavationCount() == 0) return;
+		var dust = new DustParticleEffect(new Vector3f(.25f, .65f, 1f), 1f);
+		var digging = new DustParticleEffect(new Vector3f(1f, .55f, .15f), 1f);
+		var positions = access.work.stream().filter(w -> w.temporary() || w.excavation()).toList();
+		int stride = Math.max(1, (positions.size() + 95) / 96);
+		for (int i = 0; i < positions.size(); i += stride) {
+			BlockPos p = positions.get(i).cell().pos();
+			if (viewer.getBlockPos().getSquaredDistance(p) <= VIEW_DISTANCE * VIEW_DISTANCE)
+				world.spawnParticles(viewer, positions.get(i).excavation() ? digging : dust, true, p.getX() + .5, p.getY() + .5, p.getZ() + .5, 1, 0, 0, 0, 0);
+		}
+		var frame = outline(access.bounds);
+		int frameStride = Math.max(1, (frame.size() + 47) / 48);
+		for (int i = 0; i < frame.size(); i += frameStride) {
+			BlockPos p = frame.get(i);
+			if (viewer.getBlockPos().getSquaredDistance(p) <= VIEW_DISTANCE * VIEW_DISTANCE)
+				world.spawnParticles(viewer, dust, true, p.getX() + .5, p.getY() + .5, p.getZ() + .5, 1, 0, 0, 0, 0);
+		}
+	}
+
 	/** 轮廓的颜色语义，由调用方按材料账和摆放状态决定，而不是这里猜。 */
 	public enum Tint { PENDING, READY, MISSING }
 
@@ -52,6 +72,16 @@ public final class BlueprintGhost {
 	 */
 	public static int draw(ServerWorld world, ServerPlayerEntity viewer,
 			BoundedRegion bounds, List<BlockPos> toClear, Tint tint) {
+		return draw(world, viewer, new Blueprint.Resolved(bounds, List.of(),
+			toClear == null ? List.of() : toClear), tint);
+	}
+
+	/** Draw the actual final blueprint cells plus its bounds from the shared resolution. */
+	public static int draw(ServerWorld world, ServerPlayerEntity viewer,
+			Blueprint.Resolved resolved, Tint tint) {
+		if (resolved == null) return 0;
+		if (viewer != null && world != null && TerrainLeveling.isTerrain(resolved)) return TerrainLeveling.draw(world, viewer, resolved);
+		BoundedRegion bounds = resolved.bounds();
 		if (viewer == null || world == null || viewer.getWorld() != world) {
 			return 0;
 		}
@@ -69,8 +99,11 @@ public final class BlueprintGhost {
 			default -> WHITE;
 		}, 1.0f);
 
-		List<BlockPos> points = outline(bounds);
-		int step = Math.max(1, points.size() / MAX_POINTS);
+		List<BlockPos> points = new ArrayList<>();
+		for (Blueprint.Cell cell : resolved.toPlace()) points.add(cell.pos());
+		int clearBudget = resolved.toClear().isEmpty() ? 0 : MAX_POINTS / 6;
+		int structureBudget = MAX_POINTS * 2 / 3;
+		int step = Math.max(1, (points.size() + structureBudget - 1) / structureBudget);
 		int sent = 0;
 		for (int i = 0; i < points.size(); i += step) {
 			BlockPos p = points.get(i);
@@ -78,11 +111,23 @@ public final class BlueprintGhost {
 				p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 1, 0, 0, 0, 0);
 			sent++;
 		}
+		List<BlockPos> frame = outline(bounds);
+		int frameBudget = Math.max(1, MAX_POINTS - sent - clearBudget);
+		int frameStep = Math.max(1, (frame.size() + frameBudget - 1) / frameBudget);
+		for (int i = 0; i < frame.size() && sent < MAX_POINTS; i += frameStep) {
+			BlockPos p = frame.get(i);
+			world.spawnParticles(viewer, dust, true,
+				p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 1, 0, 0, 0, 0);
+			sent++;
+		}
 		// 要挖掉的地方单独用烟：玩家一眼看出「这里会被掏空」，和放置的轮廓不混淆。
-		if (toClear != null && !toClear.isEmpty()) {
-			int digStep = Math.max(1, toClear.size() / (MAX_POINTS / 4));
-			for (int i = 0; i < toClear.size(); i += digStep) {
-				BlockPos p = toClear.get(i);
+		if (!resolved.toClear().isEmpty() && sent < MAX_POINTS) {
+			int remaining = MAX_POINTS - sent;
+			int digStep = Math.max(1,
+				(resolved.toClear().size() + remaining - 1) / remaining);
+			for (int i = 0; i < resolved.toClear().size() && sent < MAX_POINTS;
+					i += digStep) {
+				BlockPos p = resolved.toClear().get(i);
 				world.spawnParticles(viewer, ParticleTypes.SMOKE, true,
 					p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 1, 0, 0, 0, 0);
 				sent++;

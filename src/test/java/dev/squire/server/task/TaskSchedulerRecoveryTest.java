@@ -111,6 +111,22 @@ class TaskSchedulerRecoveryTest {
 			0, 500, null, null, 3, 20, true, "policy");
 	}
 
+    @Test
+    void retriesPreserveTheActualFailureCause() {
+        TaskScheduler scheduler = new TaskScheduler();
+        scheduler.register(new CompletingExecutor("fails") {
+            @Override public StepOutcome tick(Task task, long tick) {
+                task.setLastErrorCode("ACCESS_ROUTE_BLOCKED");
+                return StepOutcome.FAILED;
+            }
+        });
+        Task work = task(UUID.randomUUID(), UUID.randomUUID(), "fails");
+        scheduler.submit(work, 0);
+        for (int tick = 1; tick <= 100; tick++) scheduler.tick(tick, ignored -> CONTEXT);
+        assertEquals(TaskState.FAILED, work.state());
+        assertEquals("ACCESS_ROUTE_BLOCKED", work.lastErrorCode().orElseThrow());
+    }
+
 	private static Task task(UUID agent, UUID owner, String type) {
 		return new Task(agent, owner, type, TaskPriority.P3_USER_TASK, type, null,
 			TaskCondition.of(ctx -> true, "true"), 500, RetryPolicy.DEFAULT, true,

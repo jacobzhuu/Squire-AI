@@ -1,0 +1,1773 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_md",
+  "format": "minecraft:structure_nbt",
+  "displayName": "云杉树场 · spruce_farm_md",
+  "tier": 1,
+  "category": "PRODUCTION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/agriculture/fields/trees/spruce_farm_md",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/agriculture/fields/trees/spruce_farm_md.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "agriculture"
+    ]
+  },
+  "sourceFrame": [
+    23,
+    13,
+    11
+  ],
+  "primaryOffset": {
+    "x": 11,
+    "y": 0,
+    "z": 5
+  },
+  "groundY": 0,
+  "siteRequirements": [
+    {
+      "pos": [
+        0,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        0
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        1
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        2
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        3
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        4
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        6
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        7
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        8
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        9
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        0,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        1,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        2,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        3,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        4,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        5,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        6,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        7,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        8,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        9,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        10,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        12,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        13,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        14,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        15,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        16,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        17,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        18,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        19,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        20,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        21,
+        0,
+        10
+      ],
+      "kind": "solid"
+    },
+    {
+      "pos": [
+        22,
+        0,
+        10
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab",
+        "wall"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    },
+    {
+      "block": "minecraft:stone_brick_wall",
+      "slot": "stone_bricks",
+      "variant": "wall"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}

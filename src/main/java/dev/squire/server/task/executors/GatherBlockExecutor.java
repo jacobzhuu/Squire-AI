@@ -265,6 +265,7 @@ public final class GatherBlockExecutor implements dev.squire.server.task.TaskExe
 					// 没有能真正掉落产物的工具：绝不空手砸掉方块换来 0 掉落
 					LOG.info("[gather] {} needs a proper tool for {}", task.taskId(), state);
 					task.setLastErrorCode("PRECONDITION_FAILED");
+					avatar.setActivityDetail(FakePlayerInteractionProxy.missingHarvestToolMessage(state));
 					return StepOutcome.FAILED;
 				}
 

@@ -20,23 +20,21 @@ public record SiteAssessment(boolean executable, List<String> issues,
 		issues = issues == null ? List.of() : List.copyOf(issues);
 	}
 
+	/** Conditions that need the player to intervene before work can safely begin. */
+	public List<String> blockingIssues() {
+		return livingEntities <= 0 ? List.of()
+			: List.of("工地内有 " + livingEntities + " 个生物，请先让开");
+	}
+
 	public static SiteAssessment assess(ServerWorld world, Blueprint.Resolved resolved,
 			Set<UUID> ignoredEntities) {
 		BoundedRegion bounds = resolved.bounds();
 		int liquids = 0;
-		for (BlockPos cursor : bounds.cells()) {
+		for (BlockPos cursor : BlueprintManager.footprint(resolved)) {
 			if (!world.getFluidState(cursor).isEmpty()) liquids++;
 		}
 
-		int unsupported = 0;
-		int floorY = bounds.min().getY() - 1;
-		for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
-			for (int z = bounds.min().getZ(); z <= bounds.max().getZ(); z++) {
-				BlockPos below = new BlockPos(x, floorY, z);
-				if (world.getBlockState(below).isAir()
-						|| !world.getFluidState(below).isEmpty()) unsupported++;
-			}
-		}
+		int unsupported = BlueprintManager.automaticSiteSupports(world, resolved).size();
 
 		Box box = new Box(bounds.min().getX(), bounds.min().getY(), bounds.min().getZ(),
 			bounds.max().getX() + 1.0, bounds.max().getY() + 1.0,
@@ -48,11 +46,14 @@ public record SiteAssessment(boolean executable, List<String> issues,
 		int occupied = BlueprintManager.pendingClear(world, resolved).size();
 
 		List<String> issues = new ArrayList<>();
-		if (liquids > 0) issues.add("工地范围内有 " + liquids + " 格液体，请换到干燥地面");
-		if (unsupported > 0) issues.add("地基下有 " + unsupported + " 格悬空或积水");
-		if (entities > 0) issues.add("工地内有 " + entities + " 个生物，请先让开");
+		if (liquids > 0) issues.add("工地内有 " + liquids + " 格液体；蓝图目标液体和水域要求保留，仅清理确认范围内的冲突");
+		if (unsupported > 0) issues.add("地基下有 " + unsupported
+			+ " 格缺失或积水，将自动补齐已计价的承重基础");
+		if (entities > 0) issues.add(TerrainLeveling.isTerrain(resolved)
+			? "范围内有 " + entities + " 个生物，不影响开工；填补时会检查具体施工位置"
+			: "工地内有 " + entities + " 个生物，请先让开");
 		if (occupied > 0) issues.add("开工前会清理 " + occupied + " 个冲突方块");
-		return new SiteAssessment(liquids == 0 && unsupported == 0 && entities == 0,
+		return new SiteAssessment(entities == 0 || TerrainLeveling.isTerrain(resolved),
 			issues, liquids, unsupported, occupied, entities);
 	}
 }

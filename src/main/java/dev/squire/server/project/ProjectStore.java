@@ -27,7 +27,7 @@ public final class ProjectStore {
 
 	private static final org.slf4j.Logger LOG =
 		org.slf4j.LoggerFactory.getLogger(ProjectStore.class);
-	private static final int VERSION = 3;
+	private static final int VERSION = 9;
 
 	private final java.util.function.Supplier<Path> fileSupplier;
 	private boolean writable = true;
@@ -40,14 +40,14 @@ public final class ProjectStore {
 		return writable;
 	}
 
-	public synchronized void save(Collection<Project> projects) {
+	public synchronized boolean save(Collection<Project> projects) {
 		if (!writable) {
-			return;
+			return false;
 		}
 		try {
 			Path file = fileSupplier.get();
 			if (file == null) {
-				return;
+				return false;
 			}
 			Files.createDirectories(file.getParent());
 			JsonObject root = new JsonObject();
@@ -58,15 +58,35 @@ public final class ProjectStore {
 			}
 			root.add("projects", array);
 			Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
-			Files.writeString(tmp, root.toString());
-			try {
-				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
-					StandardCopyOption.ATOMIC_MOVE);
-			} catch (java.nio.file.AtomicMoveNotSupportedException e) {
-				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
-			}
+			retryAccessDenied(() -> {
+				Files.writeString(tmp, root.toString());
+				try {
+					Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
+						StandardCopyOption.ATOMIC_MOVE);
+				} catch (java.nio.file.AtomicMoveNotSupportedException e) {
+					Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+				}
+			});
+			return true;
 		} catch (Exception e) {
 			LOG.warn("[project] save failed: {}", e.toString());
+			return false;
+		}
+	}
+
+	@FunctionalInterface public interface SnapshotWrite { void run() throws java.io.IOException; }
+	/** Windows scanners can briefly hold the replaced file. Keep the checkpoint pending until a write succeeds. */
+	public static void retryAccessDenied(SnapshotWrite write) throws java.io.IOException {
+		for (int attempt = 0; ; attempt++) {
+			try { write.run(); return; }
+			catch (java.nio.file.AccessDeniedException locked) {
+				if (attempt >= 4) throw locked;
+				try { Thread.sleep(10L * (attempt + 1)); }
+				catch (InterruptedException interrupted) {
+					Thread.currentThread().interrupt();
+					throw new java.io.IOException("Interrupted while saving project checkpoint", interrupted);
+				}
+			}
 		}
 	}
 
@@ -86,6 +106,10 @@ public final class ProjectStore {
 				return out;
 			}
 			int sourceVersion = root.has("version") ? root.get("version").getAsInt() : 1;
+			if (sourceVersion < VERSION) {
+				Path backup = file.resolveSibling(file.getFileName() + ".pre-v" + VERSION + ".bak");
+				if (!Files.exists(backup)) Files.copy(file, backup);
+			}
 			JsonArray array = root.getAsJsonArray("projects");
 			if (array == null) {
 				return out;
@@ -94,11 +118,13 @@ public final class ProjectStore {
 				try {
 					out.add(read(element.getAsJsonObject(), sourceVersion));
 				} catch (RuntimeException bad) {
+					writable = false;
 					LOG.warn("[project] skipped corrupt row: {}", bad.toString());
 				}
 			}
 		} catch (Exception e) {
 			LOG.warn("[project] load failed: {}", e.toString());
+			writable = false;
 		}
 		return out;
 	}
@@ -109,6 +135,7 @@ public final class ProjectStore {
 		JsonObject o = new JsonObject();
 		o.addProperty("projectId", p.projectId.toString());
 		o.addProperty("ownerId", p.ownerId.toString());
+		if (p.agentId() != null) o.addProperty("agentId", p.agentId().toString());
 		o.addProperty("name", p.name);
 		o.addProperty("blueprintId", p.blueprintId);
 		o.addProperty("placementId", p.placementId.toString());
@@ -116,6 +143,11 @@ public final class ProjectStore {
 		o.addProperty("createdTick", p.createdTick);
 		o.addProperty("state", p.state().name());
 		o.addProperty("supplyPrepared", p.supplyPrepared());
+		o.addProperty("pendingMutation", p.pendingMutation());
+		JsonArray cancelledTasks = new JsonArray();
+		p.forceCancelledTaskIds().forEach(id -> cancelledTasks.add(id.toString()));
+		o.add("forceCancelledTaskIds", cancelledTasks);
+		if (p.constructionProgress() != null) o.add("constructionProgress", p.constructionProgress());
 		o.add("ownerSupply", writeSupply(p.ownerSupply()));
 		o.add("agentSupply", writeSupply(p.agentSupply()));
 		JsonArray stages = new JsonArray();
@@ -170,9 +202,14 @@ public final class ProjectStore {
 				stages.add(stage);
 			}
 		}
+		UUID projectAgent = o.has("agentId")
+			? UUID.fromString(o.get("agentId").getAsString())
+			: stages.stream().map(Stage::assignedAgentId)
+				.filter(java.util.Objects::nonNull).findFirst().orElse(null);
 		Project project = new Project(
 			UUID.fromString(o.get("projectId").getAsString()),
 			UUID.fromString(o.get("ownerId").getAsString()),
+			projectAgent,
 			o.get("name").getAsString(),
 			o.get("blueprintId").getAsString(),
 			UUID.fromString(o.get("placementId").getAsString()),
@@ -190,6 +227,14 @@ public final class ProjectStore {
 			&& (!o.has("supplyPrepared") || o.get("supplyPrepared").getAsBoolean());
 		project.restoreSupply(readSupply(o.getAsJsonObject("ownerSupply")),
 			readSupply(o.getAsJsonObject("agentSupply")), prepared);
+		if (o.has("constructionProgress")) project.constructionProgress(o.getAsJsonObject("constructionProgress"));
+		if (o.has("pendingMutation")) project.pendingMutation(o.get("pendingMutation").getAsString());
+		if (o.has("forceCancelledTaskIds")) {
+			for (var id : o.getAsJsonArray("forceCancelledTaskIds"))
+				project.rememberCancelledTasks(List.of(UUID.fromString(id.getAsString())));
+		}
+		if (!project.pendingMutation().isEmpty() && project.state() != Project.State.FORCE_CANCELLED)
+			project.setState(Project.State.PAUSED);
 		if (!prepared && project.active()) {
 			// A v2 project had no durable escrow.  Never let it resume and consume an
 			// unrelated backpack after upgrading; the owner explicitly re-reserves once.

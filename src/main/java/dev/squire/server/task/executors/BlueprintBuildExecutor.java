@@ -9,6 +9,7 @@ import dev.squire.api.body.TargetPosition;
 import dev.squire.server.blueprint.Blueprint;
 import dev.squire.server.blueprint.BlueprintManager;
 import dev.squire.server.blueprint.BlueprintPlacement;
+import dev.squire.server.blueprint.ConstructionPlan;
 import dev.squire.server.body.avatar.AvatarEntity;
 import dev.squire.server.body.avatar.AvatarInventory;
 import dev.squire.server.task.Task;
@@ -19,10 +20,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -52,24 +53,22 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 	public static final String TYPE = "build.blueprint";
 	public static final String PARAM_PLACEMENT_ID = "placementId";
 	public static final String PARAM_PROJECT_ID = "projectId";
+	/** When true, this task only seals the generated foundation/support cells. */
+	public static final String PARAM_SITE_PREPARATION = "sitePreparation";
 
 	/** 每 tick 放几格——建造应该看起来像建造。 */
 	private static final int BLOCKS_PER_TICK = 8;
 	/** 「勤勉」特质的加成。特质只改观感节奏，不改战力。 */
 	private static final int DILIGENT_BONUS =
 		dev.squire.server.profile.Trait.DILIGENT_BUILD_BONUS;
-	/** 离目标格这么远就先走过去。 */
-	private static final int WORK_RADIUS = 6;
-	/** 走不到、又远到这个程度，就如实失败而不是隔空盖房。 */
-	private static final int MAX_REMOTE_BUILD = 24;
-
-	public enum Phase { NAVIGATE, BUILD }
+	public enum Phase { SELECT_STATION, NAVIGATE, BUILD }
 
 	/** 重启后 {@code restoreCheckpoint} 先于 {@code start} 触发，用它把计数带进去。 */
-	private record Restored(int placed, int skipped) { }
+	private record Restored(int placed, int skipped, int skippedProtected) { }
 
 	public record Progress(UUID placementId, Phase phase, MoveHandle handle,
-			List<Blueprint.Cell> cells, int cursor, UUID operationId,
+			ConstructionPlan plan, int cursor, List<BlockPos> stations, int stationIndex,
+			UUID operationId,
 			int placed, int skipped, int skippedProtected) {
 
 		public String summary() {
@@ -79,6 +78,11 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 	}
 
 	private final RuntimeServices services;
+	private final java.util.Map<Task, Double> nextPlacement = new java.util.WeakHashMap<>();
+	private final java.util.Map<Task, Recovery> recoveries = new java.util.WeakHashMap<>();
+	private static final class Recovery {
+		BlockPos target; double bestDistance; long movedAt; int attempts; boolean assisted;
+	}
 
 	public BlueprintBuildExecutor(RuntimeServices services) {
 		this.services = services;
@@ -100,9 +104,11 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 	public void start(Task task) {
 		int carriedPlaced = 0;
 		int carriedSkipped = 0;
+		int carriedProtected = 0;
 		if (task.executionState() instanceof Restored restored) {
 			carriedPlaced = restored.placed();
 			carriedSkipped = restored.skipped();
+			carriedProtected = restored.skippedProtected();
 		}
 		AvatarEntity avatar = services.avatar(task.agentId());
 		if (avatar == null || !(avatar.getWorld() instanceof ServerWorld world)) {
@@ -110,8 +116,22 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 			throw new IllegalStateException("agent body unavailable");
 		}
 		Context context = contextOf(task, world);
-		List<Blueprint.Cell> cells = BlueprintManager.pendingPlacements(world,
-			context.resolved());
+		UUID projectId = projectIdOf(task);
+		if (projectId != null && !sitePreparationOnly(task) && context.resolved().access() != null
+				&& !context.resolved().access().work.isEmpty()) {
+			if (!context.placement().committed()) {
+				task.setLastErrorCode("ACCESS_CONFIRMATION_REQUIRED");
+				throw new IllegalStateException("old project access footprint requires confirmation");
+			}
+			var j = journal();
+			UUID op = j == null ? null : j.begin(task.taskId(), task.requesterId(), context.placement().dimensionId,
+				"build.blueprint " + context.placement().blueprintId, services.currentTick());
+			task.setExecutionState(new AccessBuildExecutor.Progress(context.placement().placementId, projectId, op));
+			return;
+		}
+		ConstructionPlan plan = sitePreparationOnly(task)
+			? BlueprintManager.sitePreparationPlan(world, context.resolved())
+			: BlueprintManager.constructionPlan(world, context.resolved(), projectId != null);
 		UndoJournal journal = journal();
 		UUID operationId = journal == null ? null
 			: journal.begin(task.taskId(), task.requesterId(),
@@ -121,12 +141,26 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 		context.placement().setState(BlueprintPlacement.State.BUILDING);
 		blueprints().save();
 		task.setExecutionState(new Progress(context.placement().placementId,
-			Phase.NAVIGATE, null, cells, 0, operationId, carriedPlaced,
-			carriedSkipped, 0));
+			Phase.SELECT_STATION, null, plan, 0, List.of(), -1, operationId,
+			carriedPlaced, carriedSkipped, carriedProtected));
 	}
 
 	@Override
 	public StepOutcome tick(Task task, long tick) {
+		if (task.executionState() instanceof AccessBuildExecutor.Progress progress) {
+			StepOutcome outcome = StepOutcome.CONTINUE;
+			// Preserve existing build-speed abilities, but only spend extra block
+			// budget while standing at the reviewed station. Walking still takes ticks.
+			for (int i = 0, budget = blocksPerTick(services.profile(task.agentId())); i < budget; i++) {
+				int cursor = progress.program == null ? -1 : progress.program.cursor;
+				int owned = progress.program == null ? -1 : progress.program.placed.size();
+				outcome = AccessBuildExecutor.tick(services, task, progress, tick);
+				if (outcome != StepOutcome.CONTINUE || cursor < 0 || progress.program == null
+						|| cursor == progress.program.cursor && owned == progress.program.placed.size()) break;
+			}
+			if (outcome != StepOutcome.CONTINUE && progress.operationId != null && journal() != null) journal().close(progress.operationId);
+			return outcome;
+		}
 		if (!(task.executionState() instanceof Progress progress)) {
 			return StepOutcome.FAILED;
 		}
@@ -136,57 +170,142 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 			task.setLastErrorCode("ENTITY_NOT_FOUND");
 			return finish(task, progress, StepOutcome.FAILED);
 		}
-		if (progress.cells().isEmpty() || progress.cursor() >= progress.cells().size()) {
+		if (progress.plan().size() == 0 || progress.cursor() >= progress.plan().size()) {
+			if (!sitePreparationOnly(task)) {
+				UUID fluidProjectId = projectIdOf(task);
+				var liquid = FluidBuildExecutor.tick(services, task, fluidProjectId == null ? null : services.project(fluidProjectId), contextOf(task, world).resolved(), null, tick);
+				if (liquid == StepOutcome.FAILED) return finish(task, progress, liquid);
+				if (liquid != StepOutcome.WORK_DONE) return liquid;
+			}
 			LOG.info("[blueprint] {} finished: {}", task.taskId(), progress.summary());
 			return finish(task, progress, StepOutcome.WORK_DONE);
 		}
-		BlockPos next = progress.cells().get(progress.cursor()).pos();
-
+		Blueprint.Cell next = progress.plan().entries().get(progress.cursor()).cell();
+		var recovery = recoveries.computeIfAbsent(task, k -> new Recovery());
+		if (!next.pos().equals(recovery.target)) {
+			recovery.target = next.pos(); recovery.attempts = 0; recovery.assisted = false; recovery.bestDistance = Double.MAX_VALUE; recovery.movedAt = tick;
+		}
+		double distance = avatar.squaredDistanceTo(net.minecraft.util.math.Vec3d.ofCenter(next.pos()));
+		if (distance < recovery.bestDistance - .04) {
+			recovery.bestDistance = distance; recovery.movedAt = tick;
+		}
+		var projectId = projectIdOf(task);
+		if (projectId != null && services.project(projectId) != null && !services.project(projectId).pendingMutation().isEmpty()) {
+			task.setLastErrorCode("CONSTRUCTION_RECOVERY_REQUIRED"); return finish(task, progress, StepOutcome.FAILED);
+		}
+		boolean substitutes = projectIdOf(task) == null && services.can(task.agentId(),
+			dev.squire.server.profile.Ability.BUILD_SUBSTITUTE);
+		if (BlueprintManager.matches(world.getBlockState(next.pos()), next, substitutes)) {
+			task.setExecutionState(advance(progress));
+			return StepOutcome.CONTINUE;
+		}
+		if (projectId != null && progress.phase() == Phase.NAVIGATE && tick - recovery.movedAt >= ConstructionRecovery.STALL_TICKS)
+			return assist(task, avatar, progress, next);
+		if (progress.phase() == Phase.SELECT_STATION) {
+			return selectStation(task, avatar, progress, next);
+		}
 		if (progress.phase() == Phase.NAVIGATE) {
-			StepOutcome nav = navigate(task, avatar, progress, next);
-			if (nav != null) {
-				return nav;
-			}
-			progress = (Progress) task.executionState();
+			return navigate(task, avatar, progress, next);
 		}
 		return build(task, avatar, world, progress, tick);
 	}
 
-	/**
-	 * 走到工地。走不通不等于失败——只要还够得着就照常施工；远到隔空盖房才如实停下。
-	 *
-	 * @return null 表示已经可以开工，非 null 是本 tick 的结论
-	 */
-	private StepOutcome navigate(Task task, AvatarEntity avatar, Progress progress,
-			BlockPos next) {
-		double distSq = avatar.squaredDistanceTo(next.getX() + 0.5, next.getY(),
-			next.getZ() + 0.5);
-		if (distSq <= (double) WORK_RADIUS * WORK_RADIUS) {
-			task.setExecutionState(withPhase(progress, Phase.BUILD, null));
-			return null;
+	/** Choose and retry real, pathable work stations until this cell is in reach. */
+	private StepOutcome selectStation(Task task, AvatarEntity avatar, Progress progress,
+			Blueprint.Cell cell) {
+		if (!materialAvailable(task, avatar.items(), cell)) {
+			if (cell.optional()) {
+				task.setExecutionState(skip(progress));
+				return StepOutcome.CONTINUE;
+			}
+			task.setLastErrorCode("INSUFFICIENT_ITEM");
+			return finish(task, progress, StepOutcome.FAILED);
 		}
-		MoveHandle handle = progress.handle();
-		if (handle == null) {
-			// 埋在地里的目标没有可站的邻居；先走到它正上方的井口去。
-			BlockPos target = GatherBlockExecutor.approachPoint(avatar, next);
-			handle = avatar.moveTo(new TargetPosition(
-				avatar.getWorld().getRegistryKey().getValue().toString(),
-				target.getX() + 0.5, target.getY(), target.getZ() + 0.5),
-				MoveOptions.WALK);
-			task.setExecutionState(withPhase(progress, Phase.NAVIGATE, handle));
+		BlockState target;
+		try {
+			target = BlueprintManager.targetState(cell);
+		} catch (IllegalArgumentException invalid) {
+			LOG.warn("[blueprint] {} has invalid state for {}: {}", task.taskId(),
+				cell.blockId(), invalid.getMessage());
+			task.setExecutionState(skip(progress));
 			return StepOutcome.CONTINUE;
 		}
-		if (handle.state() == MoveHandle.State.FAILED
-				|| handle.state() == MoveHandle.State.CANCELLED
-				|| handle.arrived()) {
-			if (distSq > (double) MAX_REMOTE_BUILD * MAX_REMOTE_BUILD) {
-				task.setLastErrorCode("NO_REACHABLE_TARGET");
-				LOG.info("[blueprint] {} cannot reach the site", task.taskId());
-				return finish(task, progress, StepOutcome.FAILED);
-			}
+		if (ConstructionWorksite.inReach(avatar, cell.pos())
+				&& ConstructionWorksite.clearOfWorker(avatar, target, cell.pos())) {
+			avatar.stopMoving();
 			task.setExecutionState(withPhase(progress, Phase.BUILD, null));
-			return null;
+			return StepOutcome.CONTINUE;
 		}
+		List<BlockPos> stations = ConstructionWorksite.stations(avatar, cell.pos(),
+			progress.plan().bounds());
+		if (stations.isEmpty()) return assist(task, avatar, progress, cell);
+		return moveToStation(task, avatar, progress, stations, 0);
+	}
+
+	private StepOutcome navigate(Task task, AvatarEntity avatar, Progress progress,
+			Blueprint.Cell cell) {
+		BlockState target;
+		try {
+			target = BlueprintManager.targetState(cell);
+		} catch (IllegalArgumentException invalid) {
+			task.setExecutionState(skip(progress));
+			return StepOutcome.CONTINUE;
+		}
+		if (ConstructionWorksite.inReach(avatar, cell.pos())
+				&& ConstructionWorksite.clearOfWorker(avatar, target, cell.pos())) {
+			avatar.stopMoving();
+			task.setExecutionState(withPhase(progress, Phase.BUILD, null));
+			return StepOutcome.CONTINUE;
+		}
+		MoveHandle handle = progress.handle();
+		if (handle == null || handle.state() == MoveHandle.State.FAILED
+				|| handle.state() == MoveHandle.State.CANCELLED || handle.arrived()) {
+			if (projectIdOf(task) != null && ++recoveries.computeIfAbsent(task, k -> new Recovery()).attempts > 1)
+				return assist(task, avatar, progress, cell);
+			int nextStation = progress.stationIndex() + 1;
+			if (nextStation >= progress.stations().size()) {
+				return assist(task, avatar, progress, cell);
+			}
+			return moveToStation(task, avatar, progress, progress.stations(), nextStation);
+		}
+		return StepOutcome.CONTINUE;
+	}
+
+	private StepOutcome moveToStation(Task task, AvatarEntity avatar, Progress progress,
+			List<BlockPos> stations, int index) {
+		BlockPos station = stations.get(index);
+		MoveHandle handle = avatar.moveTo(new TargetPosition(
+			avatar.getWorld().getRegistryKey().getValue().toString(),
+			station.getX() + 0.5, station.getY(), station.getZ() + 0.5),
+			EngineerMovement.options(avatar.profile()));
+		task.setExecutionState(new Progress(progress.placementId(), Phase.NAVIGATE,
+			handle, progress.plan(), progress.cursor(), stations, index,
+			progress.operationId(), progress.placed(), progress.skipped(),
+			progress.skippedProtected()));
+		return StepOutcome.CONTINUE;
+	}
+
+	private StepOutcome unreachable(Task task, Progress progress, BlockPos target) {
+		task.setLastErrorCode("NO_REACHABLE_TARGET");
+		LOG.info("[blueprint] {} has no reachable work station for {}", task.taskId(), target);
+		return finish(task, progress, StepOutcome.FAILED);
+	}
+	private StepOutcome assist(Task task, AvatarEntity avatar, Progress progress, Blueprint.Cell cell) {
+		if (projectIdOf(task) == null) return unreachable(task, progress, cell.pos());
+		var resolved = contextOf(task, (ServerWorld) avatar.getWorld()).resolved();
+		var changes = ConstructionRecovery.changes(cell, resolved);
+		if (ConstructionRecovery.occupied((ServerWorld) avatar.getWorld(), avatar, changes)) {
+			task.setLastErrorCode("CONSTRUCTION_OCCUPIED"); return finish(task, progress, StepOutcome.FAILED);
+		}
+		var mode = ConstructionRecovery.prepare(avatar, ConstructionRecovery.bounds(resolved, avatar), cell.pos(), changes);
+		if (mode == null) { task.setLastErrorCode("CONSTRUCTION_NO_SAFE_ANCHOR"); return finish(task, progress, StepOutcome.FAILED); }
+		recoveries.computeIfAbsent(task, k -> new Recovery()).assisted = true;
+		if (resolved.access() != null && !resolved.access().assistance) {
+			resolved.access().assistance = true; resolved.access().recoveries++; resolved.access().recoveryReason = "NO_REACHABLE_TARGET";
+			if (!blueprints().save()) { task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED); }
+		}
+		avatar.setActivityDetail("辅助施工");
+		task.setExecutionState(withPhase(progress, Phase.BUILD, null));
 		return StepOutcome.CONTINUE;
 	}
 
@@ -198,22 +317,29 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 	 */
 	static int blocksPerTick(dev.squire.server.profile.SquireProfile profile) {
 		int budget = BLOCKS_PER_TICK;
-		if (profile != null && profile.can(dev.squire.server.profile.Ability.BUILD_FAST)) {
+		if (profile != null && profile.profession.profession() == dev.squire.server.profession.SquireProfession.ENGINEER) {
+			budget = (int) Math.ceil(BLOCKS_PER_TICK * dev.squire.server.profession.EngineerProgression.current().efficiency(profile.profession.level));
+		} else if (profile != null && profile.can(dev.squire.server.profile.Ability.BUILD_FAST)) {
 			budget *= 2;
 		}
 		if (profile != null
 				&& profile.hasTrait(dev.squire.server.profile.Trait.DILIGENT)) {
 			budget += DILIGENT_BONUS;
 		}
-		return budget;
+		return Math.min(32, budget);
+	}
+	static double placementInterval(dev.squire.server.profile.SquireProfile profile) {
+		return profile != null && profile.profession.profession() == dev.squire.server.profession.SquireProfession.ENGINEER
+			? dev.squire.server.profession.EngineerProgression.current().placementInterval(profile.profession.level) : 1;
 	}
 
 	private StepOutcome build(Task task, AvatarEntity avatar, ServerWorld world,
 			Progress progress, long tick) {
+		var context = contextOf(task, world);
 		AvatarInventory items = avatar.items();
 		dev.squire.server.profile.SquireProfile profile =
 			services.profile(task.agentId());
-		boolean canSubstitute = profile != null
+		boolean canSubstitute = projectIdOf(task) == null && profile != null
 			&& profile.can(dev.squire.server.profile.Ability.BUILD_SUBSTITUTE);
 		boolean canDemolish = profile != null
 			&& profile.can(dev.squire.server.profile.Ability.BUILD_DEMOLISH);
@@ -222,9 +348,10 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 		int placed = progress.placed();
 		int skipped = progress.skipped();
 		int skippedProtected = progress.skippedProtected();
+		if (tick < nextPlacement.getOrDefault(task, 0.0)) return StepOutcome.CONTINUE;
 
-		for (int i = 0; i < perTick && cursor < progress.cells().size(); i++) {
-			Blueprint.Cell cell = progress.cells().get(cursor);
+		for (int i = 0; i < perTick && cursor < progress.plan().size(); i++) {
+			Blueprint.Cell cell = progress.plan().entries().get(cursor).cell();
 			BlockPos pos = cell.pos();
 			if (!(Registries.ITEM.get(BlueprintManager.itemId(cell.blockId()))
 					instanceof BlockItem blockItem)) {
@@ -246,9 +373,43 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 				continue;
 			}
 			BlockState current = world.getBlockState(pos);
+			if (dev.squire.server.blueprint.TerrainLeveling.isTerrain(context.resolved())
+					&& !world.getOtherEntities(avatar, new net.minecraft.util.math.Box(pos),
+						entity -> entity instanceof net.minecraft.entity.LivingEntity && entity.isAlive()).isEmpty()) {
+				avatar.setActivityDetail("等待施工位置的生物让开：" + pos.toShortString());
+				return StepOutcome.CONTINUE;
+			}
+			if (dev.squire.server.blueprint.TerrainLeveling.isTerrain(context.resolved())
+					&& (!dev.squire.server.blueprint.TerrainLeveling.obstacle(world, pos, true).isEmpty()
+					|| !services.protection().canPlace(world, pos, avatar.ownerId()).allowed()
+					|| !current.isAir() && !current.isReplaceable() && !BlueprintManager.matches(current, cell))) {
+				task.setLastErrorCode("TERRAIN_SITE_UNSAFE");
+				return finish(task, progress, StepOutcome.FAILED);
+			}
 			if (BlueprintManager.matches(current, cell, canSubstitute)) {
 				cursor++;
 				continue; // 已经就位，不重复计数也不重复扣料
+			}
+			boolean assisted = recoveries.containsKey(task) && recoveries.get(task).assisted && pos.equals(recoveries.get(task).target);
+			if (assisted) {
+				var changes = ConstructionRecovery.changes(cell, context.resolved());
+				if (ConstructionRecovery.occupied(world, avatar, changes)) {
+					task.setLastErrorCode("CONSTRUCTION_OCCUPIED"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				if (!current.isAir() && !current.isReplaceable()) {
+					task.setLastErrorCode("ACCESS_SITE_CHANGED"); return finish(task, progress, StepOutcome.FAILED);
+				}
+				if (ConstructionRecovery.prepare(avatar, ConstructionRecovery.bounds(context.resolved(), avatar), pos, changes) == null) {
+					task.setLastErrorCode("CONSTRUCTION_NO_SAFE_ANCHOR"); return finish(task, progress, StepOutcome.FAILED);
+				}
+			}
+			if (!assisted && !ConstructionWorksite.inReach(avatar, pos)
+					|| !ConstructionWorksite.clearOfWorker(avatar, target, pos)) {
+				Progress next = new Progress(progress.placementId(), Phase.SELECT_STATION,
+					null, progress.plan(), cursor, List.of(), -1, progress.operationId(),
+					placed, skipped, skippedProtected);
+				task.setExecutionState(next);
+				return StepOutcome.CONTINUE;
 			}
 			if (!current.isAir() && !current.isReplaceable()) {
 				// 「拆改」：挡路的错方块拆掉再盖，掉落归他。没有这项能力就跳过——
@@ -278,17 +439,46 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 				continue;
 			}
 			Identifier itemId = BlueprintManager.itemId(cell.blockId());
-			UUID projectId = projectIdOf(task);
-			boolean materialTaken = projectId != null
-				? services.consumeProjectMaterial(projectId, itemId, 1)
-				: !items.extract(itemId, 1).isEmpty();
-			if (!materialTaken && projectId == null && canSubstitute) {
+			Identifier materialId = itemId;
+			// Optional details were not charged by the project bill. They may only use
+			// spare carried stock, never the escrow reserved for later required work.
+			UUID projectId = cell.optional() ? null : projectIdOf(task);
+			List<Blueprint.Cell> assembly;
+			try { assembly = dev.squire.server.blueprint.BlueprintAssembly.pending(world, cell, context.resolved()); }
+			catch (IllegalArgumentException invalid) {
+				task.setLastErrorCode("BLUEPRINT_ASSEMBLY_INVALID");
+				return finish(task, progress, StepOutcome.FAILED);
+			}
+			int cost = dev.squire.server.blueprint.BlueprintAssembly.cost(assembly);
+			var costPlan = projectId == null ? null : context.resolved().costPlan();
+			if (costPlan != null) cost = costPlan.quote(assembly);
+			if (cost < 0) {
+				task.setLastErrorCode("SETTLED_BUILDING_CHANGED");
+				return finish(task, progress, StepOutcome.FAILED);
+			}
+			if (assembly.size() > 1) for (var part : assembly) {
+				var existing = world.getBlockState(part.pos());
+				if ((!existing.isAir() && !existing.isReplaceable())
+						|| !assisted && !ConstructionWorksite.inReach(avatar, part.pos())
+						|| !ConstructionWorksite.clearOfWorker(avatar, BlueprintManager.targetState(part), part.pos())
+						|| !services.protection().canPlace(world, part.pos(), avatar.ownerId()).allowed()) {
+					task.setLastErrorCode("BLUEPRINT_ASSEMBLY_BLOCKED");
+					return finish(task, progress, StepOutcome.FAILED);
+				}
+			}
+			boolean materialReady = cost == 0 || (projectId != null
+				? services.projectMaterialCount(projectId, itemId) >= cost
+				: items.countOf(itemId) >= cost);
+			if (!materialReady && projectId == null && canSubstitute) {
 				// 「通用建材」：同一个等价组里的东西顶得上（各种木板互通）。
 				// 组很窄，换来的仍然是同一种建筑，只是花色不同。
-				for (Identifier alternative : dev.squire.server.profile
-						.MaterialSubstitutes.substitutesFor(itemId)) {
-					if (!items.extract(alternative, 1).isEmpty()) {
-						materialTaken = true;
+				List<Identifier> alternatives = cell.properties().isEmpty()
+					? dev.squire.server.profile.MaterialSubstitutes.substitutesFor(itemId)
+					: List.of();
+				for (Identifier alternative : alternatives) {
+					if (items.countOf(alternative) > 0) {
+						materialReady = true;
+						materialId = alternative;
 						if (Registries.ITEM.get(alternative) instanceof BlockItem swap) {
 							target = swap.getBlock().getDefaultState();
 						}
@@ -296,7 +486,7 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 					}
 				}
 			}
-			if (!materialTaken) {
+			if (!materialReady) {
 				if (cell.optional()) {
 					skipped++;
 					cursor++;
@@ -306,26 +496,97 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 				LOG.info("[blueprint] {} out of {} after {} blocks", task.taskId(),
 					itemId, placed);
 				return finish(task, new Progress(progress.placementId(), Phase.BUILD,
-					null, progress.cells(), cursor, progress.operationId(), placed,
-					skipped, skippedProtected), StepOutcome.FAILED);
+					null, progress.plan(), cursor, List.of(), -1,
+					progress.operationId(), placed, skipped, skippedProtected),
+					StepOutcome.FAILED);
 			}
-			recordUndo(progress.operationId(), task.taskId(), world, pos, current,
-				target, tick);
-			world.setBlockState(pos, target, net.minecraft.block.Block.NOTIFY_ALL);
+			for (var part : assembly) recordUndo(progress.operationId(), task.taskId(), world,
+				part.pos(), world.getBlockState(part.pos()), part.pos().equals(pos) ? target
+					: BlueprintManager.targetState(part), tick);
+			var beforeAssembly = new java.util.LinkedHashMap<BlockPos, BlockState>();
+			for (var part : assembly) beforeAssembly.put(part.pos(), world.getBlockState(part.pos()));
+			if (projectId != null && !services.beginProjectMutation(projectId, "place:" + pos.asLong())) {
+				task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
+			}
+			if (!(assembly.size() > 1 ? dev.squire.server.blueprint.BlueprintAssembly.place(world, assembly)
+					: world.setBlockState(pos, target, net.minecraft.block.Block.NOTIFY_ALL))) {
+				if (projectId != null) services.completeProjectMutation(projectId);
+				task.setLastErrorCode("PLACE_FAILED");
+				return finish(task, new Progress(progress.placementId(), Phase.BUILD,
+					null, progress.plan(), cursor, List.of(), -1,
+					progress.operationId(), placed, skipped, skippedProtected),
+					StepOutcome.FAILED);
+			}
+			// Server work runs on one tick thread, so this preflighted debit cannot
+			// normally race. If an inventory integration still invalidates it, restore
+			// the old world state instead of granting a free block.
+			boolean materialTaken = cost == 0 || (projectId != null
+				? services.consumeProjectMaterial(projectId, materialId, cost)
+				: items.extract(materialId, cost).stream().mapToInt(net.minecraft.item.ItemStack::getCount).sum() == cost);
+			if (!materialTaken) {
+				dev.squire.server.blueprint.BlueprintAssembly.restore(world, beforeAssembly);
+				if (projectId != null) services.completeProjectMutation(projectId);
+				task.setLastErrorCode("INSUFFICIENT_ITEM");
+				return finish(task, new Progress(progress.placementId(), Phase.BUILD,
+					null, progress.plan(), cursor, List.of(), -1,
+					progress.operationId(), placed, skipped, skippedProtected),
+					StepOutcome.FAILED);
+			}
+			avatar.getLookControl().lookAt(pos.getX() + 0.5, pos.getY() + 0.5,
+				pos.getZ() + 0.5);
+			if (costPlan != null) costPlan.settle(assembly);
+			if (projectId != null && !services.completeProjectMutation(projectId)) {
+				task.setLastErrorCode("CONSTRUCTION_CHECKPOINT_FAILED"); return finish(task, progress, StepOutcome.FAILED);
+			}
+			avatar.swingHand(Hand.MAIN_HAND);
 			placed++;
 			cursor++;
+			nextPlacement.put(task, dev.squire.server.profession.EngineerProgression.nextWorkTick(tick, nextPlacement.getOrDefault(task, (double) tick), placementInterval(profile)));
+			break; // Placement cooldown is independent of traversal/skip budget.
 		}
 
-		Progress next = new Progress(progress.placementId(), Phase.BUILD, null,
-			progress.cells(), cursor, progress.operationId(), placed, skipped,
-			skippedProtected);
-		if (cursor >= progress.cells().size()) {
+		Progress next = new Progress(progress.placementId(), Phase.SELECT_STATION, null,
+			progress.plan(), cursor, List.of(), -1, progress.operationId(), placed,
+			skipped, skippedProtected);
+		if (cursor >= progress.plan().size()) {
+			task.setExecutionState(next);
+			if (!sitePreparationOnly(task) && dev.squire.server.blueprint.ConstructionFluids.hasFluids(context.resolved())) return StepOutcome.CONTINUE;
 			LOG.info("[blueprint] {} finished: {}", task.taskId(), next.summary());
 			return finish(task, next, StepOutcome.WORK_DONE);
 		}
-		// 下一格可能在另一头：回到导航相，让他走过去而不是隔空放。
-		task.setExecutionState(withPhase(next, Phase.NAVIGATE, null));
+		// The next cell is independently reach-checked before another material is spent.
+		task.setExecutionState(next);
 		return StepOutcome.CONTINUE;
+	}
+
+	private boolean materialAvailable(Task task, AvatarInventory items,
+			Blueprint.Cell cell) {
+		Identifier wanted = BlueprintManager.itemId(cell.blockId());
+		if (BlueprintManager.itemCost(cell) == 0) return true;
+		UUID projectId = projectIdOf(task);
+		if (projectId != null && !cell.optional()) {
+			var avatar = services.avatar(task.agentId());
+			if (avatar != null && avatar.getWorld() instanceof ServerWorld world) {
+				var resolved = contextOf(task, world).resolved();
+				if (resolved.costPlan() != null) {
+					int quoted = resolved.costPlan().quote(dev.squire.server.blueprint.BlueprintAssembly.pending(world, cell, resolved));
+					// A zero-cost discounted operation is executable with an empty escrow.
+					// Invalid/settled operations reach the precise error in build(), not a false missing-material error.
+					return quoted <= 0 || services.projectMaterialCount(projectId, wanted) >= quoted;
+				}
+			}
+			return services.projectMaterialCount(projectId, wanted) >= BlueprintManager.itemCost(cell);
+		}
+		if (projectId != null) return items.countOf(wanted) >= BlueprintManager.itemCost(cell);
+		if (items.countOf(wanted) > 0) return true;
+		if (!cell.properties().isEmpty()
+				|| !services.can(task.agentId(),
+					dev.squire.server.profile.Ability.BUILD_SUBSTITUTE)) return false;
+		for (Identifier alternative : dev.squire.server.profile.MaterialSubstitutes
+				.substitutesFor(wanted)) {
+			if (items.countOf(alternative) > 0) return true;
+		}
+		return false;
 	}
 
 	private static UUID projectIdOf(Task task) {
@@ -338,9 +599,27 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 		}
 	}
 
+	private static boolean sitePreparationOnly(Task task) {
+		return Boolean.TRUE.equals(task.parameters().get(PARAM_SITE_PREPARATION))
+			|| "true".equals(task.parameters().get(PARAM_SITE_PREPARATION));
+	}
+
 	private static Progress withPhase(Progress p, Phase phase, MoveHandle handle) {
-		return new Progress(p.placementId(), phase, handle, p.cells(), p.cursor(),
-			p.operationId(), p.placed(), p.skipped(), p.skippedProtected());
+		return new Progress(p.placementId(), phase, handle, p.plan(), p.cursor(),
+			p.stations(), p.stationIndex(), p.operationId(), p.placed(), p.skipped(),
+			p.skippedProtected());
+	}
+
+	private static Progress advance(Progress p) {
+		return new Progress(p.placementId(), Phase.SELECT_STATION, null, p.plan(),
+			p.cursor() + 1, List.of(), -1, p.operationId(), p.placed(), p.skipped(),
+			p.skippedProtected());
+	}
+
+	private static Progress skip(Progress p) {
+		return new Progress(p.placementId(), Phase.SELECT_STATION, null, p.plan(),
+			p.cursor() + 1, List.of(), -1, p.operationId(), p.placed(), p.skipped() + 1,
+			p.skippedProtected());
 	}
 
 	/** 撤销日志无论任务怎么结束都恰好关一次。 */
@@ -359,7 +638,8 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 		if (manager != null) {
 			manager.placement(progress.placementId()).ifPresent(placement -> {
 				// 成不成由 GoalVerifier 说了算，这里只把「不再施工」这件事记回去。
-				if (placement.state() == BlueprintPlacement.State.BUILDING) {
+				if (projectIdOf(task) == null
+						&& placement.state() == BlueprintPlacement.State.BUILDING) {
 					placement.setState(outcome == StepOutcome.WORK_DONE
 						? BlueprintPlacement.State.READY
 						: BlueprintPlacement.State.GHOST);
@@ -372,6 +652,8 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 
 	@Override
 	public void cancel(Task task) {
+		if (task.executionState() instanceof AccessBuildExecutor.Progress p && p.operationId != null && journal() != null)
+			journal().close(p.operationId);
 		if (task.executionState() instanceof Progress progress) {
 			if (progress.handle() != null) {
 				progress.handle().cancel();
@@ -392,7 +674,9 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 			return null;
 		}
 		return "{\"placed\":" + progress.placed() + ",\"skipped\":"
-			+ progress.skipped() + "}";
+			+ progress.skipped() + ",\"skippedProtected\":"
+			+ progress.skippedProtected() + ",\"remaining\":"
+			+ Math.max(0, progress.plan().size() - progress.cursor()) + "}";
 	}
 
 	@Override
@@ -402,9 +686,11 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 				.getAsJsonObject();
 			task.setExecutionState(new Restored(
 				o.has("placed") ? o.get("placed").getAsInt() : 0,
-				o.has("skipped") ? o.get("skipped").getAsInt() : 0));
+				o.has("skipped") ? o.get("skipped").getAsInt() : 0,
+				o.has("skippedProtected")
+					? o.get("skippedProtected").getAsInt() : 0));
 		} catch (RuntimeException bad) {
-			task.setExecutionState(new Restored(0, 0));
+			task.setExecutionState(new Restored(0, 0, 0));
 		}
 	}
 
@@ -415,7 +701,13 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 			return null;
 		}
 		try {
-			return blueprintBuilt(services, UUID.fromString(id));
+			UUID placementId = UUID.fromString(id);
+			if (Boolean.TRUE.equals(snapshot.parameters().get(PARAM_SITE_PREPARATION))
+					|| "true".equals(snapshot.parameters().get(PARAM_SITE_PREPARATION))) {
+				return sitePrepared(services, placementId);
+			}
+			return blueprintBuilt(services, placementId,
+				snapshot.parameters().containsKey(PARAM_PROJECT_ID));
 		} catch (IllegalArgumentException notAUuid) {
 			return null;
 		}
@@ -430,6 +722,40 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 	 * 卡在 VERIFYING，玩家除了取消无路可走。</p>
 	 */
 	public static TaskCondition blueprintBuilt(RuntimeServices services, UUID placementId) {
+		return blueprintBuilt(services, placementId, false);
+	}
+
+	/** The preparation pass succeeds once no generated support cell remains missing. */
+	public static TaskCondition sitePrepared(RuntimeServices services, UUID placementId) {
+		return TaskCondition.of(ctx -> {
+			BlueprintManager manager = services.blueprints();
+			if (manager == null) return false;
+			BlueprintPlacement placement = manager.placement(placementId).orElse(null);
+			AvatarEntity avatar = services.avatar(ctx.agentId());
+			if (placement == null || avatar == null
+					|| !(avatar.getWorld() instanceof ServerWorld world)
+					|| !world.getRegistryKey().getValue().toString()
+						.equals(placement.dimensionId)) {
+				return false;
+			}
+			Blueprint.Resolved resolved = manager.resolve(placement).orElse(null);
+			if (resolved == null) return false;
+			for (Blueprint.Cell cell : BlueprintManager.automaticSiteSupports(world,
+					resolved)) {
+				BlockPos pos = cell.pos();
+				if (!services.protection().canPlace(world, pos, avatar.ownerId()).allowed()
+						|| world.getBlockState(pos).getHardness(world, pos) < 0) {
+					continue;
+				}
+				return false;
+			}
+			return true;
+		}, "automatic support layer for " + placementId + " stands in the world");
+	}
+
+	/** Project builds also verify their automatically generated support layer. */
+	public static TaskCondition blueprintBuilt(RuntimeServices services, UUID placementId,
+			boolean prepareSite) {
 		return TaskCondition.of(ctx -> {
 			BlueprintManager manager = services.blueprints();
 			if (manager == null) {
@@ -447,9 +773,16 @@ public final class BlueprintBuildExecutor implements dev.squire.server.task.Task
 			if (resolved == null) {
 				return false;
 			}
+			if (resolved.access() != null && !resolved.access().work.isEmpty()) {
+				if (!resolved.access().placed.isEmpty() || !resolved.access().cleanup) return false;
+				if (resolved.access().cancelRequested) return true;
+			}
 			boolean substitutes = services.can(ctx.agentId(),
 				dev.squire.server.profile.Ability.BUILD_SUBSTITUTE);
-			for (Blueprint.Cell cell : resolved.toPlace()) {
+			List<Blueprint.Cell> cells = prepareSite
+				? BlueprintManager.pendingProjectPlacements(world, resolved)
+				: resolved.toPlace();
+			for (Blueprint.Cell cell : cells) {
 				if (BlueprintManager.matches(world.getBlockState(cell.pos()),
 						cell, substitutes)) {
 					continue;

@@ -22,13 +22,14 @@ import org.slf4j.LoggerFactory;
  * 重启后静默丢回默认值——玩家以为设置过了，实际每次重启都回到原样，而且没有任何
  * 提示。这份存档让「玩家显式改过的权限」跨重启成立。</p>
  *
- * <p>只存<b>显式</>的 grant/revoke，不存默认值：{@code DEFAULT_PLAYER_NODES} 仍然
- * 是代码里的常量，随版本演进，落盘反而会把旧默认值冻住。</p>
+ * <p>只存<b>显式的</b>管理员 grant/revoke 和玩家自己的关闭偏好，不存默认值：
+ * {@code DEFAULT_PLAYER_NODES} 仍然是代码里的常量，随版本演进，落盘反而会把旧
+ * 默认值冻住。</p>
  */
 public final class PermissionStore {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PermissionStore.class);
-	private static final int VERSION = 1;
+	private static final int VERSION = 2;
 
 	private final Supplier<Path> fileSupplier;
 	private volatile boolean writable = true;
@@ -38,7 +39,8 @@ public final class PermissionStore {
 	}
 
 	/** 写入一份快照。空 map 也照写——「清空了所有显式权限」本身是要记住的事实。 */
-	public void save(Map<UUID, Set<String>> granted, Map<UUID, Set<String>> revoked) {
+	public void save(Map<UUID, Set<String>> granted, Map<UUID, Set<String>> revoked,
+			Map<UUID, Set<String>> playerDisabled) {
 		if (!writable) {
 			return;
 		}
@@ -52,6 +54,7 @@ public final class PermissionStore {
 			root.addProperty("version", VERSION);
 			root.add("granted", writeMap(granted));
 			root.add("revoked", writeMap(revoked));
+			root.add("playerDisabled", writeMap(playerDisabled));
 			Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
 			Files.writeString(tmp, root.toString());
 			try {
@@ -71,8 +74,7 @@ public final class PermissionStore {
 	 *
 	 * @return 恢复的玩家条目数（granted + revoked 的 key 并集）
 	 */
-	public int load(java.util.function.BiConsumer<Map<UUID, Set<String>>,
-			Map<UUID, Set<String>>> receiver) {
+	public int load(LoadedPermissions receiver) {
 		try {
 			Path file = fileSupplier.get();
 			if (file == null || !Files.exists(file)) {
@@ -80,7 +82,8 @@ public final class PermissionStore {
 			}
 			JsonObject root = JsonParser.parseString(Files.readString(file))
 				.getAsJsonObject();
-			if (root.has("version") && root.get("version").getAsInt() > VERSION) {
+			int version = root.has("version") ? root.get("version").getAsInt() : 1;
+			if (version > VERSION) {
 				writable = false;
 				LOG.error("[squire-permissions] future schema {}; stored grants "
 					+ "IGNORED, falling back to defaults", root.get("version").getAsInt());
@@ -88,14 +91,28 @@ public final class PermissionStore {
 			}
 			Map<UUID, Set<String>> granted = readMap(root, "granted");
 			Map<UUID, Set<String>> revoked = readMap(root, "revoked");
-			receiver.accept(granted, revoked);
+			Map<UUID, Set<String>> playerDisabled = readMap(root, "playerDisabled");
+			// v1 grants came from an unauthenticated player toggle as well as trusted
+			// server code. They cannot safely be migrated as admin overrides.
+			if (version < 2) {
+				if (!granted.isEmpty()) LOG.warn("[squire-permissions] discarded {} legacy grant row(s): v1 grants were not admin-authorized", granted.size());
+				granted.clear();
+			}
+			receiver.accept(granted, revoked, playerDisabled);
 			Set<UUID> players = new java.util.HashSet<>(granted.keySet());
-			players.addAll(revoked.keySet());
+		players.addAll(revoked.keySet());
+		players.addAll(playerDisabled.keySet());
 			return players.size();
 		} catch (Exception e) {
 			LOG.warn("[squire-permissions] load failed: {}", e.toString());
 			return 0;
 		}
+	}
+
+	@FunctionalInterface
+	public interface LoadedPermissions {
+		void accept(Map<UUID, Set<String>> granted, Map<UUID, Set<String>> revoked,
+				Map<UUID, Set<String>> playerDisabled);
 	}
 
 	private static JsonObject writeMap(Map<UUID, Set<String>> map) {

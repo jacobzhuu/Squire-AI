@@ -38,7 +38,10 @@ public final class EngineerXp {
 	 * @param compound           这是一份复合蓝图（一次盖好几栋）
 	 */
 	public record Project(String templateId, String sizeClass, int floors,
-			boolean structuralVariant, int modules, boolean compound) {
+			boolean structuralVariant, int modules, boolean compound, int catalogTier, String catalogFamily) {
+		public Project(String templateId, String sizeClass, int floors, boolean structuralVariant, int modules, boolean compound) {
+			this(templateId, sizeClass, floors, structuralVariant, modules, compound, 0, "");
+		}
 
 		public Project {
 			templateId = templateId == null || templateId.isBlank() ? "unknown"
@@ -56,6 +59,7 @@ public final class EngineerXp {
 		 * 这次施工变成一个新工程。</p>
 		 */
 		public String signature() {
+			if (catalogFamily != null && !catalogFamily.isEmpty()) return "catalog|" + catalogFamily;
 			return templateId + "|" + sizeClass + "|f" + floors
 				+ (structuralVariant ? "|v" : "") + "|m" + modules
 				+ (compound ? "|c" : "");
@@ -90,6 +94,7 @@ public final class EngineerXp {
 	 * </ul>
 	 */
 	public static int tierOf(ProfessionConfig config, Project project) {
+		if (project.catalogTier() > 0) return Math.min(5, project.catalogTier());
 		if (project.compound()) {
 			return 5;
 		}

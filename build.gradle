@@ -52,13 +52,27 @@ tasks.test {
 
 processResources {
 	inputs.property 'version', project.version
+	inputs.property 'squireGameTestClass', providers.gradleProperty('squireGameTestClass').getOrElse('')
 
 	filesMatching('fabric.mod.json') {
 		expand 'version': project.version
 	}
+	doLast {
+		def selected = providers.gradleProperty('squireGameTestClass').getOrElse('')
+		if (!selected.isEmpty()) {
+			def manifest = new File(destinationDir, 'fabric.mod.json')
+			def json = new groovy.json.JsonSlurper().parse(manifest)
+			def names = selected.split(',').collect { it.trim() }
+			def entries = json.entrypoints['fabric-gametest'].findAll { entry -> names.any { entry.endsWith('.' + it) } }
+			if (entries.size() != names.size()) throw new GradleException('Unknown/duplicate GameTest class: ' + selected)
+			json.entrypoints['fabric-gametest'] = entries
+			manifest.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json))
+		}
+	}
 }
 
 jar {
+	from('THIRD_PARTY_NOTICES.md')
 	from('LICENSE') {
 		rename { "${it}_${project.base.archivesName.get()}" }
 	}

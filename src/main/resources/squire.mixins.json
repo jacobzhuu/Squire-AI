@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.squire.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["AvatarMeleeDamageMixin"],
+  "injectors": {"defaultRequire": 1}
+}

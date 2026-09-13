@@ -59,25 +59,39 @@ public final class InputGateway {
 		MinecraftServer server = sender.getServer();
 		SquireRuntime.ensureInitialized(server);
 
-		var avatar = SquireRuntime.get().agents().resolveForOwner(sender.getUuid());
+		SquireRuntime runtime = SquireRuntime.get();
+		var avatar = runtime.agents().resolveForOwner(sender.getUuid());
 		UUID agentId = avatar.map(a -> a.agentId()).orElse(null);
 		String text = rawText;
-		if (requireName) {
-			String name = avatar.map(a -> SquireRuntime.get().displayNameOf(a))
-				.orElse(null);
-			Addressing.Result addressed = Addressing.parse(rawText, name);
-			if (!addressed.addressed()) {
-				hintIfItLookedLikeAnOrder(sender, rawText, name);
-				return java.util.Optional.empty();
-			}
-			if (!addressed.hasText()) {
-				// 只叫了一声名字。这也是一次输入，必须有出路——沉默会让玩家以为
-				// 点名这条规则根本没生效。
-				sender.sendMessage(Text.literal("[Squire] 我在，你说。"), false);
-				return java.util.Optional.empty();
-			}
-			text = addressed.text();
-		}
+        var addressed = AgentAddressing.resolve(rawText, runtime.agentStore().recordsOfOwner(sender.getUuid())
+            .stream().map(r -> new AgentAddressing.Candidate(r.agentId, r.displayName)).toList());
+        if (addressed.ambiguous()) {
+            sender.sendMessage(Text.literal("[Squire] 请明确指定一名侍从；重名时使用 /squire as <UUID> <指令>。"), false);
+            return java.util.Optional.empty();
+        }
+        if (addressed.target() != null) {
+            var scoped=runtime.agents().explicitTarget(sender.getUuid());
+            if(scoped.isPresent() && !scoped.get().equals(addressed.target())) {
+                sender.sendMessage(Text.literal("[Squire] Name differs from the selected command/panel target."),false);
+                return java.util.Optional.empty();
+            }
+            agentId = addressed.target();
+            text = addressed.text();
+        } else if (requireName) {
+            hintIfItLookedLikeAnOrder(sender, rawText, runtime.agentStore().recordsOfOwner(sender.getUuid())
+                .stream().map(r -> r.displayName).collect(java.util.stream.Collectors.joining(" / ")));
+            return java.util.Optional.empty();
+        }
+        if (agentId == null || runtime.agents().resolveByAgentId(agentId).isEmpty()) {
+            sender.sendMessage(Text.literal("[Squire] 指定的侍从当前不在场，请使用绑定的召集铃。"), false);
+            return java.util.Optional.empty();
+        }
+        final UUID inputTarget = agentId;
+        if (text.isBlank()) {
+            sender.sendMessage(Text.literal("[" + runtime.agentStore().recordOfAgent(agentId)
+                .map(r -> r.displayName).orElse("Squire") + "] 我在，你说。"), false);
+            return java.util.Optional.empty();
+        }
 		InputEnvelope envelope = new InputEnvelope(
 			sender.getUuid(),
 			InputSource.CHAT,
@@ -100,8 +114,9 @@ public final class InputGateway {
 				try {
 					// 和面板上点那一格<b>同一条路</b>：绑定式的走服务端动作并过一遍
 					// 能力闸，老存档里的原话才回到这条自然语言管线上。
-					return java.util.Optional.of(SquireRuntime.get()
-						.runShortcut(sender, shortcut.get()));
+					var result=withTarget(runtime, sender, inputTarget, () -> runtime.runShortcut(sender, shortcut.get()));
+                    if(!result.message().isBlank()) withTarget(runtime,sender,inputTarget,() -> {sender.sendMessage(Text.literal(runtime.namedMessage(sender.getUuid(),result.message())),false);return null;});
+                    return java.util.Optional.of(result);
 				} finally {
 					shortcutDepth--;
 				}
@@ -115,13 +130,12 @@ public final class InputGateway {
 					var result = new SquireRuntime.ExecutionResult(true,
 						"feedback.conversation_cancel", null,
 						"[Squire] 已取消刚才的对话任务及未完成步骤。");
-					sender.sendMessage(Text.literal(result.message()), false);
+					sender.sendMessage(Text.literal(runtime.namedMessage(sender.getUuid(),result.message())), false);
 					return java.util.Optional.of(result);
 				}
 			}
 			if (dialogueControl.kind() == NaturalLanguageIntentRouter.Kind.CORRECTION) {
-				var corrected = SquireRuntime.get().conversations()
-					.tryHandleCorrection(sender, envelope.rawText());
+				var corrected = withTarget(runtime, sender, inputTarget, () -> runtime.conversations().tryHandleCorrection(sender, envelope.rawText()));
 				if (corrected.isPresent()) {
 					metrics.inc(dev.squire.server.metrics.SquireMetrics.Key.FASTPATH_HITS);
 					sender.sendMessage(Text.literal(corrected.get().message()), false);
@@ -131,8 +145,7 @@ public final class InputGateway {
 			// Cross-turn referents ("传送过去", "攻击刚才那个") are resolved before
 			// the ordinary phrase table. The resolver also notices an explicit new target
 			// and invalidates the stale pending target before letting normal parsing continue.
-			var continuation = SquireRuntime.get().conversations()
-				.tryHandleContinuation(sender, envelope.rawText());
+			var continuation = withTarget(runtime, sender, inputTarget, () -> runtime.conversations().tryHandleContinuation(sender, envelope.rawText()));
 			if (continuation.isPresent()) {
 				metrics.inc(dev.squire.server.metrics.SquireMetrics.Key.FASTPATH_HITS);
 				sender.sendMessage(Text.literal(continuation.get().message()), false);
@@ -141,9 +154,15 @@ public final class InputGateway {
 			var intent = FastPath.match(envelope.rawText(), SquireRuntime.get().vocabulary());
 			if (intent.isPresent()) {
 				metrics.inc(dev.squire.server.metrics.SquireMetrics.Key.FASTPATH_HITS);
-				return java.util.Optional.of(applyIntent(sender, intent.get()));
+				UUID routed = agentId;
+				return java.util.Optional.of(withTarget(runtime, sender, routed,
+					() -> applyIntent(sender, intent.get())));
 			}
-			SquireRuntime.get().handleConversation(sender, envelope.rawText());
+			UUID routed = agentId;
+			withTarget(runtime, sender, routed, () -> {
+				runtime.handleConversation(sender, envelope.rawText());
+				return null;
+			});
 			return java.util.Optional.empty();
 		} catch (RuntimeException e) {
 			LOG.error("[input] chat handling threw for {}",
@@ -155,13 +174,12 @@ public final class InputGateway {
 		}
 	}
 
-	/**
-	 * 没点名、但这句话明显是冲他去的时候，提醒一次规则。
-	 *
-	 * <p>沉默是这条规则唯一的风险：玩家照着帮助说了「跟着我」却毫无反应，会以为
-	 * 模组坏了。只在这句话<b>本来能被认出来</b>（命中短语表或某条快捷指令）时才提醒，
-	 * 并且带冷却——否则多人服里的正常聊天会被刷屏。</p>
-	 */
+	private static <T> T withTarget(SquireRuntime runtime, ServerPlayerEntity sender,
+			UUID agentId, java.util.function.Supplier<T> action) {
+		return agentId == null ? action.get()
+			: runtime.agents().withTarget(sender.getUuid(), agentId, action);
+	}
+
 	private static void hintIfItLookedLikeAnOrder(ServerPlayerEntity sender,
 			String rawText, String name) {
 		SquireRuntime runtime = SquireRuntime.get();
@@ -243,8 +261,11 @@ public final class InputGateway {
 		} else if (intent instanceof FastPathIntent.StartProject project) {
 			result = runtime.projectStartFromPhrase(sender, project.phrase());
 		} else if (intent instanceof FastPathIntent.ProjectControl control) {
-			result = control.kind() == FastPathIntent.ProjectControl.Kind.PAUSE
-				? runtime.projectPause(sender) : runtime.projectResume(sender);
+			result = switch (control.kind()) {
+				case CONFIRM -> runtime.projectConfirm(sender);
+				case PAUSE -> runtime.projectPause(sender);
+				case RESUME -> runtime.projectResume(sender);
+			};
 		} else if (intent instanceof FastPathIntent.BuildHouse house) {
 			result = runtime.buildHouse(sender, house.styleWord(), 0, 0, 0);
 		} else if (intent instanceof FastPathIntent.Help) {
@@ -257,7 +278,7 @@ public final class InputGateway {
 		// 第二个参数是 overlay：true 会渲染到物品栏上方的动作栏，闪两秒就没、且不进
 		// 聊天历史。以前这里绑的是 result.success()，于是所有"成功"都只在动作栏一闪，
 		// 只有失败才进聊天——玩家看到的就是"命令毫无反应"。成功比失败更需要被看见。
-		sender.sendMessage(Text.literal(result.message()), false);
+		sender.sendMessage(Text.literal(runtime.namedMessage(sender.getUuid(),result.message())), false);
 		return result;
 	}
 }

@@ -59,7 +59,8 @@ public final class M21NewPlayerWalkthroughGameTests implements FabricGameTest {
 	private static ProfessionView panel(SquireRuntime rt, FakePlayer owner,
 			AvatarEntity avatar) {
 		return ProfessionView.of(rt.professionOf(avatar), rt.professionConfig(),
-			itemId -> SquireProfessionService.countMaterial(owner, avatar, itemId));
+			itemId -> SquireProfessionService.countMaterial(owner, avatar, itemId))
+			.withBuildingCatalog(rt.blueprints().registry().catalog(), "", rt.blueprints().registry().revision());
 	}
 
 	@GameTest(templateName = FLOOR, tickLimit = 400, batchId = "squire-walkthrough")
@@ -103,12 +104,19 @@ public final class M21NewPlayerWalkthroughGameTests implements FabricGameTest {
 			world.spawnEntity(zombie);
 			SquireRuntime.onAvatarKill(avatar, zombie);
 			zombie.discard();
-			// 盖成一次东西
-			rt.noteTraining(avatar, TrainingMilestone.BUILD);
+			// Construction must not be a prerequisite for choosing Engineer.
+			context.assertFalse(data.hasTrained(TrainingMilestone.BUILD), "No construction before choosing a profession");
+			ProfessionData restored = new ProfessionData();
+			restored.readNbt(data.writeNbt());
+			var legacyConfig = dev.squire.server.profession.ProfessionConfig.fromJson(
+				com.google.gson.JsonParser.parseString("{\"general\":{\"trainingXpRequired\":100}}")
+					.getAsJsonObject());
+			context.assertTrue(restored.trainingComplete(legacyConfig),
+				"Saved four-step progress must unlock professions with legacy configuration");
 
 			ProfessionView afterTraining = panel(rt, owner, avatar);
 			context.assertTrue(afterTraining.trainingComplete(),
-				"五项都做过了，训练该满：" + afterTraining.trainingXp() + " / "
+				"四项基础训练完成，应该可以转职：" + afterTraining.trainingXp() + " / "
 					+ afterTraining.trainingRequired());
 
 			// ── 3. 转职：面板按钮 ──────────────────────────────────────
@@ -146,20 +154,22 @@ public final class M21NewPlayerWalkthroughGameTests implements FabricGameTest {
 			context.assertTrue(atTwo.maxFootprint() > afterTraining.maxFootprint(),
 				"Lv2 的尺寸上限该比 Lv1 大：" + afterTraining.maxFootprint()
 					+ " → " + atTwo.maxFootprint());
-			context.assertTrue(atTwo.templates().size() > 1,
-				"Lv2 该解锁更多模板，实际 " + atTwo.templates());
+			context.assertTrue(atTwo.blueprintLibrary().size() == 72, "family catalog is accessible from the panel");
 
 			// 蓝图参数页：换模板 → 换尺寸，全是按钮。
-			press(SquireScreenHandler.BUTTON_DESIGN_TEMPLATE, owner, avatar);
+			var screen = new SquireScreenHandler(82, owner.getInventory(), avatar.items().mainInventory(),
+				new dev.squire.server.gui.AvatarEquipmentInventory(avatar, SquireScreenHandler.EQUIPMENT_ORDER), avatar.backpackSlotInventory(), avatar);
+			screen.syncState(owner);
+			screen.selectBlueprint(owner, "squire:keepitlevel/residence", screen.state().profession().catalogVersion());
+			screen.selectBlueprint(owner, "keepitlevel_residence", screen.state().profession().catalogVersion());
 			context.assertTrue(rt.blueprints().activeOf(owner.getUuid()).isPresent(),
-				"点「模板」就该摆出一份工地来");
+				"family then variant buttons create a zero-write preview");
 			String before = rt.blueprints().activeOf(owner.getUuid()).orElseThrow()
 				.blueprintId;
 			press(SquireScreenHandler.BUTTON_DESIGN_SIZE_UP, owner, avatar);
 			String after = rt.blueprints().activeOf(owner.getUuid()).orElseThrow()
 				.blueprintId;
-			context.assertFalse(before.equals(after),
-				"点「放大」尺寸该真的变，实际还是 " + after);
+			context.assertTrue(before.equals(after), "retired size controls cannot reshape fixed imported content");
 
 			// 而 Lv2 还够不着的那些，点了必须没反应（服务端拒绝）。
 			String guarded = after;

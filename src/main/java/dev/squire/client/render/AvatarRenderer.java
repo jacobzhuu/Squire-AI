@@ -1,7 +1,6 @@
 package dev.squire.client.render;
 
 import dev.squire.server.body.avatar.AvatarEntity;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.MobEntityRenderer;
 import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
@@ -10,23 +9,24 @@ import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 
 /**
- * Renders the avatar with the classic player model and the owner's live skin when
- * that profile is present in the client player list. Offline owners use the stable
- * UUID-derived vanilla default skin; no Mojang asset is copied into this jar.
+ * Renders the avatar with the classic player model and its own profession skin.
+ * Profession comes from entity tracking, including for offline owners.
  * The name tag shows the explicit AI identity "[Squire] <name>".
  */
 public class AvatarRenderer extends MobEntityRenderer<AvatarEntity, AvatarPlayerModel> {
+	private static final Identifier COMMON = new Identifier("squire", AvatarSkins.texturePath(""));
+	private static final Identifier GUARD = new Identifier("squire", AvatarSkins.texturePath("guard"));
+	private static final Identifier ENGINEER = new Identifier("squire", AvatarSkins.texturePath("engineer"));
 
 	public AvatarRenderer(EntityRendererFactory.Context ctx) {
 		// AvatarPlayerModel = 玩家模型 + 手臂姿势（拉弓时摆出举弓的样子）。
-		// 第二个构造参数 = slim arms（"Alex" 体型）。
-		super(ctx, new AvatarPlayerModel(ctx.getPart(EntityModelLayers.PLAYER), true), 0.5f);
+		// Imported skins use classic four-pixel arms, matching EntityModelLayers.PLAYER.
+		super(ctx, new AvatarPlayerModel(ctx.getPart(EntityModelLayers.PLAYER), false), 0.5f);
 		// 装备会通过原版实体同步送到客户端，但没有这两个 feature renderer 就一格都
 		// 画不出来——伙伴穿了整套下界合金也还是光着。"让他装备套装没反应"里，
 		// 有一半是这个原因。
@@ -41,20 +41,11 @@ public class AvatarRenderer extends MobEntityRenderer<AvatarEntity, AvatarPlayer
 
 	@Override
 	public Identifier getTexture(AvatarEntity entity) {
-		java.util.Optional<java.util.UUID> owner = entity.syncedOwner();
-		if (owner.isEmpty()) {
-			return DefaultSkinHelper.getTexture();
-		}
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.getNetworkHandler() != null) {
-			var entry = client.getNetworkHandler().getPlayerListEntry(owner.get());
-			if (entry != null) {
-				return entry.getSkinTexture();
-			}
-		}
-		// The owner can be offline. UUID-derived vanilla fallback remains stable across
-		// restarts and never substitutes another player's skin.
-		return DefaultSkinHelper.getTexture(owner.get());
+		return switch (entity.syncedProfession()) {
+			case "guard" -> GUARD;
+			case "engineer" -> ENGINEER;
+			default -> COMMON;
+		};
 	}
 
 	/**

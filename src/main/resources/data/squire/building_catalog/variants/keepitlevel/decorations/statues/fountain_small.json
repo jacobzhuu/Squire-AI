@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "keepitlevel_fountain",
+  "format": "minecraft:structure_nbt",
+  "displayName": "村庄喷泉 · fountain_small",
+  "tier": 1,
+  "category": "DECORATION",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/decorations/statues/fountain_small",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/decorations/statues/fountain_small.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "decorations"
+    ]
+  },
+  "sourceFrame": [
+    5,
+    5,
+    5
+  ],
+  "primaryOffset": {
+    "x": 2,
+    "y": 0,
+    "z": 2
+  },
+  "groundY": 0,
+  "siteRequirements": [
+    {
+      "pos": [
+        2,
+        0,
+        2
+      ],
+      "kind": "solid"
+    }
+  ],
+  "materialSlots": [
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "slab"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_stairs": [
+      "shape"
+    ]
+  }
+}

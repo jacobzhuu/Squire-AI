@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import dev.squire.server.body.avatar.AvatarEntity;
+import dev.squire.server.gui.PanelState;
 import dev.squire.server.gui.SquireActions;
 import dev.squire.server.gui.SquireScreenHandler;
 import dev.squire.server.registry.SquireScreens;
@@ -127,16 +128,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	private static final int TAB_PROFESSION = 2;
 	private static final int TAB_PROJECT = 3;
 	private static final int TAB_PERMISSIONS = 4;
-	/**
-	 * 「指令」页：常用动作 + 我的快捷。
-	 *
-	 * <p>它吃掉了原来的「指挥」和「快捷」两页。那两页问的是同一个问题的两半——
-	 * 「系统让我做什么」和「我自己常让它做什么」——而分成两页的代价是：指挥页把
-	 * 十四个按钮一次全铺出来（一个 Lv.0 侍从看到「下界合金套装」和「保护我」并排
-	 * 摆着，会以为自己养了个万能侍从），快捷页则孤零零地占着一整格页签。合并之后
-	 * 上半页按职业/等级/能力/当前状态<b>算出</b>真正点得动的那几格，下半页是玩家
-	 * 自己攒的八条。</p>
-	 */
+	/** Saved, user-defined shortcuts only; built-in actions live on their owning pages. */
 	private static final int TAB_COMMAND = 5;
 	private static final String[] TAB_KEYS = {
 		"squire.gui.tab.items", "squire.gui.tab.profile",
@@ -167,6 +159,9 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 */
 	public static final int TAB_RAIL_BOTTOM =
 		TAB_RAIL_TOP + TAB_COUNT * TAB_RAIL_PITCH - TAB_RAIL_GAP;
+	/** Leave the first 16 pixels below navigation free for IPN's sorting controls. */
+	public static final int RECALL_BUTTON_Y = TAB_RAIL_BOTTOM + 20;
+	public static final int EQUIP_BUTTON_Y = RECALL_BUTTON_Y + 22;
 
 	// ------------------------------------------------------------------ 物品页
 
@@ -227,6 +222,55 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	// ------------------------------------------------------------------ 状态
 
 	private int tab = TAB_ITEMS;
+    private final List<ButtonWidget> rosterButtons = new ArrayList<>();
+    private final List<ButtonWidget> navigationButtons = new ArrayList<>();
+    private String rosterSignature = "";
+    private boolean professionHomeSelected;
+    private static final java.util.Map<String,Integer> REMEMBERED_SCROLL = new java.util.HashMap<>();
+    private static final java.util.Map<String,Integer> REMEMBERED_TABS = new java.util.HashMap<>();
+
+    private String currentAgentKey() {
+        return handler.state().roster().stream().map(dev.squire.server.gui.PanelState::decodeRosterEntry)
+            .flatMap(java.util.Optional::stream).filter(e -> e.current()).map(e -> e.agentId()).findFirst().orElse("");
+    }
+    private void refreshRoster() {
+        String signature = handler.state().roster().toString()+handler.inventoryAccessible+handler.bodyAvailable;
+        if (signature.equals(rosterSignature)) return;
+        rosterSignature = signature;
+        if (professionHomeSelected) applyTab();
+        handler.setSlotsVisible(tab==TAB_ITEMS && handler.inventoryAccessible);
+        rosterButtons.forEach(this::remove); rosterButtons.clear();
+        var entries = handler.state().roster();
+        for(int i=0;entries.size()>1 && i<Math.min(2,entries.size());i++) {
+            var entry = dev.squire.server.gui.PanelState.decodeRosterEntry(entries.get(i)).orElse(null);
+            if(entry==null) continue;
+            Text label=Text.literal((entry.current()?"\u25b6 ":"")+entry.name()+" \u00b7 ")
+                .append(Text.translatable(entry.professionId().isBlank()?"squire.gui.profession.untrained":"squire.gui.profession."+entry.professionId()));
+            final java.util.UUID target=java.util.UUID.fromString(entry.agentId());
+            var button=ButtonWidget.builder(label,b -> {
+                var packet=net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+                REMEMBERED_SCROLL.put(currentAgentKey()+"/"+tab,pageScroll);
+                packet.writeVarInt(handler.syncId);packet.writeUuid(target);
+                ClientPlayNetworking.send(SquireScreens.SWITCH_PANEL_PACKET,packet);
+            }).dimensions(x+8+i*146,y+1,142,15).build();
+            button.active=!entry.current();
+            button.visible=true;
+            button.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(label.copy().append(entry.active()?"":" \u00b7 Offline")));
+            rosterButtons.add(addDrawableChild(button));
+        }
+        var profession=handler.state().profession().profession();
+        if(!professionHomeSelected && !currentAgentKey().isEmpty()) {
+            professionHomeSelected=true;
+            tab=REMEMBERED_TABS.getOrDefault(currentAgentKey(),profession==null?TAB_PROFESSION:TAB_PROJECT);
+            pageScroll=REMEMBERED_SCROLL.getOrDefault(currentAgentKey()+"/"+tab,0);
+            applyTab();
+        }
+        if(navigationButtons.size()>TAB_PROJECT) {
+            navigationButtons.get(TAB_PROJECT).visible=true;
+            navigationButtons.get(TAB_PROFESSION).setMessage(Text.translatable("squire.gui.panel.growth"));
+            navigationButtons.get(TAB_PROJECT).setMessage(Text.translatable(guardPanel()?"squire.gui.panel.guard":"squire.gui.panel.engineer"));
+        }
+    }
 	/** 状态条现在显示的是「更多」那一组。 */
 	private boolean stateRowExpanded;
 	private TextFieldWidget chatField;
@@ -247,6 +291,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	private final List<Integer> projectButtonIds = new ArrayList<>();
 	private final List<ButtonWidget> materialButtons = new ArrayList<>();
 	private ButtonWidget materialConfigButton;
+	private ButtonWidget forceCancelProjectButton;
 	private boolean editingMaterials;
 	/** 跟随传送距离按钮：标签上要写着当前值，所以单独拿着它。 */
 	private ButtonWidget followDistanceButton;
@@ -278,12 +323,11 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 */
 	private int editingShortcut = -1;
 	private TextFieldWidget shortcutNameField;
-	/** Header identity editor. It is not a page widget: the name is global identity. */
+	/** Identity editor in the profile content area. */
 	private TextFieldWidget nameField;
 	private ButtonWidget confirmNameButton;
-	private ButtonWidget cancelNameButton;
-	private boolean editingName;
-	private int headerNameHitRight;
+	private final NameEditState nameEdit = new NameEditState();
+	private boolean restoreNameFocus;
 
 	/** Personality reroll confirmation is deliberately one local, reversible step. */
 	private boolean confirmingPersonalityReroll;
@@ -341,20 +385,26 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	@Override
 	protected void init() {
 		super.init();
-		editingName = false;
+        navigationButtons.clear(); rosterSignature="";
+		nameField = null;
+		confirmNameButton = null;
 		this.titleX = 8;
 		this.titleY = 5;
 
 		// 右侧竖排页签栏。位置全部由 TAB_RAIL_* 算出来，加一页不用改任何数。
 		for (int i = 0; i < TAB_KEYS.length; i++) {
 			final int index = i;
-			addDrawableChild(ButtonWidget.builder(Text.translatable(TAB_KEYS[i]),
+			navigationButtons.add(addDrawableChild(ButtonWidget.builder(Text.translatable(TAB_KEYS[i]),
 					b -> selectTab(index))
 				.dimensions(x + TAB_RAIL_X, y + TAB_RAIL_TOP + i * TAB_RAIL_PITCH,
-					TAB_RAIL_W, TAB_RAIL_H).build());
+					TAB_RAIL_W, TAB_RAIL_H).build()));
 		}
 
 		buildStateRow();
+        addDrawableChild(ButtonWidget.builder(Text.translatable("squire.gui.panel.recall"),b -> {
+            var packet=PacketByteBufs.create();packet.writeVarInt(handler.syncId);
+            ClientPlayNetworking.send(SquireScreens.RECALL_PANEL_PACKET,packet);
+        }).dimensions(x+TAB_RAIL_X,y+RECALL_BUTTON_Y,TAB_RAIL_W,18).build());
 
 		chatField = new TextFieldWidget(textRenderer, x + 8, y + PANEL_HEIGHT - 22,
 			PANEL_WIDTH - 60, 16, Text.translatable("squire.gui.chat.placeholder"));
@@ -366,7 +416,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				Text.translatable("squire.gui.chat.send"), b -> sendChat())
 			.dimensions(x + PANEL_WIDTH - 48, y + PANEL_HEIGHT - 23, 40, 18).build());
 
-		buildNameEditor();
 
 		applyTab();
 	}
@@ -423,8 +472,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	// ------------------------------------------------------------------ 切页
 
 	private void selectTab(int next) {
-		tab = next;
-		pageScroll = 0;
+		REMEMBERED_SCROLL.put(currentAgentKey()+"/"+tab,pageScroll);
+        tab = next;
+        if (!currentAgentKey().isEmpty()) REMEMBERED_TABS.put(currentAgentKey(), tab);
+		pageScroll = REMEMBERED_SCROLL.getOrDefault(currentAgentKey()+"/"+tab,0);
 		editingShortcut = -1; // 切页就退出编辑态，免得回来时停在半截
 		editorEntryId = "";
 		editorArg = "";
@@ -435,34 +486,18 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		applyTab();
 	}
 
-	/**
-	 * 指令页上那些「常用动作」的导航格：点一下换到另一页，而不是对侍从做什么。
-	 *
-	 * <p>「基础施工」「材料配置」「蓝图参数」都不是新功能，它们本来就在工程页；
-	 * 指令页只是把入口摆到玩家会去找的地方。真正的参数照旧留在工程页——
-	 * 指令页首页放不下、也不该放那一整屏参数。</p>
-	 */
-	private void navigate(dev.squire.server.gui.CommandCatalog.Nav target) {
-		switch (target) {
-			case PROJECT -> selectTab(TAB_PROJECT);
-			case PROJECT_MATERIALS -> {
-				selectTab(TAB_PROJECT);
-				editingMaterials = true;
-				applyTab();
-			}
-			case PROJECT_DESIGN -> {
-				selectTab(TAB_PROJECT);
-				editingDesign = true;
-				applyTab();
-			}
-			case PROFESSION -> selectTab(TAB_PROFESSION);
-			case NONE -> { }
-		}
-	}
-
 	@Override
 	public void handledScreenTick() {
 		super.handledScreenTick();
+        refreshRoster();
+        syncNameEditor();
+        if (restoreNameFocus) {
+            restoreNameFocus = false;
+            if (nameField != null && nameField.visible) {
+                setFocused(nameField);
+                nameField.setFocused(true);
+            }
+        }
 		// 刚存下的快捷指令要立刻变成一个按钮。状态是服务端推过来的，客户端这边
 		// 只有重建这一页才能看到——否则玩家得切一次页签才发现自己存成功了。
 		// 编辑态里不重建：那会把玩家正在打的字冲掉。
@@ -498,7 +533,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		String projectSignature = projectSignature();
 		if (!projectSignature.equals(projectShown)) {
 			projectShown = projectSignature;
-			if (tab == TAB_PROJECT && !editingMaterials && !editingDesign) {
+			if (tab == TAB_PROJECT) {
 				applyTab();
 			}
 		}
@@ -530,8 +565,9 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		return state.hasProject() + "/" + state.hasPlacement() + "/"
 			+ state.projectState() + "/" + state.blockerCode() + "/"
 			+ state.blockedReason() + "/" + state.siteExecutable() + "/"
-			+ state.materialChoices().size() + "/" + state.stages().size() + "/"
-			+ state.materialLines().size() + "/" + state.siteIssues().size();
+			+ state.placementBlueprintId() + "/" + state.materialChoices() + "/"
+			+ state.stages().size() + "/" + state.materialLines() + "/"
+			+ state.siteIssues() + "/" + state.profession().catalogVersion();
 	}
 
 	private String projectShown = "";
@@ -546,6 +582,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 * 两件事必须一起做，否则要么控件泄漏，要么物品泄漏。
 	 */
 	private void applyTab() {
+		restoreNameFocus |= nameField != null && nameField.isFocused();
+		setFocused(null);
+		nameField = null;
+		confirmNameButton = null;
 		pageWidgets.forEach(this::remove);
 		pageWidgets.clear();
 		permissionButtons.clear();
@@ -563,6 +603,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		pageTexts.clear();
 		pageDecos.clear();
 		materialConfigButton = null;
+		forceCancelProjectButton = null;
 		promoteButton = null;
 		followDistanceButton = null;
 		combatModeButton = null;
@@ -570,12 +611,13 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		rerollPersonalityButton = null;
 		pageWidgetBaseY.clear();
 		beginPage();
-		handler.setSlotsVisible(tab == TAB_ITEMS);
+		handler.setSlotsVisible(tab == TAB_ITEMS && handler.inventoryAccessible);
 		// 离开物品页时背囊视图必须一起关掉：那两套槽位在同一个位置上，
 		// 留着的话回来时会看到"两层格子"。
 		handler.setShowingBackpack(tab == TAB_ITEMS && showingBackpack);
 		if (tab == TAB_ITEMS) {
 			buildItemsPage();
+            if(!handler.inventoryAccessible) addNote(Text.translatable("squire.gui.panel.remote_items"),TEXT_WARN);
 		} else if (tab == TAB_COMMAND) {
 			buildCommandPage();
 		} else if (tab == TAB_PERMISSIONS) {
@@ -585,12 +627,14 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		} else if (tab == TAB_PROFESSION) {
 			buildProfessionPage();
 		} else if (tab == TAB_PROJECT) {
-			if (editingDesign) {
+            if (guardPanel()) {buildGuardDashboard();}
+			else if (editingDesign) {
 				buildDesignPage();
 			} else if (editingMaterials) {
 				buildMaterialPage();
 			} else {
 				buildProjectPage();
+                buildRecoveryActions();
 			}
 		}
 		boolean showChat = tab != TAB_ITEMS;
@@ -600,6 +644,12 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			chatSendButton.visible = showChat;
 		}
 		captureScrollableLayout();
+        if(!handler.bodyAvailable) {
+            pageWidgets.forEach(w -> w.active=false);
+            stateRowWidgets.forEach(w -> w.active=false);
+            chatField.setEditable(false);chatSendButton.active=false;
+        } else {stateRowWidgets.forEach(w -> w.active=true);chatSendButton.active=true;}
+        if (forceCancelProjectButton != null) forceCancelProjectButton.active = true;
 	}
 
 	// ------------------------------------------------------------------ 布局游标
@@ -697,16 +747,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 
 	// ------------------------------------------------------------------ 滚动
 
-	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (button == 0 && !editingName
-				&& mouseX >= x + titleX && mouseX <= x + headerNameHitRight
-				&& mouseY >= y + titleY - 2 && mouseY <= y + titleY + LINE_H + 2) {
-			beginNameEdit();
-			return true;
-		}
-		return super.mouseClicked(mouseX, mouseY, button);
-	}
 
 	private void captureScrollableLayout() {
 		if (tab == TAB_ITEMS) {
@@ -736,6 +776,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			widget.setY(base - pageScroll);
 			widget.visible = widget.getY() >= top
 				&& widget.getY() + widget.getHeight() <= bottom;
+            if (!widget.visible && widget.isFocused()) setFocused(null);
 		}
 	}
 
@@ -774,6 +815,13 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 * 玩家背包的标题在 {@code y=145}，中间正好塞得下一个 18 高的按钮。</p>
 	 */
 	private void buildItemsPage() {
+        if (guardPanel()) {
+            var equip = addPageWidget(ButtonWidget.builder(Text.translatable("squire.gui.items.equip"),
+                b -> click(SquireScreenHandler.BUTTON_AUTO_EQUIP_BEST_ARMOR))
+                .dimensions(x + TAB_RAIL_X, y + EQUIP_BUTTON_Y, TAB_RAIL_W, BTN_H).build());
+            equip.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(
+                Text.translatable("squire.gui.button.auto_equip_best_armor")));
+        }
 		int index = 0;
 		for (SquireActions.Action action : SquireActions.ofPage(SquireActions.Page.ITEMS)) {
 			final int id = action.id();
@@ -826,15 +874,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 
 	// ------------------------------------------------------------------ 指令页
 
-	/**
-	 * 指令页：<b>常用动作</b> + <b>我的快捷</b>。
-	 *
-	 * <p>它回答两个问题，各占半页：「这只侍从<em>现在</em>能做什么」和
-	 * 「我最常让它做什么」。上半张不是一份写死的按钮表——它由
-	 * {@link dev.squire.server.gui.CommandCatalog} 按职业、等级、已解锁能力和当前
-	 * 状态算出来，没解锁的一格<b>不画</b>，只在下面留一行「下一相关能力 Lv.X 解锁」。
-	 * 画一排灰按钮是上一版指挥页的做法，它让玩家反复去点一个永远点不动的东西。</p>
-	 */
+	/** Custom shortcuts and their editor; no duplicate built-in action dashboard. */
 	private void buildCommandPage() {
 		shortcutNamesShown = List.copyOf(handler.state().shortcuts());
 		commandSignatureShown = commandSignature();
@@ -842,12 +882,12 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			buildShortcutEditor();
 			return;
 		}
-		buildCommonActions();
+		addWrappedNote(Text.translatable("squire.gui.shortcuts.purpose"), TEXT_MUTED);
 		gap(4);
 		buildShortcutGrid();
 	}
 
-	/** 「常用动作」这半张的指纹：变了就得重排（转职、升级、开工、放蓝图）。 */
+	/** Refresh shortcut locks when profession or execution prerequisites change. */
 	private String commandSignature() {
 		var context = dev.squire.server.gui.CommandCatalog.Context.of(handler.state());
 		StringBuilder out = new StringBuilder();
@@ -856,73 +896,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		}
 		var next = dev.squire.server.gui.CommandCatalog.nextUnlock(context);
 		return out.append('|').append(next == null ? "" : next.id()).toString();
-	}
-
-	/**
-	 * 上半张：现在真的点得动的那几格。
-	 *
-	 * <p>普通格两列等分；数量、材质、巡逻点这类<b>同一件事的几个档</b>缩成一排小格，
-	 * 说明在左。碰到紧凑行时列游标要归零，否则一行会剩半格空着。</p>
-	 */
-	private void buildCommonActions() {
-		addSection("squire.gui.command.common");
-		var context = dev.squire.server.gui.CommandCatalog.Context.of(handler.state());
-		var entries = dev.squire.server.gui.CommandCatalog.visible(context);
-		dev.squire.server.gui.CommandCatalog.Entry equipment = null;
-		int column = 0;
-		int top = 0;
-		for (var entry : entries) {
-			if ("equip.self".equals(entry.id())) {
-				equipment = entry;
-				continue;
-			}
-			if (entry.compact()) {
-				column = 0; // 紧凑行独占一整条，不和上一行的半格拼在一起
-				addCompactEntry(entry);
-				continue;
-			}
-			if (column == 0) {
-				top = take(BTN_H + 3);
-			}
-			addEntryButton(entry, column, top);
-			column = (column + 1) % 2;
-		}
-		nextUnlockY = take(LINE_H + 4);
-		if (equipment != null) {
-			gap(3);
-			addSection("squire.gui.command.equipment_supplies");
-			var variant = equipment.defaultVariant();
-			if (variant != null) {
-				int equipmentTop = take(BTN_H + 3);
-				final int actionId = variant.actionId();
-				addPageWidget(ButtonWidget.builder(
-						Text.translatable("squire.gui.button.auto_equip_best_armor"),
-						b -> click(actionId))
-					.dimensions(x + CONTENT_MARGIN, y + equipmentTop,
-						contentWidth(), BTN_H).build());
-			}
-		}
-	}
-
-	/** 「下一相关能力」那一行画在哪。文字每帧现取，所以位置排死。 */
-	private int nextUnlockY;
-
-	/** 一个普通动作格：导航格跳页，动作格直接点。 */
-	private void addEntryButton(dev.squire.server.gui.CommandCatalog.Entry entry,
-			int column, int top) {
-		Text label = Text.translatable(entry.labelKey());
-		if (entry.navigates()) {
-			final var target = entry.nav();
-			addPageWidget(ButtonWidget.builder(label, b -> navigate(target))
-				.dimensions(x + columnX(column, 2), y + top, columnWidth(2), BTN_H)
-				.build());
-			return;
-		}
-		var variant = entry.defaultVariant();
-		if (variant == null) {
-			return; // 既不导航也没有档位：这一格没有出路，宁可不画
-		}
-		addRowButton(label, variant.actionId(), column, 2, top);
 	}
 
 	/**
@@ -1115,6 +1088,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 * 抄一份的代价是两页说的话迟早不一样。</p>
 	 */
 	private void buildBehaviourPage() {
+		buildNameEditor();
 		addSection("squire.gui.profile.autonomy");
 		int top = take(BTN_H + 3);
 		var levels = dev.squire.server.profile.AutonomyLevel.values();
@@ -1150,6 +1124,9 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			TEXT_MUTED);
 		gap(2);
 
+		addSection("squire.gui.profile.patrol");
+		addCompactEntry(dev.squire.server.gui.CommandCatalog.byId("patrol.points"));
+		gap(4);
 		addSection("squire.gui.personality.title");
 		personalitySignatureShown = personalitySignature();
 		var traits = new ArrayList<dev.squire.server.profile.Trait>();
@@ -1287,6 +1264,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 */
 	private void buildProfessionPage() {
 		var view = handler.state().profession();
+
 		if (confirmingProfession != null) {
 			buildProfessionConfirm();
 			return;
@@ -1340,42 +1318,53 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		buildProfessionExtra(view);
 	}
 
-	/** 守卫是姿态 + 补给，工程师是尺寸上限 + 蓝图库入口。 */
+	/** Guard work page: stance, combat, recovery and supply status. */
+    private void buildGuardDashboard() {
+        addSection("squire.gui.panel.guard");
+        var view=handler.state().profession();
+        addSection(view.can(dev.squire.server.profession.ProfessionAbility.GUARD_COMBAT_STANCE)
+            ? Text.translatable("squire.gui.profession.stance")
+            : Text.translatable("squire.gui.profession.stance_locked",
+                dev.squire.server.profession.ProfessionAbility.GUARD_COMBAT_STANCE.unlockLevel()));
+        int top=take(BTN_H+4);
+        var stances=dev.squire.server.profession.CombatStance.values();
+        for(var stance:stances) {
+            var action=SquireActions.byId(SquireScreenHandler.BUTTON_STANCE_BASE+stance.ordinal());
+            var button=addRowButton(Text.translatable(action.labelKey()),action.id(),stance.ordinal(),stances.length,top);
+            button.active=view.can(dev.squire.server.profession.ProfessionAbility.GUARD_COMBAT_STANCE);
+            if (!button.active) lockedButtons.add(button);
+        }
+        addSection("squire.gui.work.combat");
+        addActionRows(new int[]{SquireScreenHandler.BUTTON_GUARD_ATTACK,
+            SquireScreenHandler.BUTTON_TASK_STOP, SquireScreenHandler.BUTTON_GUARD_START,
+            SquireScreenHandler.BUTTON_GUARD_STOP});
+        buildRecoveryActions();
+        addSection("squire.gui.profession.supplies");
+        addWrappedNote(Text.translatable("squire.gui.profession.supply_counts",view.food(),view.potions(),view.arrows(),view.backupWeapons()),TEXT_LABEL);
+        addWrappedNote(Text.translatable("squire.gui.work.supplies_hint"),TEXT_MUTED);
+    }
+    private void addActionRows(int[] actions) {
+        for (int i = 0; i < actions.length; i += 2) {
+            int top = take(BTN_H + 4);
+            for (int j = 0; j < 2 && i + j < actions.length; j++) {
+                var action = SquireActions.byId(actions[i + j]);
+                addRowButton(Text.translatable(action.labelKey()), action.id(), j, 2, top);
+            }
+        }
+    }
+
+    private void buildRecoveryActions() {
+        gap(4);
+        addSection("squire.gui.work.recovery");
+        addActionRows(new int[]{SquireScreenHandler.BUTTON_AID_OWNER, SquireScreenHandler.BUTTON_HEAL_SELF});
+    }
+
+    private boolean guardPanel() {return handler.state().profession().profession()==dev.squire.server.profession.SquireProfession.GUARD;}
+
 	private void buildProfessionExtra(dev.squire.server.gui.ProfessionView view) {
-		if (view.profession() == dev.squire.server.profession.SquireProfession.GUARD) {
-			boolean unlocked = view.can(dev.squire.server.profession.ProfessionAbility
-				.GUARD_COMBAT_STANCE);
-			addSection(unlocked ? Text.translatable("squire.gui.profession.stance")
-				: Text.translatable("squire.gui.profession.stance_locked",
-					dev.squire.server.profession.ProfessionAbility.GUARD_COMBAT_STANCE
-						.unlockLevel()));
-			int top = take(BTN_H + 4);
-			var stances = dev.squire.server.profession.CombatStance.values();
-			int stanceBase = SquireScreenHandler.BUTTON_STANCE_BASE;
-			for (SquireActions.Action action : SquireActions.ofPage(
-					SquireActions.Page.PROFESSION)) {
-				int id = action.id();
-				if (id < stanceBase || id >= stanceBase + stances.length) {
-					continue;
-				}
-				ButtonWidget button = addRowButton(Text.translatable(action.labelKey()),
-					id, id - stanceBase, stances.length, top);
-				button.active = unlocked;
-				if (!unlocked) {
-					lockedButtons.add(button);
-				}
-			}
-			professionExtraY = take(LINE_H * GUARD_SUPPLY_LINES);
-			return;
-		}
-		addSection("squire.gui.profession.engineer");
-		professionExtraY = take(LINE_H + 3);
-		addPageWidget(ButtonWidget.builder(
-				Text.translatable("squire.gui.button.open_blueprint"),
-				b -> selectTab(TAB_PROJECT))
-			.dimensions(x + CONTENT_MARGIN, y + take(BTN_H), contentWidth(), BTN_H)
-			.build());
-	}
+        addSection("squire.gui.profile.capability_summary");
+        professionExtraY = take(LINE_H + 3);
+    }
 
 	/** Lv.0：训练清单 + 两个转职按钮。 */
 	private void buildTrainingPage(dev.squire.server.gui.ProfessionView view) {
@@ -1383,8 +1372,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		trainingBarY = take(7);
 		professionXpY = take(LINE_H + 4);
 		addSection("squire.gui.profession.training_list");
-		trainingListY = take(dev.squire.server.profession.TrainingMilestone.values()
-			.length * LINE_H + 4);
+		trainingListY = take(dev.squire.server.profession.TrainingMilestone.required()
+			.size() * LINE_H + 4);
 		professionExtraY = take(LINE_H + 4);
 
 		int top = take(BTN_H);
@@ -1397,6 +1386,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				continue;
 			}
 			final var target = professions[id - chooseBase];
+			boolean taken = handler.state().roster().stream()
+				.map(PanelState::decodeRosterEntry).flatMap(java.util.Optional::stream)
+				.anyMatch(entry -> !entry.current()
+					&& target.id().equals(entry.professionId()));
 			// 点转职<b>不直接发包</b>：先进确认态。这一步纯客户端，服务端那一侧
 			// 仍然会把条件重新验一遍。
 			ButtonWidget button = addPageWidget(ButtonWidget.builder(
@@ -1406,7 +1399,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 					})
 				.dimensions(x + columnX(id - chooseBase, professions.length), y + top,
 					columnWidth(professions.length), BTN_H).build());
-			button.active = view.trainingComplete();
+			button.active = view.trainingComplete() && !taken;
 			if (!button.active) {
 				lockedButtons.add(button);
 			}
@@ -1469,12 +1462,17 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		addSection("squire.gui.project.current");
 
 		if (state.hasProject()) {
+			buildForceCancelProjectButton();
 			projectStatusY = take(LINE_H + 2);
 			projectStageY = take(state.stages().size() * LINE_H + 4);
 			if (!state.blockedReason().isEmpty()) {
 				// 阻塞原因是一段变长的人话（可能列着一串缺料）。预留三行，
 				// 画的时候也只画三行——多出来的用省略号收住，绝不铺到按钮上。
 				gap(LINE_H * BLOCKED_REASON_LINES + 2);
+			}
+			if ("MATERIALS_MISSING".equals(state.blockerCode())
+					&& !state.materialLines().isEmpty()) {
+				gap(LINE_H * state.materialLines().size() + 2);
 			}
 			boolean needsRetry = !state.blockerCode().isEmpty()
 				|| state.stages().stream().anyMatch(line -> line.endsWith(":BLOCKED")
@@ -1501,15 +1499,36 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		}
 
 		if (state.hasPlacement()) {
-			projectStatusY = take(LINE_H * 3 + 4);
+			projectStatusY = take(LINE_H
+				* (2 + Math.max(1, state.siteIssues().size())) + 4);
+			if (dev.squire.server.blueprint.TerrainLeveling.parse(state.placementBlueprintId()).isPresent()) {
+				buildTerrainControls();
+				return;
+			}
 			addSection("squire.gui.project.adjust");
+			addWrappedNote(Text.translatable("squire.gui.project.direction_hint"),
+				TEXT_MUTED);
 			int top = take(BTN_H + 3);
-			addPlacementRow(top, SquireScreenHandler.BUTTON_BLUEPRINT_ROTATE,
-				SquireScreenHandler.BUTTON_BLUEPRINT_FORWARD,
-				SquireScreenHandler.BUTTON_BLUEPRINT_BACK);
+			// A small D-pad: forward is physically above back, and left/right are
+			// physically beside it. Rotate stays adjacent without pretending to be a
+			// direction. This is much easier to read than two arbitrary button rows.
+			addProjectButton(Text.translatable("squire.gui.button.blueprint_forward"),
+				SquireScreenHandler.BUTTON_BLUEPRINT_FORWARD, 1, 3, top);
+			addProjectButton(Text.translatable("squire.gui.button.blueprint_rotate"),
+				SquireScreenHandler.BUTTON_BLUEPRINT_ROTATE, 2, 3, top);
 			top = take(BTN_H + 4);
-			addPlacementRow(top, SquireScreenHandler.BUTTON_BLUEPRINT_LEFT,
-				SquireScreenHandler.BUTTON_BLUEPRINT_RIGHT);
+			addProjectButton(Text.translatable("squire.gui.button.blueprint_left"),
+				SquireScreenHandler.BUTTON_BLUEPRINT_LEFT, 0, 3, top);
+			addProjectButton(Text.translatable("squire.gui.button.blueprint_back"),
+				SquireScreenHandler.BUTTON_BLUEPRINT_BACK, 1, 3, top);
+			addProjectButton(Text.translatable("squire.gui.button.blueprint_right"),
+				SquireScreenHandler.BUTTON_BLUEPRINT_RIGHT, 2, 3, top);
+			if (state.siteIssues().stream().anyMatch(s -> s.startsWith("水域："))) {
+				top = take(BTN_H + 4);
+				addProjectButton(Text.translatable("squire.gui.button.water_mode"), SquireScreenHandler.BUTTON_WATER_MODE, 0, 3, top);
+				addProjectButton(Text.translatable("squire.gui.button.water_source"), SquireScreenHandler.BUTTON_WATER_SOURCE, 1, 3, top);
+				addProjectButton(Text.translatable("squire.gui.button.water_supplied"), SquireScreenHandler.BUTTON_WATER_SUPPLIED, 2, 3, top);
+			}
 
 			top = take(BTN_H + 4);
 			materialConfigButton = addPageWidget(ButtonWidget.builder(
@@ -1521,7 +1540,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			materialConfigButton.active = !state.materialChoices().isEmpty();
 			// Blueprint design is a profession feature, not a different project page.
 			if (state.profession().profession()
-					== dev.squire.server.profession.SquireProfession.ENGINEER) {
+					== dev.squire.server.profession.SquireProfession.ENGINEER
+					&& dev.squire.server.blueprint.ProjectSpec.parse(state.placementBlueprintId()).isPresent()) {
 				addPageWidget(ButtonWidget.builder(
 						Text.translatable("squire.gui.button.design_open"), b -> {
 							editingDesign = true;
@@ -1535,43 +1555,109 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				SquireScreenHandler.BUTTON_PROJECT_CONFIRM, 0, 2, top);
 			addProjectButton(Text.translatable("squire.gui.button.project_transfer"),
 				SquireScreenHandler.BUTTON_PROJECT_TRANSFER, 1, 2, top);
+			top = take(BTN_H + 4);
+			addProjectButton(Text.translatable(
+				"squire.gui.button.project_cancel_preview"),
+				SquireScreenHandler.BUTTON_PROJECT_CANCEL, 0, 1, top);
 			return;
 		}
 
 		projectStatusY = take(LINE_H + 4);
-		// 「基础施工」不是工程师的东西：这五个固定模板走的是面板路径，谁都点得动，
-		// 尺寸和结构都改不了。名字必须说清楚这一点，否则一个守卫看到一排建筑按钮，
-		// 会以为自己还是个完整的建筑职业。
-		addSection("squire.gui.project.basic");
-		addWrappedNote(Text.translatable("squire.gui.project.basic_note"), TEXT_MUTED);
-		var chooser = new ArrayList<SquireActions.Action>();
-		for (SquireActions.Action action : SquireActions.ofPage(
-				SquireActions.Page.PROJECT)) {
-			if (isProjectChooser(action.id())) {
-				chooser.add(action);
+		if (state.profession().profession()
+				!= dev.squire.server.profession.SquireProfession.ENGINEER) {
+			addWrappedNote(Text.translatable("squire.gui.project.engineer_only"), TEXT_LOCK);
+			return;
+		}
+		// Player content is the family/Tier catalog; procedural recovery stays backend-only.
+		addRowButton(Text.translatable("squire.gui.terrain.open"), SquireScreenHandler.BUTTON_TERRAIN_BASE, 0, 1, take(BTN_H + 4));
+		buildBlueprintLibrary();
+	}
+
+	private void buildTerrainControls() {
+		addWrappedNote(Text.translatable("squire.gui.terrain.hint"), TEXT_MUTED);
+		var actions = dev.squire.server.runtime.TerrainLevelingService.Action.values();
+		for (int i = 1; i < actions.length; i += 2) {
+			int top = take(BTN_H + 3);
+			for (int col = 0; col < 2 && i + col < actions.length; col++) {
+				var action = actions[i + col];
+				addProjectButton(Text.translatable("squire.gui.terrain." + action.name().toLowerCase(java.util.Locale.ROOT)),
+					SquireScreenHandler.BUTTON_TERRAIN_BASE + action.ordinal(), col, 2, top);
 			}
 		}
-		for (int i = 0; i < chooser.size(); i++) {
-			if (i % 2 == 0) {
-				projectQuickRowTop = take(BTN_H + 3);
-			}
-			SquireActions.Action action = chooser.get(i);
-			addRowButton(Text.translatable(action.labelKey()), action.id(), i % 2, 2,
-				projectQuickRowTop);
-		}
-		gap(4);
-		buildTemplateLibrary();
+		int top = take(BTN_H + 4);
+		addProjectButton(Text.translatable("squire.gui.button.project_confirm"), SquireScreenHandler.BUTTON_PROJECT_CONFIRM, 0, 2, top);
+		addProjectButton(Text.translatable("squire.gui.button.project_cancel_preview"), SquireScreenHandler.BUTTON_PROJECT_CANCEL, 1, 2, top);
 	}
 
 	private int projectQuickRowTop;
+	private String catalogCategory = "";
+	private boolean catalogUnlockedOnly;
+	private int catalogTier;
+
+	/** Dynamic fixed/external catalog sent by the server after every data-pack reload. */
+	private void buildBlueprintLibrary() {
+		addSection("squire.gui.project.blueprint_catalog");
+		addWrappedNote(Text.translatable("squire.gui.project.blueprint_catalog_note"), TEXT_MUTED);
+		addWrappedNote(Text.literal(handler.state().profession().constructionGrowth()), TEXT_MUTED);
+		var library = handler.state().profession().blueprintLibrary();
+		int filterTop = take(SMALL_BTN_H + 2);
+		addPageWidget(ButtonWidget.builder(catalogCategory.isEmpty() ? Text.translatable("squire.gui.catalog.all_categories")
+			: Text.translatable("squire.gui.catalog.category", Text.literal(catalogCategory)), b -> {
+			var categories = library.stream().map(dev.squire.server.gui.ProfessionView.BlueprintEntry::category).distinct().toList();
+			int next = categories.indexOf(catalogCategory) + 1;
+			catalogCategory = next >= categories.size() ? "" : categories.get(next); applyTab();
+		}).dimensions(x + columnX(0, 2), y + filterTop, columnWidth(2), SMALL_BTN_H).build());
+		addPageWidget(ButtonWidget.builder(Text.translatable(catalogUnlockedOnly ? "squire.gui.catalog.unlocked" : "squire.gui.catalog.all_levels"), b -> {
+			catalogUnlockedOnly = !catalogUnlockedOnly; applyTab();
+		}).dimensions(x + columnX(1, 2), y + filterTop, columnWidth(2), SMALL_BTN_H).build());
+		if (library.stream().anyMatch(e -> !"family".equals(e.kind()))) {
+			int tierTop = take(SMALL_BTN_H + 2);
+			addPageWidget(ButtonWidget.builder(Text.literal(catalogTier == 0 ? "全部 Tier / 组件" : "Tier " + catalogTier), b -> {
+				catalogTier = (catalogTier + 1) % 6; applyTab();
+			}).dimensions(x + CONTENT_MARGIN, y + tierTop, contentWidth(), SMALL_BTN_H).build());
+		}
+		String category = "";
+		int item = 0;
+		for (int i = 0; i < library.size(); i++) {
+			var entry = library.get(i);
+			if (!"family".equals(entry.kind()) && catalogTier > 0 && entry.tier() != catalogTier) continue;
+			if (!catalogCategory.isEmpty() && !catalogCategory.equals(entry.category()) || catalogUnlockedOnly && !entry.allowed()) continue;
+			if (!entry.category().equals(category)) {
+				category = entry.category();
+				item = 0;
+				addNote(Text.literal(category), TEXT_GOLD);
+			}
+			if (item % 2 == 0) projectQuickRowTop = take(SMALL_BTN_H + 2);
+			boolean unlocked = "family".equals(entry.kind()) || entry.unlockedAt(handler.state().profession().level());
+			Text label = Text.literal("family".equals(entry.kind()) ? "" : unlocked ? "✓ " : "🔒 ")
+				.append(Text.literal(entry.displayName()))
+				.append("family".equals(entry.kind()) ? Text.literal(" ›") : entry.minLevel() > 10 ? Text.translatable("squire.gui.catalog.over_limit") : Text.literal(" · Lv." + entry.minLevel()));
+			ButtonWidget button = addPageWidget(ButtonWidget.builder(label,
+				b -> {
+					if ("family".equals(entry.kind())) { catalogCategory = ""; catalogTier = 0; }
+					var packet = PacketByteBufs.create(); packet.writeVarInt(handler.syncId);
+					packet.writeString(entry.id(), 512); packet.writeLong(handler.state().profession().catalogVersion());
+					ClientPlayNetworking.send(SquireScreens.BLUEPRINT_SELECT_PACKET, packet);
+					editingDesign = "parametric".equals(entry.kind());
+				})
+				.dimensions(x + columnX(item % 2, 2), y + projectQuickRowTop,
+					columnWidth(2), SMALL_BTN_H).build());
+			button.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(Text.literal(
+				("family".equals(entry.kind()) ? "建筑家族" : Text.translatable("parametric".equals(entry.kind()) ? "squire.gui.catalog.parametric" : "squire.gui.catalog.fixed").getString()) + "\n"
+				+ ("family".equals(entry.kind()) ? "" : entry.width() + "×" + entry.height() + "×" + entry.depth() + "\n")
+				+ entry.author() + " · " + entry.style() + "\n" + entry.license() + "\n" + entry.source()
+				+ (entry.reason().isEmpty() ? "" : "\n" + entry.reason()))));
+			button.active = unlocked;
+			if (!unlocked) lockedButtons.add(button);
+			item++;
+		}
+	}
 
 	/**
 	 * 工程师专属的那一半：参数化蓝图库。
 	 *
-	 * <p>和上面的「基础施工」<b>分开写出来</b>，是这一页最需要说清楚的一件事。
-	 * 上面那五个是固定模板，谁都能点；这里的旋转、多层、结构变体、模块化、预设
-	 * 只有工程师有。守卫看到的不是一片空白，而是一段写明「转职之后解锁什么」的
-	 * 灰字——否则他只会觉得这一页对他没用，而不知道这条线通向哪儿。</p>
+	 * <p>和上面的资源蓝图库分开：上面是按 metadata 等级解锁的成品建筑；这里是旧版
+	 * 参数化设计器，保留旋转、多层、结构变体、模块化和预设等既有功能。</p>
 	 */
 	private void buildTemplateLibrary() {
 		addSection("squire.gui.project.library");
@@ -1584,6 +1670,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		}
 		projectLibraryRows = (library.size() + 1) / 2;
 		projectLibraryY = layoutY;
+		int level = handler.state().profession().level();
 		for (int row = 0; row < projectLibraryRows; row++) {
 			int top = take(SMALL_BTN_H + 2);
 			for (int column = 0; column < 2; column++) {
@@ -1591,23 +1678,43 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				if (index >= library.size()) {
 					break;
 				}
-				addCard(columnX(column, 2), top, columnX(column, 2) + columnWidth(2),
-					top + SMALL_BTN_H, COLOR_CARD);
+				var entry = library.get(index);
+				var template = dev.squire.server.blueprint.ProjectSpec.Template
+					.byId(entry.templateId());
+				Text label = Text.literal(entry.unlockedAt(level) ? "✔ " : "🔒 ")
+					.append(Text.translatable("squire.gui.template." + entry.templateId()))
+					.append(Text.literal(" · Lv." + entry.minLevel()));
+				ButtonWidget button = addPageWidget(ButtonWidget.builder(label, b -> {
+					editingDesign = true;
+					if (template != null) click(SquireScreenHandler.BUTTON_DESIGN_TEMPLATE_BASE
+						+ template.ordinal());
+					applyTab();
+				}).dimensions(x + columnX(column, 2), y + top, columnWidth(2),
+					SMALL_BTN_H).build());
+				button.active = template != null && entry.unlockedAt(level);
+				if (!button.active) lockedButtons.add(button);
 			}
 		}
 		gap(2);
 		addWrappedNote(Text.translatable("squire.gui.project.library_hint"), TEXT_MUTED);
 	}
 
-	private void addPlacementRow(int top, int... ids) {
-		for (int i = 0; i < ids.length; i++) {
-			SquireActions.Action action = SquireActions.byId(ids[i]);
-			if (action == null) {
-				continue;
-			}
-			addProjectButton(Text.translatable(action.labelKey()), action.id(), i,
-				ids.length, top);
-		}
+	private void buildForceCancelProjectButton() {
+		boolean[] confirming = {false};
+		forceCancelProjectButton = addPageWidget(ButtonWidget.builder(
+			Text.translatable("squire.gui.button.project_force_cancel"), button -> {
+				if (!confirming[0]) {
+					confirming[0] = true;
+					button.setMessage(Text.translatable("squire.gui.button.project_force_cancel_confirm"));
+					return;
+				}
+				click(SquireScreenHandler.BUTTON_PROJECT_FORCE_CANCEL);
+				confirming[0] = false;
+				button.setMessage(Text.translatable("squire.gui.button.project_force_cancel"));
+			}).dimensions(x + CONTENT_MARGIN, y + take(BTN_H + 4), contentWidth(), BTN_H).build());
+		forceCancelProjectButton.setTooltip(net.minecraft.client.gui.tooltip.Tooltip.of(
+			Text.translatable("squire.gui.project.force_cancel_note")));
+		addWrappedNote(Text.translatable("squire.gui.project.force_cancel_note"), TEXT_WARN);
 	}
 
 	private void addProjectButton(Text label, int buttonId, int col, int cols, int top) {
@@ -1665,8 +1772,13 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	 */
 	private void buildDesignPage() {
 		var view = handler.state().profession();
+		var spec = dev.squire.server.blueprint.ProjectSpec
+			.parse(handler.state().placementBlueprintId()).orElse(null);
 		addSection("squire.gui.design.title");
-		designSpecY = take(LINE_H + 4);
+		// Three live readout lines make every cycle button observable. ProjectSpec's
+		// short display name omits foundation/window/entrance/mirror, which made those
+		// clicks look like no-ops even though the server had accepted them.
+		designSpecY = take(LINE_H * 3 + 4);
 		var actions = SquireActions.ofPage(SquireActions.Page.DESIGN);
 		int row = -1;
 		int top = 0;
@@ -1675,7 +1787,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				row = action.row();
 				top = take(BTN_H + 3);
 			}
-			ButtonWidget button = addRowButton(Text.translatable(action.labelKey()),
+			ButtonWidget button = addRowButton(designButtonLabel(action, spec),
 				action.id(), action.col(), action.cols(), top);
 			var gate = SquireActions.DESIGN_GATES.get(action.id());
 			if (gate != null && !view.can(gate)) {
@@ -1694,6 +1806,67 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	}
 
 	private int designSpecY;
+
+	/** A cycle control says both what it changes and the value currently selected. */
+	private static Text designButtonLabel(SquireActions.Action action,
+			dev.squire.server.blueprint.ProjectSpec spec) {
+		if (spec == null) {
+			return Text.translatable(action.labelKey());
+		}
+		int id = action.id();
+		if (id == SquireScreenHandler.BUTTON_DESIGN_TEMPLATE) {
+			return Text.translatable("squire.gui.design.value.template",
+				Text.translatable("squire.gui.template." + spec.template().id()));
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_FLOORS) {
+			return Text.translatable("squire.gui.design.value.floors", spec.floors());
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_SIZE_DOWN) {
+			return Text.translatable("squire.gui.design.value.smaller", spec.width(),
+				spec.depth());
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_SIZE_UP) {
+			return Text.translatable("squire.gui.design.value.bigger", spec.width(),
+				spec.depth());
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_ROOF) {
+			return Text.translatable("squire.gui.design.value.roof",
+				designOption("roof", spec.roof().id()));
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_FOUNDATION) {
+			return Text.translatable("squire.gui.design.value.foundation",
+				designOption("foundation", spec.foundation().id()));
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_WINDOW) {
+			return Text.translatable("squire.gui.design.value.window",
+				designOption("window", spec.window().id()));
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_ENTRANCE) {
+			return Text.translatable("squire.gui.design.value.entrance",
+				designOption("entrance", spec.entrance().id()));
+		}
+		if (id == SquireScreenHandler.BUTTON_DESIGN_MIRROR) {
+			return Text.translatable("squire.gui.design.value.mirror", mirrorName(spec));
+		}
+		int moduleIndex = id - SquireScreenHandler.BUTTON_DESIGN_MODULE_BASE;
+		var modules = dev.squire.server.blueprint.ProjectSpec.Module.values();
+		if (moduleIndex >= 0 && moduleIndex < modules.length) {
+			boolean selected = spec.modules().contains(modules[moduleIndex]);
+			return Text.literal(selected ? "✓ " : "+ ")
+				.append(Text.translatable(action.labelKey()));
+		}
+		return Text.translatable(action.labelKey());
+	}
+
+	private static Text designOption(String group, String id) {
+		return Text.translatable("squire.gui.design." + group + "." + id);
+	}
+
+	private static Text mirrorName(dev.squire.server.blueprint.ProjectSpec spec) {
+		String state = spec.mirrorX() && spec.mirrorZ() ? "xz"
+			: spec.mirrorX() ? "x" : spec.mirrorZ() ? "z" : "none";
+		return Text.translatable("squire.gui.design.mirror." + state);
+	}
 
 	// ------------------------------------------------------------------ 快捷编辑
 
@@ -1829,7 +2002,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			drawShortcutEditor(context);
 			return;
 		}
-		drawNextUnlock(context);
 		var state = handler.state();
 		for (int slot = 0; slot < dev.squire.server.shortcut.ShortcutStore
 				.MAX_PER_PLAYER; slot++) {
@@ -1872,24 +2044,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			case LEVEL -> Text.translatable(lock.labelKey(), profession, lock.level());
 			default -> Text.translatable(lock.labelKey());
 		};
-	}
-
-	/** 「下一相关能力：Lv.X ...」。不画灰按钮，但也不让玩家以为到此为止。 */
-	private void drawNextUnlock(DrawContext context) {
-		var view = handler.state().profession();
-		var next = dev.squire.server.gui.CommandCatalog.nextUnlock(
-			dev.squire.server.gui.CommandCatalog.Context.of(handler.state()));
-		Text line;
-		if (!view.hasProfession()) {
-			line = Text.translatable("squire.gui.command.next_untrained");
-		} else if (next == null) {
-			line = Text.translatable("squire.gui.command.next_maxed");
-		} else {
-			line = Text.translatable("squire.gui.command.next", next.unlockLevel(),
-				Text.translatable(next.nameKey()));
-		}
-		drawClipped(context, line, CONTENT_MARGIN, nextUnlockY, contentWidth(),
-			next == null && view.hasProfession() ? TEXT_GOLD : TEXT_MUTED);
 	}
 
 	/** 编辑态：选中的动作加一圈绿框，选中的档位也是。 */
@@ -1941,7 +2095,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			return; // 服务端也会拒，但这里就不必先发一趟包再挨一句错误
 		}
 		var buf = PacketByteBufs.create();
-		buf.writeVarInt(editingShortcut);
+		buf.writeVarInt(handler.syncId);
+        buf.writeVarInt(editingShortcut);
 		buf.writeString(name,
 			dev.squire.server.shortcut.ShortcutStore.MAX_NAME_LENGTH);
 		buf.writeString(editorEntryId,
@@ -1955,53 +2110,54 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		applyTab();
 	}
 
-	private void buildNameEditor() {
-		nameField = addDrawableChild(new TextFieldWidget(textRenderer,
-			x + 8, y + 2, 108, 14, Text.translatable("squire.gui.rename.hint")));
-		nameField.setMaxLength(SquireScreens.MAX_NAME_LENGTH);
-		confirmNameButton = addDrawableChild(ButtonWidget.builder(
-				Text.translatable("squire.gui.rename.confirm"), b -> sendRename())
-			.dimensions(x + 120, y + 1, 42, 16).build());
-		cancelNameButton = addDrawableChild(ButtonWidget.builder(
-				Text.translatable("squire.gui.rename.cancel"), b -> cancelNameEdit())
-			.dimensions(x + 166, y + 1, 42, 16).build());
-		setNameEditorVisible(false);
-	}
+    private void syncNameEditor() {
+        String currentName = handler.state().agentName().isEmpty()
+            ? title.getString() : handler.state().agentName();
+        nameEdit.sync(currentAgentKey(), currentName);
+        if (nameField != null) {
+            if (!nameField.getText().equals(nameEdit.draft())) nameField.setText(nameEdit.draft());
+            var validation = dev.squire.server.profile.SquireName.validate(nameField.getText());
+            nameField.setEditableColor(validation.valid() ? TEXT_PRIMARY : TEXT_DANGER);
+            confirmNameButton.active = handler.bodyAvailable && nameEdit.dirty() && validation.valid();
+        }
+    }
 
-	private void beginNameEdit() {
-		if (nameField == null) {
-			return;
-		}
-		editingName = true;
-		nameField.setText(handler.state().agentName().isEmpty()
-			? title.getString() : handler.state().agentName());
-		nameField.setCursor(nameField.getText().length());
-		nameField.setEditableColor(TEXT_PRIMARY);
-		setNameEditorVisible(true);
-		setFocused(nameField);
-		nameField.setFocused(true);
-	}
+    private void buildNameEditor() {
+        syncNameEditor();
+        addSection("squire.gui.profile.identity");
+        addWrappedNote(Text.translatable("squire.gui.profile.identity_hint"), TEXT_MUTED);
+        int top = take(BTN_H + 4);
+        var row = PanelLayout.nameEditorRow(CONTENT_MARGIN, top, contentWidth(), BTN_H);
+        var input = row.get(0);
+        var save = row.get(1);
+        var reset = row.get(2);
+        nameField = addPageWidget(new TextFieldWidget(textRenderer,
+            x + input.left(), y + input.top(), input.right() - input.left(), BTN_H,
+            Text.translatable("squire.gui.rename.hint")));
+        nameField.setMaxLength(SquireScreens.MAX_NAME_LENGTH);
+        nameField.setText(nameEdit.draft());
+        nameField.setChangedListener(nameEdit::edit);
+        confirmNameButton = addPageWidget(ButtonWidget.builder(
+            Text.translatable("squire.gui.rename.save"), b -> sendRename())
+            .dimensions(x + save.left(), y + save.top(), save.right() - save.left(), BTN_H).build());
+        addPageWidget(ButtonWidget.builder(Text.translatable("squire.gui.rename.reset"),
+            b -> cancelNameEdit())
+            .dimensions(x + reset.left(), y + reset.top(), reset.right() - reset.left(), BTN_H).build());
+        syncNameEditor();
+        gap(4);
+    }
 
-	private void cancelNameEdit() {
-		editingName = false;
-		if (nameField != null) {
-			nameField.setFocused(false);
-		}
-		setFocused(null);
-		setNameEditorVisible(false);
-	}
-
-	private void setNameEditorVisible(boolean visible) {
-		if (nameField != null) {
-			nameField.visible = visible;
-			nameField.setEditable(visible);
-		}
-		if (confirmNameButton != null) confirmNameButton.visible = visible;
-		if (cancelNameButton != null) cancelNameButton.visible = visible;
-	}
+    private void cancelNameEdit() {
+        nameEdit.reset();
+        if (nameField != null) {
+            nameField.setText(nameEdit.draft());
+            nameField.setFocused(false);
+        }
+        setFocused(null);
+    }
 
 	private void sendRename() {
-		if (nameField == null) {
+		if (nameField == null || !handler.bodyAvailable || !nameEdit.dirty()) {
 			return;
 		}
 		var validation = dev.squire.server.profile.SquireName.validate(nameField.getText());
@@ -2009,11 +2165,14 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			nameField.setEditableColor(TEXT_DANGER);
 			return;
 		}
+		nameField.setText(validation.value());
 		var buf = PacketByteBufs.create();
 		buf.writeVarInt(handler.syncId);
 		buf.writeString(validation.value(), SquireScreens.MAX_NAME_LENGTH);
 		ClientPlayNetworking.send(SquireScreens.RENAME_PACKET, buf);
-		cancelNameEdit();
+		// Keep the draft until the server acknowledges the rename.
+		nameField.setFocused(false);
+		setFocused(null);
 	}
 
 	private void confirmPersonalityReroll() {
@@ -2025,6 +2184,15 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	}
 
 	private void click(int buttonId) {
+		if (buttonId >= SquireScreenHandler.BUTTON_TERRAIN_BASE && buttonId < SquireScreenHandler.BUTTON_TERRAIN_BASE + 12
+				|| !handler.terrainReview.isEmpty() && (buttonId == SquireScreenHandler.BUTTON_PROJECT_CONFIRM
+				|| buttonId == SquireScreenHandler.BUTTON_PROJECT_CANCEL || buttonId == SquireScreenHandler.BUTTON_PROJECT_PAUSE
+				|| buttonId == SquireScreenHandler.BUTTON_PROJECT_RESUME)) {
+			var packet = PacketByteBufs.create(); packet.writeVarInt(handler.syncId); packet.writeVarInt(buttonId);
+			packet.writeString(handler.terrainReview, 128);
+			ClientPlayNetworking.send(SquireScreens.TERRAIN_ACTION_PACKET, packet);
+			return;
+		}
 		if (client != null && client.interactionManager != null) {
 			client.interactionManager.clickButton(handler.syncId, buttonId);
 		}
@@ -2039,7 +2207,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			return;
 		}
 		var buf = PacketByteBufs.create();
-		buf.writeString(message, SquireScreens.MAX_CHAT_LENGTH);
+		buf.writeVarInt(handler.syncId);
+        buf.writeString(message, SquireScreens.MAX_CHAT_LENGTH);
 		ClientPlayNetworking.send(SquireScreens.CHAT_PACKET, buf);
 		chatField.setText("");
 		close();
@@ -2059,8 +2228,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				return true;
 			}
 			if (keyCode != 256) { // 除了 Esc，其它按键都交给输入框
-				return focused.keyPressed(keyCode, scanCode, modifiers)
-					|| super.keyPressed(keyCode, scanCode, modifiers);
+				focused.keyPressed(keyCode, scanCode, modifiers);
+				return true; // E/K character events must not reach inventory-close bindings.
 			}
 		}
 		return super.keyPressed(keyCode, scanCode, modifiers);
@@ -2069,7 +2238,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	private TextFieldWidget focusedField() {
 		for (TextFieldWidget field : new TextFieldWidget[] {
 				chatField, shortcutNameField, nameField}) {
-			if (field != null && field.isFocused()) {
+			if (field != null && field.visible && field.isFocused()) {
 				return field;
 			}
 		}
@@ -2185,7 +2354,8 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		} else if (tab == TAB_PROFESSION) {
 			drawProfessionPage(context);
 		} else if (tab == TAB_PROJECT) {
-			if (editingDesign) {
+            if (guardPanel()) { drawStanceSelection(context, handler.state().profession()); drawLockMarks(context); }
+			else if (editingDesign) {
 				drawDesignPage(context);
 			} else if (editingMaterials) {
 				drawMaterialPage(context);
@@ -2206,13 +2376,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 
 	/** 顶部一行读数：名字在左，职业/等级 · 血量 · 当前状态右对齐。 */
 	private void drawHeader(DrawContext context) {
-		if (editingName) {
-			if (confirmNameButton != null && nameField != null) {
-				confirmNameButton.active = dev.squire.server.profile.SquireName
-					.validate(nameField.getText()).valid();
-			}
-			return;
-		}
+        if(handler.state().roster().size()>1)return;
 		var view = handler.state().profession();
 		AvatarEntity.MovementMode mode = handler.mode();
 		int hp = handler.health();
@@ -2239,7 +2403,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		// 标题优先用状态包里的名字：{@code title} 是<b>开界面那一刻</b>定下的，
 		// 在面板里改完名它不会动，玩家会以为改名没生效。
 		Text liveTitle = (handler.state().agentName().isEmpty() ? title
-			: Text.literal(handler.state().agentName())).copy().append(" ✎");
+			: Text.literal(handler.state().agentName())).copy();
 		int titleRoom = jobX - titleX - 6;
 		net.minecraft.text.OrderedText shownTitle =
 			textRenderer.getWidth(liveTitle) <= titleRoom
@@ -2247,7 +2411,6 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				: Text.literal(textRenderer.trimToWidth(liveTitle.getString(),
 					Math.max(6, titleRoom - 6)) + "…").asOrderedText();
 		context.drawText(textRenderer, shownTitle, titleX, titleY, 0xFFFFFF, false);
-		headerNameHitRight = titleX + textRenderer.getWidth(shownTitle);
 	}
 
 	/** 当前档位加一圈绿框。三个按钮长得一样，不加框就看不出他现在是哪一档。 */
@@ -2459,11 +2622,11 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		}
 		drawGrowthRoute(context, view);
 		if (view.profession() == dev.squire.server.profession.SquireProfession.GUARD) {
-			drawGuardBlock(context, view);
-			drawStanceSelection(context, view);
-		} else {
-			drawEngineerBlock(context, view);
-		}
+            drawClipped(context, Text.translatable("squire.gui.profile.guard_growth", view.guardMaxHealth()),
+                CONTENT_MARGIN, professionExtraY, contentWidth(), TEXT_LABEL);
+        } else {
+            drawEngineerBlock(context, view);
+        }
 		drawLockMarks(context);
 	}
 
@@ -2587,7 +2750,7 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			view.trainingComplete() ? TEXT_OK : TEXT_MUTED, false);
 
 		int at = trainingListY;
-		for (var milestone : dev.squire.server.profession.TrainingMilestone.values()) {
+		for (var milestone : dev.squire.server.profession.TrainingMilestone.required()) {
 			boolean done = view.hasTrained(milestone);
 			drawClipped(context, Text.literal(done ? "✔ " : "· ")
 					.append(Text.translatable(milestone.nameKey())),
@@ -2633,47 +2796,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		}
 	}
 
-	/** 补给块占几行：一行标题 + 最多两行清单。 */
-	private static final int GUARD_SUPPLY_LINES = 3;
-
-	/**
-	 * 守卫块：补给概览。姿态按钮本身由动作表摆。
-	 *
-	 * <p>原来这是<b>一整行</b>：「补给 ♥30 3 食物 / 2 药水 / 64 箭 / 1 备用武器 / 弓 / 盾」，
-	 * 中文就已经 270px、比 240px 的内容区宽，英文更长——它是这一页最后一块，
-	 * 于是那一截直接横穿到页签栏上。现在拆成标题 + 折行清单，占几行是排进游标的；
-	 * 清单本身也不再是硬编码中文，跟着语言走。</p>
-	 */
-	private void drawGuardBlock(DrawContext context,
-			dev.squire.server.gui.ProfessionView view) {
-		context.drawText(textRenderer,
-			Text.translatable("squire.gui.profession.supplies")
-				.append(Text.literal("   ♥ " + view.guardMaxHealth())),
-			CONTENT_MARGIN, professionExtraY, TEXT_LABEL, false);
-		MutableText counts = Text.translatable("squire.gui.profession.supply_counts",
-			view.food(), view.potions(), view.arrows(), view.backupWeapons());
-		if (view.bow()) {
-			counts.append(" · ").append(
-				Text.translatable("squire.gui.profession.supply_bow"));
-		}
-		if (view.shield()) {
-			counts.append(" · ").append(
-				Text.translatable("squire.gui.profession.supply_shield"));
-		}
-		var lines = textRenderer.wrapLines(counts, contentWidth());
-		for (int i = 0; i < lines.size() && i < GUARD_SUPPLY_LINES - 1; i++) {
-			context.drawText(textRenderer, lines.get(i), CONTENT_MARGIN,
-				professionExtraY + (i + 1) * LINE_H, TEXT_MUTED, false);
-		}
-	}
-
 	/** 工程师块：尺寸上限。模板库在工程页。 */
 	private void drawEngineerBlock(DrawContext context,
 			dev.squire.server.gui.ProfessionView view) {
-		context.drawText(textRenderer,
-			Text.translatable("squire.gui.profession.engineer_limits",
-				view.maxFootprint(), view.maxFootprint()),
-			CONTENT_MARGIN, professionExtraY, TEXT_LABEL, false);
+		drawClipped(context, Text.literal(view.constructionGrowth()), CONTENT_MARGIN, professionExtraY, contentWidth(), TEXT_LABEL);
 	}
 
 	/**
@@ -2759,7 +2885,18 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 			ButtonWidget button = projectButtons.get(i);
 			button.active = button.visible;
 			if (id == SquireScreenHandler.BUTTON_PROJECT_CONFIRM) {
-				button.active = button.visible && state.siteExecutable();
+				boolean materialsReady = state.materialLines().isEmpty();
+				button.setMessage(Text.translatable(!state.siteExecutable()
+					? "squire.gui.button.project_blocked_site"
+					: !materialsReady ? "squire.gui.button.project_blocked_materials"
+						: "squire.gui.button.project_confirm"));
+				// Keep it clickable when blocked. The server owns the checks and returns the
+				// exact reason; a silent disabled button gave the player no route forward.
+				if (button.visible && materialsReady && state.siteExecutable()) {
+					context.drawBorder(button.getX() - x - 1,
+						button.getY() - y + pageScroll - 1, button.getWidth() + 2,
+						button.getHeight() + 2, TEXT_OK);
+				}
 			}
 		}
 		if (materialConfigButton != null) {
@@ -2775,9 +2912,10 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				int colon = entry.indexOf(':');
 				String kind = colon < 0 ? entry : entry.substring(0, colon);
 				String stageState = colon < 0 ? "" : entry.substring(colon + 1);
+				String stageKey = dev.squire.server.blueprint.TerrainLeveling.parse(state.placementBlueprintId()).isPresent()
+					? "squire.gui.terrain.stage." : "squire.gui.stage.";
 				drawClipped(context, Text.literal(marker(stageState) + " ")
-						.append(Text.translatable("squire.gui.stage."
-							+ kind.toLowerCase(java.util.Locale.ROOT))),
+						.append(Text.translatable(stageKey + kind.toLowerCase(java.util.Locale.ROOT))),
 					CONTENT_MARGIN, line, contentWidth(), colour(stageState));
 				line += LINE_H;
 			}
@@ -2798,6 +2936,13 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 					line += LINE_H;
 				}
 			}
+			if ("MATERIALS_MISSING".equals(state.blockerCode())) {
+				for (int i = 0; i < state.materialLines().size(); i++) {
+					drawClipped(context, Text.literal("· " + state.materialLines().get(i)),
+						CONTENT_MARGIN, line, contentWidth(), TEXT_WARN);
+					line += LINE_H;
+				}
+			}
 			return;
 		}
 		if (state.hasPlacement()) {
@@ -2806,18 +2951,26 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 				CONTENT_MARGIN, line, contentWidth(), TEXT_PRIMARY);
 			line += LINE_H;
 			boolean enough = state.materialLines().isEmpty();
-			context.drawText(textRenderer,
-				Text.literal(textRenderer.trimToWidth(enough ? "材料已齐"
-					: "缺料 " + String.join("，", state.materialLines()),
-					contentWidth())),
-				CONTENT_MARGIN, line, enough ? TEXT_OK : 0xFFD0A050, false);
+			drawClipped(context, enough
+					? Text.translatable("squire.gui.project.materials_ready")
+					: Text.translatable("squire.gui.project.materials_missing",
+						String.join("，", state.materialLines())),
+				CONTENT_MARGIN, line, contentWidth(), enough ? TEXT_OK : TEXT_WARN);
 			line += LINE_H;
-			if (!state.siteIssues().isEmpty()) {
-				context.drawText(textRenderer,
-					Text.literal(textRenderer.trimToWidth(state.siteIssues().get(0),
-						contentWidth())),
-					CONTENT_MARGIN, line,
-					state.siteExecutable() ? 0xFFD0A050 : TEXT_DANGER, false);
+			if (state.siteIssues().isEmpty()) {
+				drawClipped(context,
+					Text.translatable("squire.gui.project.site_ready"), CONTENT_MARGIN,
+					line, contentWidth(), TEXT_OK);
+			} else {
+				for (String issue : state.siteIssues()) {
+					boolean automatic = automaticSiteIssue(issue);
+					drawClipped(context,
+						Text.literal(automatic ? "↻ " : state.siteExecutable() ? "! " : "✘ ")
+							.append(issue),
+						CONTENT_MARGIN, line, contentWidth(),
+						automatic || state.siteExecutable() ? TEXT_WARN : TEXT_DANGER);
+					line += LINE_H;
+				}
 			}
 			return;
 		}
@@ -2826,48 +2979,30 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		drawTemplateLibrary(context);
 	}
 
-	/** 模板库那一格格：名字、要求等级、解锁了没有。 */
+	/** 模板库已由真实按钮绘制；保留入口以维持工程页渲染结构。 */
 	private void drawTemplateLibrary(DrawContext context) {
-		if (projectLibraryRows <= 0) {
-			return;
-		}
-		int level = handler.state().profession().level();
-		var library = handler.state().profession().templateLibrary();
-		for (int i = 0; i < library.size(); i++) {
-			var entry = library.get(i);
-			int row = i / 2;
-			int column = i % 2;
-			int left = columnX(column, 2);
-			int top = projectLibraryY + row * (SMALL_BTN_H + 2);
-			boolean unlocked = entry.unlockedAt(level);
-			Text requirement = Text.translatable("squire.gui.profession.locked",
-				entry.minLevel());
-			drawClipped(context,
-				Text.literal(unlocked ? "✔ " : "🔒 ")
-					.append(Text.translatable("squire.gui.template."
-						+ entry.templateId())),
-				left + 4, top + 4,
-				columnWidth(2) - textRenderer.getWidth(requirement) - 12,
-				unlocked ? TEXT_OK : TEXT_LOCK);
-			context.drawText(textRenderer, requirement,
-				left + columnWidth(2) - textRenderer.getWidth(requirement) - 4, top + 4,
-				unlocked ? TEXT_MUTED : TEXT_WARN, false);
-		}
+		// no-op
+	}
+
+	private static boolean automaticSiteIssue(String issue) {
+		return issue != null && (issue.contains("会自动") || issue.contains("将自动")
+			|| issue.startsWith("开工前会"));
 	}
 
 	private void drawMaterialPage(DrawContext context) {
 		List<String> choices = handler.state().materialChoices();
 		for (int i = 0; i < choices.size() && i < 6; i++) {
-			String[] parts = choices.get(i).split("\\u001f", -1);
-			if (parts.length < 5) {
+			var decoded = PanelState.decodeMaterialChoice(choices.get(i));
+			if (decoded.isEmpty()) {
 				continue;
 			}
+			var choice = decoded.get();
 			int top = materialFirstRowY + i * (BTN_H + 3);
-			ItemStack icon = materialIcon(parts[4]);
+			ItemStack icon = materialIcon(choice.representativeItemId());
 			if (!icon.isEmpty()) {
 				context.drawItem(icon, CONTENT_MARGIN + 26, top + 1);
 			}
-			String label = parts[1] + " · " + parts[3];
+			String label = choice.slotName() + " · " + choice.familyName();
 			context.drawText(textRenderer,
 				Text.literal(textRenderer.trimToWidth(label, contentWidth() - 76)),
 				CONTENT_MARGIN + 46, top + 5, 0xFFD8D8E0, false);
@@ -2888,11 +3023,33 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 	private void drawDesignPage(DrawContext context) {
 		var spec = dev.squire.server.blueprint.ProjectSpec
 			.parse(handler.state().placementBlueprintId()).orElse(null);
-		drawClipped(context,
-			spec == null ? Text.translatable("squire.gui.design.none")
-				: Text.literal(spec.displayName()),
-			CONTENT_MARGIN, designSpecY, contentWidth(),
-			spec == null ? TEXT_MUTED : 0xFFB0D0B0);
+		if (spec == null) {
+			drawClipped(context, Text.translatable("squire.gui.design.none"),
+				CONTENT_MARGIN, designSpecY, contentWidth(), TEXT_MUTED);
+		} else {
+			drawClipped(context, Text.translatable("squire.gui.design.summary.geometry",
+				Text.translatable("squire.gui.template." + spec.template().id()),
+				spec.width(), spec.depth(), spec.floors(), spec.wallHeight()),
+				CONTENT_MARGIN, designSpecY, contentWidth(), 0xFFB0D0B0);
+			drawClipped(context, Text.translatable("squire.gui.design.summary.structure",
+				designOption("roof", spec.roof().id()),
+				designOption("foundation", spec.foundation().id()),
+				designOption("window", spec.window().id()),
+				designOption("entrance", spec.entrance().id())),
+				CONTENT_MARGIN, designSpecY + LINE_H, contentWidth(), TEXT_LABEL);
+			MutableText moduleNames = Text.empty();
+			if (spec.orderedModules().isEmpty()) {
+				moduleNames.append(Text.translatable("squire.gui.design.modules.none"));
+			} else {
+				for (var module : spec.orderedModules()) {
+					if (!moduleNames.getString().isEmpty()) moduleNames.append(" · ");
+					moduleNames.append(Text.translatable("squire.gui.module." + module.id()));
+				}
+			}
+			drawClipped(context, Text.translatable("squire.gui.design.summary.extras",
+				mirrorName(spec), moduleNames), CONTENT_MARGIN,
+				designSpecY + LINE_H * 2, contentWidth(), TEXT_LABEL);
+		}
 		// 锁着的按钮旁边写清楚要几级——「灰着」本身不解释任何事。
 		for (ButtonWidget button : lockedButtons) {
 			var gate = lockGateOf(button);
@@ -2947,6 +3104,30 @@ public class SquireScreen extends HandledScreen<SquireScreenHandler> {
 		super.render(context, mouseX, mouseY, delta);
 		if (tab == TAB_ITEMS) {
 			drawMouseoverTooltip(context, mouseX, mouseY);
+		} else if (tab == TAB_PROJECT && editingMaterials) {
+			drawMaterialTooltip(context, mouseX, mouseY);
+		}
+	}
+
+	/** Item previews are not slots, so provide the familiar item-name hover explicitly. */
+	private void drawMaterialTooltip(DrawContext context, int mouseX, int mouseY) {
+		List<String> choices = handler.state().materialChoices();
+		for (int i = 0; i < choices.size() && i < 6; i++) {
+			var decoded = PanelState.decodeMaterialChoice(choices.get(i));
+			if (decoded.isEmpty()) continue;
+			int iconX = x + CONTENT_MARGIN + 26;
+			int iconY = y + materialFirstRowY + i * (BTN_H + 3) - pageScroll + 1;
+			if (iconY < y + SquireScreenHandler.CONTENT_TOP
+					|| iconY + 16 > y + CONTENT_BOTTOM
+					|| mouseX < iconX || mouseX >= iconX + 16
+					|| mouseY < iconY || mouseY >= iconY + 16) {
+				continue;
+			}
+			ItemStack icon = materialIcon(decoded.get().representativeItemId());
+			if (!icon.isEmpty()) {
+				context.drawTooltip(textRenderer, icon.getName(), mouseX, mouseY);
+			}
+			return;
 		}
 	}
 

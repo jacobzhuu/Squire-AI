@@ -21,9 +21,11 @@ import dev.squire.server.world.ContainerAccess;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.base.SingleStackStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedSlottedStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.enchantment.Enchantments;
@@ -751,6 +753,45 @@ public final class M7LogisticsGameTests implements FabricGameTest {
 		};
 	}
 
+	/** A merged chest is usable only when both independently protected halves allow it. */
+	@GameTest(templateName = FLOOR)
+	public void doubleChestChecksProtectionForBothHalves(TestContext context) {
+		ServerWorld world = context.getWorld();
+		BlockPos first = context.getAbsolutePos(new BlockPos(6, 2, 6));
+		BlockPos second = first.east();
+		var left = Blocks.CHEST.getDefaultState()
+			.with(net.minecraft.block.ChestBlock.FACING, net.minecraft.util.math.Direction.NORTH)
+			.with(net.minecraft.block.ChestBlock.CHEST_TYPE, net.minecraft.block.enums.ChestType.LEFT);
+		var right = Blocks.CHEST.getDefaultState()
+			.with(net.minecraft.block.ChestBlock.FACING, net.minecraft.util.math.Direction.NORTH)
+			.with(net.minecraft.block.ChestBlock.CHEST_TYPE, net.minecraft.block.enums.ChestType.RIGHT);
+		world.setBlockState(first, left, net.minecraft.block.Block.NOTIFY_ALL);
+		world.setBlockState(second, right, net.minecraft.block.Block.NOTIFY_ALL);
+		var denySecondHalf = new dev.squire.server.world.ProtectionAdapter() {
+			private PermissionDecision check(BlockPos pos) {
+				return pos.equals(second) ? PermissionDecision.deny("other owner's claim")
+					: PermissionDecision.allow();
+			}
+			@Override public PermissionDecision canBreak(ServerWorld w, BlockPos p, UUID a) { return check(p); }
+			@Override public PermissionDecision canPlace(ServerWorld w, BlockPos p, UUID a) { return check(p); }
+			@Override public PermissionDecision canInteract(ServerWorld w, BlockPos p, UUID a) { return check(p); }
+			@Override public PermissionDecision canEditRegion(ServerWorld w,
+					dev.squire.server.world.BoundedRegion r, UUID a) { return PermissionDecision.allow(); }
+		};
+		context.runAtTick(2, () -> {
+			var allowed = ContainerAccess.resolve(world, first, null, null,
+				dev.squire.server.world.ProtectionAdapter.ALLOW_ALL, true);
+			context.assertTrue(allowed.ok() && allowed.inventory().size() == 54,
+				"fixture must resolve a merged double chest: " + allowed.errorCode()
+					+ " / " + (allowed.ok() ? allowed.inventory().size() : 0));
+			var denied = ContainerAccess.resolve(world, first, null, UUID.randomUUID(),
+				denySecondHalf, true);
+			context.assertTrue(!denied.ok() && "PROTECTED_REGION".equals(denied.errorCode()),
+				"a protected second half must deny access to the whole merged chest");
+			context.complete();
+		});
+	}
+
 	// ============================================================ D1：长期 Guard
 
 	/**
@@ -1124,18 +1165,86 @@ public final class M7LogisticsGameTests implements FabricGameTest {
 	private static final class FakeBackpack implements BackpackCompat.Lookup {
 		private final net.minecraft.item.Item marker;
 		private final SimpleInventory contents;
-		private final InventoryStorage storage;
+		private final Storage<ItemVariant> storage;
 
 		FakeBackpack(net.minecraft.item.Item marker, int slots) {
+			this(marker, slots, false);
+		}
+
+		FakeBackpack(net.minecraft.item.Item marker, int slots, boolean expanded) {
 			this.marker = marker;
-			this.contents = new SimpleInventory(slots);
-			this.storage = InventoryStorage.of(contents, null);
+			this.contents = new SimpleInventory(slots) {
+				@Override public int getMaxCountPerStack() {
+					return expanded ? 1024 : super.getMaxCountPerStack();
+				}
+			};
+			java.util.List<SingleSlotStorage<ItemVariant>> slotStorage = new java.util.ArrayList<>();
+			for (int slot = 0; slot < slots; slot++) {
+				final int index = slot;
+				slotStorage.add(new SingleStackStorage() {
+					@Override protected ItemStack getStack() { return contents.getStack(index); }
+					@Override protected void setStack(ItemStack stack) { contents.setStack(index, stack); }
+					@Override protected int getCapacity(ItemVariant variant) {
+						return expanded ? 1024 : variant.isBlank()
+							? 64 : variant.getItem().getMaxCount();
+					}
+				});
+			}
+			this.storage = new CombinedSlottedStorage<>(slotStorage);
 		}
 
 		@Override
 		public Storage<ItemVariant> find(ItemStack stack, ContainerItemContext context) {
 			return stack.getItem() == marker ? storage : null;
 		}
+	}
+
+	/** Expanded stacks survive panel display and quick-move without being truncated. */
+	@GameTest(templateName = FLOOR)
+	public void expandedBackpackQuickMoveConservesHiddenItems(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		FakePlayer owner = fakeOwner(context.getWorld(), "expanded-backpack-owner");
+		place(owner, Vec3d.ofBottomCenter(context.getAbsolutePos(new BlockPos(4, 2, 4))));
+		context.runAtTick(5, () -> {
+			context.getWorld().spawnEntity(owner);
+			AvatarEntity avatar = rt.summonFor(owner);
+			BackpackCompat.useLookupForTesting(new FakeBackpack(Items.CHEST, 2, true));
+			try {
+				avatar.setBackpackStack(new ItemStack(Items.CHEST));
+				var view = avatar.items().backpack();
+				context.assertTrue(view.setStack(0, new ItemStack(Items.DIAMOND, 256)),
+					"fixture stores a 256-item expanded stack");
+				var panel = new dev.squire.server.gui.SquireScreenHandler(1,
+					owner.getInventory(), avatar.items().mainInventory(),
+					new dev.squire.server.gui.AvatarEquipmentInventory(avatar,
+						dev.squire.server.gui.SquireScreenHandler.EQUIPMENT_ORDER),
+					avatar.backpackSlotInventory(), avatar);
+				owner.getInventory().clear();
+				owner.refreshPositionAndAngles(avatar.getX() + 1, avatar.getY(), avatar.getZ(), 0, 0);
+				int first = dev.squire.server.gui.SquireScreenHandler.BACKPACK_CONTENTS_START;
+				context.assertTrue(panel.slots.get(first).getStack().getCount() == 64,
+					"panel may display an ordinary-stack-sized view");
+				panel.quickMove(owner, first);
+				int delivered = 0;
+				for (int i = 0; i < owner.getInventory().size(); i++)
+					if (owner.getInventory().getStack(i).isOf(Items.DIAMOND))
+						delivered += owner.getInventory().getStack(i).getCount();
+				context.assertTrue(delivered == 256 && view.stackAt(0).isEmpty(),
+					"all expanded contents transfer exactly once; delivered=" + delivered
+						+ " remaining=" + view.stackAt(0).getCount());
+
+				context.assertTrue(view.setStack(0, new ItemStack(Items.DIAMOND, 256)),
+					"restore fixture for a full-destination check");
+				for (int i = 0; i < owner.getInventory().size(); i++)
+					owner.getInventory().setStack(i, new ItemStack(Items.STONE, 64));
+				panel.quickMove(owner, first);
+				context.assertTrue(view.stackAt(0).getCount() == 256,
+					"a full player inventory leaves the expanded source untouched");
+			} finally {
+				BackpackCompat.useLookupForTesting(null);
+			}
+			avatar.discard(); owner.discard(); context.complete();
+		});
 	}
 
 	/**

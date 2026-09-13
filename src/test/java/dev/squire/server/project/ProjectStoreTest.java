@@ -36,7 +36,8 @@ class ProjectStoreTest {
 	}
 
 	private static Project project(Project.State state) {
-		Project p = new Project(UUID.randomUUID(), UUID.randomUUID(), "矿井前哨站",
+		Project p = new Project(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+			"矿井前哨站",
 			"mine_outpost", UUID.randomUUID(), "minecraft:overworld", 1234L,
 			ProjectCoordinator.compileStages());
 		p.setState(state);
@@ -61,6 +62,7 @@ class ProjectStoreTest {
 		Project back = loaded.get(0);
 		assertEquals(original.projectId, back.projectId);
 		assertEquals(original.ownerId, back.ownerId);
+		assertEquals(original.agentId(), back.agentId(), "工程必须保持绑定的施工侍从");
 		assertEquals("矿井前哨站", back.name);
 		assertEquals("mine_outpost", back.blueprintId);
 		assertEquals(original.placementId, back.placementId,
@@ -80,6 +82,30 @@ class ProjectStoreTest {
 	}
 
 	@Test
+	void interruptedSettlementIsQuarantinedWithItsRealEscrow() {
+		var original = project(Project.State.RUNNING);
+		var item = new Identifier("minecraft:oak_planks");
+		original.reserve(Map.of(item, 20), Map.of(item, 3));
+		original.pendingMutation("deposit:owner=20:agent=3");
+		var progress = new com.google.gson.JsonObject(); progress.addProperty("cursor", 17);
+		original.constructionProgress(progress);
+		assertTrue(new ProjectStore(this::file).save(List.of(original)));
+		var recovered = new ProjectStore(this::file).load().get(0);
+		assertEquals(Project.State.PAUSED, recovered.state());
+		assertEquals(original.pendingMutation(), recovered.pendingMutation());
+		assertEquals(23, recovered.reservedCount(item));
+		assertEquals(17, recovered.constructionProgress().get("cursor").getAsInt());
+	}
+
+	@Test
+	void migrationKeepsAnUntouchedBackup() throws IOException {
+		String legacy = "{\"version\":4,\"projects\":[]}";
+		Files.writeString(file(), legacy);
+		var store = new ProjectStore(this::file); store.load(); store.save(List.of());
+		assertEquals(legacy, Files.readString(dir.resolve("projects.json.pre-v9.bak")));
+	}
+
+	@Test
 	void escrowConsumesAtomicallyAndReportsOnlyTheDelta() {
 		Project p = project(Project.State.RUNNING);
 		Identifier planks = new Identifier("minecraft:oak_planks");
@@ -92,6 +118,29 @@ class ProjectStoreTest {
 		assertEquals(2, p.reservedCount(planks));
 		assertEquals(0, p.agentSupply().getOrDefault(planks, 0));
 		assertEquals(2, p.ownerSupply().getOrDefault(planks, 0));
+	}
+
+	@Test
+	void partialBatchesAccumulateAndSurviveRestart() {
+		Project original = project(Project.State.PAUSED);
+		Identifier cobble = new Identifier("minecraft:cobblestone");
+		original.reserve(Map.of(), Map.of(cobble, 2));
+		original.reserve(Map.of(cobble, 3), Map.of(cobble, 1));
+		original.currentStage().orElseThrow().block(Stage.BlockerCode.MATERIALS_MISSING,
+			"工程物资池已预留 6/20 件，仍缺 14 件。");
+
+		new ProjectStore(this::file).save(List.of(original));
+		Project loaded = new ProjectStore(this::file).load().get(0);
+
+		assertEquals(Project.State.PAUSED, loaded.state());
+		assertEquals(6, loaded.reservedCount(cobble),
+			"later batches add to the durable pool instead of replacing it");
+		assertEquals(Map.of(cobble, 3), loaded.ownerSupply());
+		assertEquals(Map.of(cobble, 3), loaded.agentSupply());
+		assertEquals(Stage.State.BLOCKED, loaded.currentStage().orElseThrow().state());
+		assertEquals(Stage.BlockerCode.MATERIALS_MISSING,
+			loaded.currentStage().orElseThrow().blockerCode(),
+			"the restored UI must still offer the deposit action");
 	}
 
 	@Test

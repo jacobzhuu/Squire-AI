@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import dev.squire.server.body.avatar.AvatarEntity;
+import dev.squire.server.body.avatar.AvatarInventory;
 import dev.squire.server.world.BoundedRegion;
 import net.minecraft.block.BlockState;
 import net.minecraft.state.property.Property;
@@ -38,6 +40,7 @@ public final class BlueprintManager {
 
 	private final BlueprintRegistry registry = new BlueprintRegistry();
 	private final Map<UUID, BlueprintPlacement> placements = new ConcurrentHashMap<>();
+	private final Map<UUID, Long> previewRevisions = new ConcurrentHashMap<>();
 	private final BlueprintPlacementStore store;
 	private final java.util.function.Supplier<MinecraftServer> serverSupplier;
 
@@ -74,13 +77,14 @@ public final class BlueprintManager {
 	}
 
 	public void remove(UUID placementId) {
+		previewRevisions.remove(placementId);
 		if (placements.remove(placementId) != null) {
 			save();
 		}
 	}
 
-	public void save() {
-		store.save(placements.values());
+	public boolean save() {
+		return store.save(placements.values());
 	}
 
 	/** 启动时恢复。已完成/已取消的摆放不再留着，否则档案会无限长胖。 */
@@ -91,18 +95,115 @@ public final class BlueprintManager {
 				placements.put(placement.placementId, placement);
 			}
 		}
-		LOG.info("[blueprint] {} blueprint(s), {} active placement(s) restored",
-			registry.size(), placements.size());
+		LOG.info("[blueprint] catalog: {} families, {} variants ({} buildable); {} active placement(s) restored",
+			registry.catalog().families().size(), registry.catalog().variants().size(),
+			registry.catalog().variants().stream().filter(BuildingCatalog.BuildingVariantDefinition::buildable).count(), placements.size());
 		return placements.size();
 	}
 
 	// ------------------------------------------------------------------ 形状与账目
 
 	public Optional<Blueprint.Resolved> resolve(BlueprintPlacement placement) {
-		return registry.byId(placement.blueprintId)
-			.map(bp -> bp.resolve(placement.origin, placement.facing,
-				placement.materials(), registry.materials()));
+		return resolve(placement, true);
 	}
+
+	/**
+	 * Resolve the moving ghost without running the bounded path planner.
+	 *
+	 * <p>Ground preparation and the material bill are still refreshed, so the
+	 * preview remains useful.  The expensive access review runs only when the
+	 * player confirms the project through {@link #resolve(BlueprintPlacement)}.
+	 * Committed projects always keep using their pinned full plan.</p>
+	 */
+	public Optional<Blueprint.Resolved> preview(BlueprintPlacement placement) {
+		return resolve(placement, placement.committed());
+	}
+
+	private Optional<Blueprint.Resolved> resolve(BlueprintPlacement placement,
+			boolean planAccess) {
+		if (TerrainLeveling.parse(placement.blueprintId).isPresent()) {
+			if (placement.snapshot() != null) return Optional.of(placement.snapshot());
+			var server = serverSupplier.get();
+			var world = server == null ? null : server.getWorld(net.minecraft.registry.RegistryKey.of(
+				net.minecraft.registry.RegistryKeys.WORLD, new Identifier(placement.dimensionId)));
+			if (world == null || placement.committed()) return Optional.empty();
+			var plan = TerrainLeveling.plan(world, placement);
+			placement.snapshot(plan.resolved(), false);
+			placement.terrainReview = plan.fingerprint();
+			return Optional.of(plan.resolved());
+		}
+		var worker = avatarLookup == null ? null : avatarLookup.apply(placement.agentId);
+		int currentLevel = placement.legacyFullPrice() ? 0 : engineerLevel(worker);
+		int currentWaste = placement.legacyFullPrice() ? 0 : dev.squire.server.profession.EngineerProgression.current().wasteBasisPoints(currentLevel);
+		if (!placement.committed() && placement.snapshot() != null && placement.snapshot().costPlan() != null
+				&& worker != null && worker.getWorld() instanceof ServerWorld terrainWorld
+				&& placement.snapshot().siteRequirements().stream().anyMatch(q -> q.kind().equals("solid") && !q.satisfied(terrainWorld))) placement.invalidatePreview();
+		if (!placement.committed() && placement.snapshot() != null && placement.snapshot().costPlan() != null
+				&& worker != null && worker.getWorld() instanceof ServerWorld world
+				&& !placement.snapshot().costPlan().sameFoundations(world, placement.snapshot())) placement.invalidatePreview();
+		if (!placement.committed() && placement.snapshot() != null && worker != null
+				&& worker.getWorld() instanceof ServerWorld world
+				&& automaticSiteSupports(world, placement.snapshot()).stream().anyMatch(c -> {
+					BlockState state = world.getBlockState(c.pos());
+					return !state.isAir() && !state.isReplaceable() && !matches(state, c);
+				})) {
+			// A ghost may have been open while an older project left a block on a
+			// future foundation cell. Rebuild terrain/access from the live world.
+			placement.invalidatePreview();
+		}
+		if (!placement.committed() && placement.snapshot() != null && placement.snapshot().costPlan() != null
+				&& (placement.snapshot().costPlan().level() != currentLevel
+				|| placement.snapshot().costPlan().wasteBasisPoints() != currentWaste))
+			placement.invalidatePreview();
+		if (placement.committed() && placement.snapshot() != null && placement.snapshot().costPlan() == null && worker != null
+				&& worker.getWorld() instanceof ServerWorld world && world.getRegistryKey().getValue().toString().equals(placement.dimensionId)) {
+			// Existing worlds keep their original full-price bill, never acquire new waste on migration.
+			placement.snapshot(placement.snapshot().withCostPlan(ConstructionCostPlan.create(world, placement.snapshot(), 0, 0)), true);
+		}
+		if (!placement.committed() && previewRevisions.getOrDefault(placement.placementId, -1L) != registry.revision())
+			placement.invalidatePreview();
+		if (placement.snapshot() != null) {
+			if (planAccess && !placement.committed() && placement.snapshot().access() != null && !placement.snapshot().access().valid())
+				placement.invalidatePreview();
+		}
+		if (placement.snapshot() != null) {
+			// A preview resolved while the body was unloaded has geometry but no
+			// access review. Retry once the body is available; committed jobs stay pinned.
+			if (planAccess && !placement.committed() && placement.snapshot().access() == null
+					&& avatarLookup != null && avatarLookup.apply(placement.agentId) != null)
+				placement.invalidatePreview();
+			else return Optional.of(placement.snapshot());
+		}
+		return registry.byId(placement.blueprintId).map(bp -> {
+			var resolved = bp.resolve(placement.origin, placement.facing, placement.materials(), registry.materials());
+			if (placement.artificialWater()) resolved = ArtificialWaterSite.prepare(resolved);
+			var avatar = avatarLookup == null ? null : avatarLookup.apply(placement.agentId);
+			if (avatar != null && avatar.getWorld() instanceof ServerWorld world
+					&& world.getRegistryKey().getValue().toString().equals(placement.dimensionId)) {
+				ConstructionAccessPlan access = null;
+				try {
+					resolved = GroundPreparation.prepare(world, resolved);
+					if (planAccess) access = ConstructionAccessPlan.plan(world, resolved, avatar);
+				} catch (IllegalArgumentException unsafeGround) {
+					if (planAccess) access = new ConstructionAccessPlan(List.of(), resolved.bounds(), "自动地基无法安全规划：" + unsafeGround.getMessage());
+				}
+				resolved = new Blueprint.Resolved(resolved.bounds(), resolved.toPlace(), resolved.toClear(), access, null, resolved.siteRequirements());
+				resolved = resolved.withCostPlan(ConstructionCostPlan.create(world, resolved, currentLevel, currentWaste));
+				resolved.costPlan().waterSource(placement.waterSource());
+			}
+			placement.snapshot(resolved, false);
+			previewRevisions.put(placement.placementId, registry.revision());
+			return resolved;
+		});
+	}
+
+	private java.util.function.Function<UUID, AvatarEntity> avatarLookup;
+	private static int engineerLevel(AvatarEntity worker) {
+		return worker != null && worker.profile() != null
+			&& worker.profile().profession.profession() == dev.squire.server.profession.SquireProfession.ENGINEER
+			? worker.profile().profession.level : 1;
+	}
+	public void attachAvatarLookup(java.util.function.Function<UUID, AvatarEntity> lookup) { avatarLookup = lookup; }
 
 	/** 还没变成目标方块、需要真正放下去的格子。 */
 	public static List<Blueprint.Cell> pendingPlacements(ServerWorld world,
@@ -114,6 +215,87 @@ public final class BlueprintManager {
 			}
 		}
 		return out;
+	}
+
+	/**
+	 * Extra one-block foundation generated for a durable project when the blueprint's
+	 * lowest structural layer would otherwise sit directly over air or fluid.
+	 *
+	 * <p>The support uses the most common material on that lowest layer, so it remains
+	 * part of the real material bill instead of conjuring a hard-coded block.  Only
+	 * columns that the blueprint actually occupies are considered; door openings,
+	 * shafts and empty corners of a sparse bounding box are never filled.</p>
+	 */
+	public static List<Blueprint.Cell> automaticSiteSupports(ServerWorld world,
+			Blueprint.Resolved resolved) {
+		if (world == null || resolved == null || resolved.toPlace().isEmpty()) {
+			return List.of();
+		}
+		if (TerrainLeveling.isTerrain(resolved)) return resolved.toPlace().stream()
+			.filter(c -> !matches(world.getBlockState(c.pos()), c))
+			.sorted(Comparator.comparingInt(c -> c.pos().getY())).toList();
+		int baseY = resolved.toPlace().stream().filter(cell -> !cell.optional())
+			.mapToInt(cell -> cell.pos().getY()).min().orElse(Integer.MAX_VALUE);
+		if (baseY == Integer.MAX_VALUE) return List.of();
+
+		List<Blueprint.Cell> baseCells = resolved.toPlace().stream()
+			.filter(cell -> !cell.optional() && !ConstructionFluids.liquid(cell) && cell.pos().getY() == baseY).toList();
+		Map<String, Integer> frequencies = new LinkedHashMap<>();
+		for (Blueprint.Cell cell : baseCells) {
+			frequencies.merge(cell.blockId(), 1, Integer::sum);
+		}
+		String supportBlock = frequencies.entrySet().stream()
+			.max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
+		if (supportBlock == null) return List.of();
+
+		java.util.Set<BlockPos> managed = footprint(resolved);
+		resolved.siteRequirements().stream().filter(q -> q.kind().equals("fluid")).forEach(q -> managed.add(q.pos()));
+		List<Blueprint.Cell> supports = new ArrayList<>();
+		resolved.toPlace().stream().filter(c -> GroundPreparation.FILL.equals(c.what())
+			&& !matches(world.getBlockState(c.pos()), c)).forEach(supports::add);
+		for (Blueprint.Cell cell : baseCells) {
+			BlockPos below = cell.pos().down().toImmutable();
+			if (managed.contains(below)) continue;
+			BlockState current = world.getBlockState(below);
+			if (!current.isAir() && world.getFluidState(below).isEmpty()) continue;
+			if (GroundPreparation.elevatedAirGap(world, below)) continue;
+			supports.add(new Blueprint.Cell(below, supportBlock, Map.of(),
+				Integer.MIN_VALUE, "自动承重基础", false));
+		}
+		supports.sort(Comparator.comparingInt((Blueprint.Cell cell) -> cell.pos().getY())
+			.thenComparingInt(cell -> cell.pos().getX())
+			.thenComparingInt(cell -> cell.pos().getZ()));
+		return List.copyOf(supports);
+	}
+
+	/** Pending foundation preparation followed by the blueprint's ordinary cells. */
+	public static List<Blueprint.Cell> pendingProjectPlacements(ServerWorld world,
+			Blueprint.Resolved resolved) {
+		List<Blueprint.Cell> out = new ArrayList<>(automaticSiteSupports(world, resolved));
+		out.addAll(pendingPlacements(world, resolved));
+		return List.copyOf(out);
+	}
+
+	/** The deterministic worker plan used by placement, accounting and recovery. */
+	public static ConstructionPlan constructionPlan(ServerWorld world,
+			Blueprint.Resolved resolved, boolean includeSiteSupports) {
+		List<Blueprint.Cell> cells = includeSiteSupports
+			? pendingProjectPlacements(world, resolved)
+			: pendingPlacements(world, resolved);
+		return ConstructionPlan.create(resolved, cells);
+	}
+
+	/** Site preparation is deliberately a support-only construction pass. */
+	public static ConstructionPlan sitePreparationPlan(ServerWorld world,
+			Blueprint.Resolved resolved) {
+		return ConstructionPlan.create(resolved, automaticSiteSupports(world, resolved));
+	}
+
+	/** Region touched by a project, including its automatically generated support layer. */
+	public static BoundedRegion projectBounds(ServerWorld world,
+			Blueprint.Resolved resolved) {
+		return ConstructionPlan.create(resolved, automaticSiteSupports(world, resolved))
+			.bounds();
 	}
 
 	/**
@@ -133,13 +315,19 @@ public final class BlueprintManager {
 	public static List<BlockPos> pendingClear(ServerWorld world,
 			Blueprint.Resolved resolved) {
 		List<BlockPos> out = new ArrayList<>();
+		java.util.Set<BlockPos> preserved = new java.util.HashSet<>();
+		resolved.siteRequirements().stream().filter(q -> q.kind().equals("fluid")).forEach(q -> preserved.add(q.pos()));
+		resolved.toPlace().stream()
+			.filter(c -> matches(world.getBlockState(c.pos()), c)).forEach(c -> preserved.add(c.pos()));
 		for (BlockPos pos : resolved.toClear()) {
+			if (preserved.contains(pos)) continue;
 			if (!world.getBlockState(pos).isAir()) {
 				out.add(pos);
 			}
 		}
 		for (Blueprint.Cell cell : resolved.toPlace()) {
 			BlockState current = world.getBlockState(cell.pos());
+			if (ConstructionFluids.wet(cell) && matches(current, ConstructionFluids.dry(cell))) continue;
 			if (!current.isAir() && !current.isReplaceable()
 					&& !matches(current, cell)) {
 				out.add(cell.pos());
@@ -178,11 +366,15 @@ public final class BlueprintManager {
 		for (Blueprint.Cell cell : resolved.toPlace()) {
 			Identifier id = itemId(cell.blockId());
 			if (matches(world.getBlockState(cell.pos()), cell)) {
-				inPlace.merge(id, 1, Integer::sum);
+				inPlace.merge(id, itemCost(cell), Integer::sum);
 			} else {
-				required.merge(id, 1, Integer::sum);
+				required.merge(id, itemCost(cell), Integer::sum);
 			}
 		}
+		if (resolved.costPlan() != null) {
+			required.clear(); required.putAll(resolved.costPlan().remaining(world));
+		} else for (var c : resolved.toPlace()) if (ConstructionFluids.wet(c) && !ConstructionFluids.matches(world, c))
+			required.merge(ConstructionFluids.WATER_BUCKET, 1, Integer::sum);
 		Map<Identifier, Integer> carried = new LinkedHashMap<>();
 		if (inventory != null) {
 			for (Identifier id : required.keySet()) {
@@ -198,14 +390,7 @@ public final class BlueprintManager {
 	 */
 	public static Map<Identifier, Integer> missingMaterials(ServerWorld world,
 			Blueprint.Resolved resolved, dev.squire.server.body.avatar.AvatarEntity avatar) {
-		Map<Identifier, Integer> missing = new LinkedHashMap<>(
-			bill(world, resolved, avatar == null ? null : avatar.items()).missing());
-		int torches = dev.squire.server.world.Torchlight.lightingDeficit(
-			world, resolved, avatar);
-		if (torches > 0) {
-			missing.merge(dev.squire.server.world.Torchlight.TORCH, torches, Integer::sum);
-		}
-		return Map.copyOf(missing);
+		return missingProjectMaterials(world, resolved, null, avatar);
 	}
 
 	/**
@@ -217,62 +402,132 @@ public final class BlueprintManager {
 			Blueprint.Resolved resolved) {
 		Map<Identifier, Integer> required = new LinkedHashMap<>();
 		if (world == null || resolved == null) return Map.of();
-		for (Blueprint.Cell cell : resolved.toPlace()) {
+		if (resolved.costPlan() != null) required.putAll(resolved.costPlan().remaining(world));
+		else for (Blueprint.Cell cell : constructionPlan(world, resolved, true).cells()) {
 			if (!cell.optional() && !matches(world.getBlockState(cell.pos()), cell)) {
-				required.merge(itemId(cell.blockId()), 1, Integer::sum);
+				int cost = itemCost(cell);
+				if (cost > 0) required.merge(itemId(cell.blockId()), cost, Integer::sum);
 			}
 		}
-		if (!dev.squire.server.world.Torchlight.brightEnough(world,
-				dev.squire.server.world.Torchlight.candidates(resolved))) {
-			required.merge(dev.squire.server.world.Torchlight.TORCH,
-				dev.squire.server.world.Torchlight.projectTorchRequirement(world, resolved),
-				Integer::sum);
+		if (resolved.costPlan() == null) for (var c : ConstructionFluids.operations(resolved))
+			if (!ConstructionFluids.matches(world, c)) required.merge(ConstructionFluids.bucket(c), 1, Integer::sum);
+		// Before construction, current light/air cannot predict the finished rooms.
+		// Once the structure is complete, only outstanding planned lights cost items.
+		boolean structuralWork = !required.isEmpty() || resolved.toClear().stream()
+			.anyMatch(pos -> !world.getBlockState(pos).isAir()
+				&& !world.getBlockState(pos).isOf(net.minecraft.block.Blocks.TORCH));
+		int torches = TerrainLeveling.isTerrain(resolved) ? 0 : structuralWork
+			? dev.squire.server.world.Torchlight.projectTorchRequirement(world, resolved)
+			: dev.squire.server.world.Torchlight.remainingProjectTorchRequirement(world, resolved);
+		if (torches > 0) {
+			required.merge(dev.squire.server.world.Torchlight.TORCH, torches, Integer::sum);
 		}
+		if (resolved.access() != null)
+			resolved.access().remainingTemporaryMaterials().forEach((item, count) -> required.merge(item, count, Integer::sum));
 		return Map.copyOf(required);
+	}
+
+	/**
+	 * Shortfalls shown before project confirmation.  Confirmation can reserve from both
+	 * the owner's ordinary inventory and the companion's inventory/backpack, so the UI
+	 * must count that exact same stock.  The old preview only counted the companion and
+	 * could say "missing" while the start operation was already fully funded.
+	 */
+	public static Map<Identifier, Integer> missingProjectMaterials(ServerWorld world,
+			Blueprint.Resolved resolved,
+			ServerPlayerEntity owner, AvatarEntity avatar) {
+		return missingProjectMaterials(world, resolved, owner,
+			avatar == null ? null : avatar.items(), Map.of());
+	}
+
+	/** Shared chat/UI/ghost ledger: remaining work minus escrow and both real inventories. */
+	public static Map<Identifier, Integer> missingProjectMaterials(ServerWorld world,
+			Blueprint.Resolved resolved, ServerPlayerEntity owner, AvatarEntity avatar,
+			Map<Identifier, Integer> reserved) {
+		return missingProjectMaterials(world, resolved, owner,
+			avatar == null ? null : avatar.items(), reserved);
+	}
+
+	private static Map<Identifier, Integer> missingProjectMaterials(ServerWorld world,
+			Blueprint.Resolved resolved, ServerPlayerEntity owner,
+			AvatarInventory companionInventory, Map<Identifier, Integer> reserved) {
+		Map<Identifier, Integer> missing = new LinkedHashMap<>();
+		for (Map.Entry<Identifier, Integer> entry
+				: requiredProjectMaterials(world, resolved).entrySet()) {
+			Identifier id = entry.getKey();
+			int available = companionInventory == null ? 0
+				: companionInventory.countOf(id);
+			available += reserved == null ? 0 : reserved.getOrDefault(id, 0);
+			if (resolved.costPlan() != null && resolved.costPlan().waterSource() != null && id.equals(ConstructionFluids.BUCKET))
+				available += reserved == null ? 0 : reserved.getOrDefault(ConstructionFluids.WATER_BUCKET, 0);
+			if (owner != null) {
+				var item = Registries.ITEM.get(id);
+				for (int slot = 0; slot < 36; slot++) {
+					var stack = owner.getInventory().getStack(slot);
+					if (stack.isOf(item)) available += stack.getCount();
+				}
+			}
+			int deficit = entry.getValue() - available;
+			if (deficit > 0) missing.put(id, deficit);
+		}
+		return Map.copyOf(missing);
 	}
 
 	/** Material delta after a partially completed lighting stage. */
 	public static Map<Identifier, Integer> remainingProjectMaterials(ServerWorld world,
 			Blueprint.Resolved resolved) {
-		Map<Identifier, Integer> required = new LinkedHashMap<>();
-		if (world == null || resolved == null) return Map.of();
-		for (Blueprint.Cell cell : resolved.toPlace()) {
-			if (!cell.optional() && !matches(world.getBlockState(cell.pos()), cell)) {
-				required.merge(itemId(cell.blockId()), 1, Integer::sum);
-			}
-		}
-		int torches = dev.squire.server.world.Torchlight
-			.remainingProjectTorchRequirement(world, resolved);
-		if (torches > 0) {
-			required.merge(dev.squire.server.world.Torchlight.TORCH, torches,
-				Integer::sum);
-		}
-		return Map.copyOf(required);
+		return requiredProjectMaterials(world, resolved);
 	}
 
 	/** 蓝图里写的 blockId 对应的<b>物品</b> id；两者在原版里同名，这里只做一次解析。 */
 	public static Identifier itemId(String blockId) {
-		int colon = blockId.indexOf(':');
-		return colon < 0 ? new Identifier(blockId)
-			: new Identifier(blockId.substring(0, colon), blockId.substring(colon + 1));
+		if (blockId.equals("minecraft:water")) return ConstructionFluids.WATER_BUCKET;
+		if (blockId.equals("minecraft:lava")) return ConstructionFluids.LAVA_BUCKET;
+		Identifier id = new Identifier(blockId);
+		var block = Registries.BLOCK.get(id);
+		return block.asItem() == net.minecraft.item.Items.AIR ? id : Registries.ITEM.getId(block.asItem());
+	}
+
+	public static int itemCost(Blueprint.Cell cell) {
+		if (ConstructionFluids.liquid(cell)) return ConstructionFluids.source(cell) ? 1 : 0;
+		var block = Registries.BLOCK.get(new Identifier(cell.blockId()));
+		String quantity = block instanceof net.minecraft.block.CandleBlock ? "candles"
+			: block instanceof net.minecraft.block.SeaPickleBlock ? "pickles"
+			: block instanceof net.minecraft.block.TurtleEggBlock ? "eggs"
+			: block instanceof net.minecraft.block.SnowBlock ? "layers" : null;
+		if (quantity != null) return Math.max(1, Integer.parseInt(cell.properties().getOrDefault(quantity, "1")));
+		if ("upper".equals(cell.properties().get("half"))
+				&& (block instanceof net.minecraft.block.DoorBlock || block instanceof net.minecraft.block.TallPlantBlock)) return 0;
+		if ("head".equals(cell.properties().get("part"))
+				&& Registries.BLOCK.get(new Identifier(cell.blockId())) instanceof net.minecraft.block.BedBlock) return 0;
+		return "double".equals(cell.properties().get("type"))
+			&& Registries.BLOCK.get(new Identifier(cell.blockId())) instanceof net.minecraft.block.SlabBlock ? 2 : 1;
 	}
 
 	/** 这个 blockId 真的能被伙伴放下去吗（存在、且有对应的方块物品）。 */
 	public static boolean placeable(String blockId) {
-		return Registries.ITEM.get(itemId(blockId)) instanceof BlockItem;
+		return ConstructionFluids.liquid(blockId) || Registries.ITEM.get(itemId(blockId)) instanceof BlockItem;
 	}
 
 	/** 世界里这一格是不是已经是目标方块了。 */
 	public static boolean matches(BlockState state, String blockId) {
-		return Registries.ITEM.get(itemId(blockId)) instanceof BlockItem item
-			&& state.isOf(item.getBlock());
+		return Registries.BLOCK.containsId(new Identifier(blockId))
+			&& state.isOf(Registries.BLOCK.get(new Identifier(blockId)));
 	}
 
 	/** Exact target match, including authored facing/axis/half/type properties. */
 	public static boolean matches(BlockState state, Blueprint.Cell cell) {
+		if (GroundPreparation.FILL.equals(cell.what()) && cell.blockId().equals("minecraft:dirt")
+				&& (state.isOf(net.minecraft.block.Blocks.GRASS_BLOCK) || state.isOf(net.minecraft.block.Blocks.MYCELIUM))) return true;
 		if (!matches(state, cell.blockId())) return false;
+		if (ConstructionFluids.liquid(cell)) return !ConstructionFluids.source(cell) || state.getFluidState().isStill();
 		BlockState target = targetState(cell);
 		for (Property<?> property : target.getProperties()) {
+            // Walking through a built door changes its operational state, not its structure.
+            // Keep material, facing, hinge and half exact; do not reopen settled material bills.
+            if (target.getBlock() instanceof net.minecraft.block.DoorBlock
+                    && (property == net.minecraft.state.property.Properties.OPEN
+                        || property == net.minecraft.state.property.Properties.POWERED)) continue;
 			if (cell.properties().containsKey(property.getName())
 					&& !sameProperty(state, target, property)) return false;
 		}
@@ -285,10 +540,10 @@ public final class BlueprintManager {
 	}
 
 	public static BlockState targetState(Blueprint.Cell cell) {
-		if (!(Registries.ITEM.get(itemId(cell.blockId())) instanceof BlockItem item)) {
+		if (!placeable(cell.blockId())) {
 			throw new IllegalArgumentException("unplaceable block " + cell.blockId());
 		}
-		BlockState state = item.getBlock().getDefaultState();
+		BlockState state = Registries.BLOCK.get(new Identifier(cell.blockId())).getDefaultState();
 		for (var entry : cell.properties().entrySet()) {
 			Property<?> found = state.getProperties().stream()
 				.filter(p -> p.getName().equals(entry.getKey())).findFirst()
@@ -383,36 +638,46 @@ public final class BlueprintManager {
 						.equals(placement.dimensionId)) {
 				continue;
 			}
-			Blueprint.Resolved resolved = resolve(placement).orElse(null);
+			Blueprint.Resolved resolved = preview(placement).orElse(null);
 			if (resolved == null) {
 				continue;
 			}
-			var inventory = inventoryOf(placement);
-			BillOfMaterials bill = bill(world, resolved, inventory);
+			AvatarInventory inventory = inventoryOf(placement);
+			Map<Identifier, Integer> reserved = projectSupplyLookup == null ? Map.of()
+				: projectSupplyLookup.apply(placement.placementId);
+			Map<Identifier, Integer> missing = missingProjectMaterials(world, resolved,
+				owner, inventory, reserved == null ? Map.of() : reserved);
 			// 白 = 还不知道伙伴手里有什么（没有绑定随从），红 = 缺料，绿 = 可以开工。
+			// 这里和工程页/确认开工一样合计玩家与伙伴库存，避免页面显示已齐、
+			// 幽灵轮廓却仍然是红色。
 			BlueprintGhost.Tint tint = inventory == null ? BlueprintGhost.Tint.PENDING
-				: bill.satisfied() ? BlueprintGhost.Tint.READY
+				: missing.isEmpty() ? BlueprintGhost.Tint.READY
 				: BlueprintGhost.Tint.MISSING;
-			BoundedRegion bounds = resolved.bounds();
-			BlueprintGhost.draw(world, owner, bounds, pendingClear(world, resolved), tint);
+			BlueprintGhost.draw(world, owner, resolved, tint);
+			if (resolved.access() != null) BlueprintGhost.drawAccess(world, owner, resolved.access());
 		}
 	}
 
 	/** 幽灵着色要看「伙伴身上有多少料」，取不到就当空手，颜色偏保守而不是撒谎。 */
-	private dev.squire.server.body.avatar.AvatarInventory inventoryOf(
-			BlueprintPlacement placement) {
+	private AvatarInventory inventoryOf(BlueprintPlacement placement) {
 		if (placement.agentId == null || inventoryLookup == null) {
 			return null;
 		}
 		return inventoryLookup.apply(placement.agentId);
 	}
 
-	private java.util.function.Function<UUID,
-		dev.squire.server.body.avatar.AvatarInventory> inventoryLookup;
+	private java.util.function.Function<UUID, AvatarInventory> inventoryLookup;
+	private java.util.function.Function<UUID, Map<Identifier, Integer>> projectSupplyLookup;
 
 	/** 由运行时注入：agentId → 该伙伴的真实背包。 */
-	public void attachInventoryLookup(java.util.function.Function<UUID,
-			dev.squire.server.body.avatar.AvatarInventory> lookup) {
+	public void attachInventoryLookup(
+			java.util.function.Function<UUID, AvatarInventory> lookup) {
 		this.inventoryLookup = lookup;
+	}
+
+	/** Injects placement-id to durable project escrow for truthful preview tinting. */
+	public void attachProjectSupplyLookup(
+			java.util.function.Function<UUID, Map<Identifier, Integer>> lookup) {
+		this.projectSupplyLookup = lookup;
 	}
 }

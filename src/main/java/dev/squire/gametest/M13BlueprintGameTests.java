@@ -1,5 +1,7 @@
 package dev.squire.gametest;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,10 +11,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.mojang.authlib.GameProfile;
 
 import dev.squire.server.blueprint.Blueprint;
+import dev.squire.server.blueprint.BlueprintLoader;
 import dev.squire.server.blueprint.BlueprintManager;
 import dev.squire.server.blueprint.BlueprintPlacement;
 import dev.squire.server.blueprint.BlueprintStep;
 import dev.squire.server.body.avatar.AvatarEntity;
+import dev.squire.server.profession.SquireProfession;
+import dev.squire.server.project.Project;
 import dev.squire.server.runtime.SquireRuntime;
 import dev.squire.server.task.RetryPolicy;
 import dev.squire.server.task.Task;
@@ -24,6 +29,11 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -42,10 +52,41 @@ import net.minecraft.util.math.Vec3d;
 public final class M13BlueprintGameTests implements FabricGameTest {
 	public static final String FLOOR = M0SpikeGameTests.FLOOR;
 
+	@GameTest(templateName = FLOOR, tickLimit = 40)
+	public void pairedBlocksAndSlabsUseTheSameWorldStateAndItemBill(TestContext context) {
+		var world = context.getWorld();
+		BlockPos p = context.getAbsolutePos(new BlockPos(2, 2, 2));
+		world.setBlockState(p.down(), Blocks.STONE.getDefaultState(), 2);
+		var lower = new Blueprint.Cell(p, "minecraft:oak_door", Map.of("half", "lower", "facing", "north"), 0, "door", false);
+		var upper = new Blueprint.Cell(p.up(), "minecraft:oak_door", Map.of("half", "upper", "facing", "north"), 1, "door", false);
+		var resolved = new Blueprint.Resolved(new dev.squire.server.world.BoundedRegion(p, p.up()), List.of(lower, upper), List.of());
+		var assembly = dev.squire.server.blueprint.BlueprintAssembly.pending(world, lower, resolved);
+		context.assertTrue(dev.squire.server.blueprint.BlueprintAssembly.cost(assembly) == 1, "one door item pays for both halves");
+		context.assertTrue(dev.squire.server.blueprint.BlueprintAssembly.place(world, assembly), "door halves placed together");
+		context.assertTrue(BlueprintManager.matches(world.getBlockState(p), lower)
+			&& BlueprintManager.matches(world.getBlockState(p.up()), upper), "both authored halves survive neighbour updates");
+		context.assertTrue(dev.squire.server.blueprint.BlueprintAssembly.pending(world, upper, resolved).isEmpty(), "already installed pair never charged twice");
+		var slab = new Blueprint.Cell(p.east(2), "minecraft:stone_slab", Map.of("type", "double"), 2, "slab", false);
+		context.assertTrue(BlueprintManager.itemCost(slab) == 2, "double slab requires two items");
+		context.assertTrue(BlueprintManager.itemId("minecraft:wall_torch").equals(new Identifier("minecraft:torch")), "wall torch bills the inventory item");
+		var malformed = new Blueprint.Resolved(resolved.bounds(), List.of(lower,
+			new Blueprint.Cell(p.up(), lower.blockId(), lower.properties(), 1, "bad half", false)), List.of());
+		boolean rejected = false;
+		try { dev.squire.server.blueprint.BlueprintAssembly.cells(lower, malformed); }
+		catch (IllegalArgumentException expected) { rejected = true; }
+		context.assertTrue(rejected, "mismatched pair rejected before world edits");
+		context.complete();
+	}
+
 	/** 测试专用的小蓝图：3×3×3 石壳，正中掏空一格。放得进 9×4×9 的测试场地。 */
 	private static final String SHELL = "gametest_shell";
+	private static final String WINDOW_SHELL = "gametest_shell_window";
+	private static final int MAX_LEVEL_STONE_COST = 13;
 	/** 26 = 27 格实心减掉掏空的那一格。展平之后要砌的就是这个数。 */
 	private static final int SHELL_CELLS = 26;
+	private static final List<String> KEEPITLEVEL = List.of(
+		"keepitlevel_residence", "keepitlevel_fountain", "keepitlevel_builder_lodge",
+		"keepitlevel_guardtower", "keepitlevel_library", "keepitlevel_warehouse");
 
 	private static void registerShell(SquireRuntime rt) {
 		rt.blueprints().registry().register(new Blueprint(SHELL, "测试壳", 1,
@@ -58,7 +99,7 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 
 	/** 带一格可选窗的变体：缺料时那一格要被跳过，而不是让整栋停在半截。 */
 	private static void registerShellWithWindow(SquireRuntime rt) {
-		rt.blueprints().registry().register(new Blueprint(SHELL, "测试壳", 1,
+		rt.blueprints().registry().register(new Blueprint(WINDOW_SHELL, "测试壳", 1,
 			Blueprint.Category.SHELTER, 3, 3, 3,
 			List.of(BlueprintStep.place(0, 0, 0, 0, 2, 2, 2, "minecraft:stone",
 					"壳", false),
@@ -87,6 +128,8 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 			context.getAbsolutePos(new BlockPos(1, 2, 1)));
 		owner.refreshPositionAndAngles(ownerFeet.x, ownerFeet.y, ownerFeet.z, 0.0f, 0.0f);
 		AvatarEntity avatar = rt.summonFor(owner);
+		rt.profileOf(avatar).profession.setProfession(SquireProfession.ENGINEER);
+		rt.profileOf(avatar).profession.level = SquireProfession.MAX_LEVEL;
 		avatar.refreshPositionAndAngles(
 			Vec3d.ofBottomCenter(context.getAbsolutePos(relative)).x,
 			Vec3d.ofBottomCenter(context.getAbsolutePos(relative)).y,
@@ -100,8 +143,13 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 	/** 直接摆一个落点写死的摆放：位置可控，断言才能逐格对。 */
 	private static BlueprintPlacement placeAt(SquireRuntime rt, TestContext context,
 			FakePlayer owner, AvatarEntity avatar, BlockPos relativeOrigin) {
+		return placeAt(rt, context, owner, avatar, relativeOrigin, SHELL);
+	}
+
+	private static BlueprintPlacement placeAt(SquireRuntime rt, TestContext context,
+			FakePlayer owner, AvatarEntity avatar, BlockPos relativeOrigin, String blueprintId) {
 		BlueprintPlacement placement = new BlueprintPlacement(UUID.randomUUID(),
-			owner.getUuid(), avatar.agentId(), SHELL,
+			owner.getUuid(), avatar.agentId(), blueprintId,
 			context.getWorld().getRegistryKey().getValue().toString(),
 			context.getAbsolutePos(relativeOrigin), Direction.NORTH, rt.tickNow());
 		rt.blueprints().put(placement);
@@ -186,8 +234,8 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 					new BlockPos(5, 3, 5))).isOf(Blocks.STONE),
 				"the hollowed centre is not filled by the shell; it may hold a torch");
 			int left = avatar.items().countOf(new Identifier("minecraft:stone"));
-			context.assertTrue(left == 64 - SHELL_CELLS,
-				"the backpack must really be " + SHELL_CELLS + " lighter, has " + left);
+			context.assertTrue(left == 64 - MAX_LEVEL_STONE_COST,
+				"the backpack must really be " + MAX_LEVEL_STONE_COST + " lighter, has " + left);
 			context.assertTrue(!rt.undoableFor(owner.getUuid()).isEmpty(),
 				"blueprint building is undoable like every other world write");
 			done.set(true);
@@ -216,16 +264,25 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 			avatar.items().insert(new ItemStack(Items.STONE, 4));
 			BlueprintPlacement placement = placeAt(rt, context, owner, avatar,
 				new BlockPos(4, 2, 4));
-			// 走一次玩家入口：4 块石头盖不起 22 格的壳，所以确认必须<b>如实拒绝</b>
-			// 并报出还差多少——料在确认那一刻就要锁进工程物资池，凑不齐就没有工程。
-			// 这一条本身就是「绝不凭空补齐」的第一道防线。
+			// 走一次玩家入口：4 块石头盖不起 22 格的壳，所以确认会建立工程、
+			// 锁住这一批真实材料并停在备料阶段，而不是要求一次装齐或凭空补齐。
 			var confirmed = rt.blueprintBuild(owner);
-			context.assertFalse(confirmed.success(),
-				"4 stone cannot pay for the shell; confirming must refuse");
+			context.assertTrue(confirmed.success(), confirmed.message());
 			context.assertTrue(confirmed.message().contains("石头"),
-				"the refusal must say what is short, got: " + confirmed.message());
-			context.assertTrue(rt.projects().activeOf(owner.getUuid()).isEmpty(),
-				"a refused confirmation must not leave a project behind");
+				"the material blocker must say what is short, got: "
+					+ confirmed.message());
+			Project waiting = rt.projects().activeOf(owner.getUuid()).orElseThrow();
+			context.assertTrue(waiting.state() == Project.State.PAUSED,
+				"an incomplete real batch must leave a durable waiting project");
+			context.assertTrue(waiting.reservedCount(
+				new Identifier("minecraft:stone")) == 4,
+				"all four real blocks must be held by the project pool");
+			// 下面单独验底层执行器的缺料行为；先取消工程把同一批四块石头
+			// 原样返还给侍从。Coordinator cancel 不会删除本测试仍要直接使用的 placement。
+			rt.projects().cancel(waiting);
+			context.assertTrue(avatar.items().countOf(
+				new Identifier("minecraft:stone")) == 4,
+				"cancelling must return the staged batch before the direct executor test");
 			// 再直接提交任务，验执行器本身也会诚实停下，而不是凭空补料。
 			Map<String, Object> params = Map.of(
 				BlueprintBuildExecutor.PARAM_PLACEMENT_ID,
@@ -271,7 +328,7 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 			AvatarEntity avatar = summon(context, rt, owner, new BlockPos(1, 2, 1));
 			avatar.items().insert(new ItemStack(Items.STONE, 64)); // 石头够，玻璃一块没有
 			BlueprintPlacement placement = placeAt(rt, context, owner, avatar,
-				new BlockPos(4, 2, 4));
+				new BlockPos(4, 2, 4), WINDOW_SHELL);
 			Map<String, Object> params = Map.of(
 				BlueprintBuildExecutor.PARAM_PLACEMENT_ID,
 				placement.placementId.toString());
@@ -388,14 +445,15 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 			Blueprint.Resolved resolved = rt.blueprints().resolve(placement)
 				.orElseThrow();
 			var before = BlueprintManager.bill(world, resolved, avatar.items());
-			context.assertTrue(before.totalRequired() == SHELL_CELLS,
+			context.assertTrue(before.totalRequired() == MAX_LEVEL_STONE_COST,
 				"a bare site needs the whole shell, got " + before.totalRequired());
 
 			// 玩家自己先砌了一角。
-			world.setBlockState(context.getAbsolutePos(new BlockPos(4, 2, 4)),
-				Blocks.STONE.getDefaultState());
+			var paidCell = resolved.costPlan().operations().stream()
+				.filter(op -> op.total() == 1).findFirst().orElseThrow().cells().get(0);
+			world.setBlockState(paidCell.pos(), Blocks.STONE.getDefaultState());
 			var after = BlueprintManager.bill(world, resolved, avatar.items());
-			context.assertTrue(after.totalRequired() == SHELL_CELLS - 1,
+			context.assertTrue(after.totalRequired() == MAX_LEVEL_STONE_COST - 1,
 				"an already-standing block must leave the requirement");
 			context.assertTrue(after.totalPlaced() == 1,
 				"and be reported as progress instead");
@@ -508,6 +566,211 @@ public final class M13BlueprintGameTests implements FabricGameTest {
 			context.assertTrue(placed == SHELL_CELLS,
 				"the refill must not leave the task retrying; found " + placed
 					+ " of " + SHELL_CELLS + " cells");
+			cleanUp(rt, owner);
+			context.complete();
+		});
+	}
+
+	/** A failed route may pause construction, but it must never degrade to remote writes. */
+	@GameTest(templateName = FLOOR, tickLimit = 220,
+		batchId = "squire-blueprint-no-remote")
+	public void anEnclosedWorkerCannotBuildFromAcrossTheSite(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		ServerWorld world = context.getWorld();
+		FakePlayer owner = fakeOwner(world, "bp-no-remote-owner");
+		registerShell(rt);
+
+		context.runAtTick(5, () -> {
+			BlockPos feet = context.getAbsolutePos(new BlockPos(1, 2, 1));
+			AvatarEntity avatar = summon(context, rt, owner, new BlockPos(1, 2, 1));
+			avatar.items().insert(new ItemStack(Items.STONE, 64));
+			for (Direction direction : Direction.Type.HORIZONTAL) {
+				world.setBlockState(feet.offset(direction), Blocks.BEDROCK.getDefaultState());
+				world.setBlockState(feet.offset(direction).up(),
+					Blocks.BEDROCK.getDefaultState());
+			}
+			world.setBlockState(feet.up(2), Blocks.BEDROCK.getDefaultState());
+			BlueprintPlacement placement = placeAt(rt, context, owner, avatar,
+				new BlockPos(5, 2, 5));
+			Map<String, Object> params = Map.of(
+				BlueprintBuildExecutor.PARAM_PLACEMENT_ID,
+				placement.placementId.toString());
+			rt.scheduler().submit(new Task(avatar.agentId(), owner.getUuid(),
+				BlueprintBuildExecutor.TYPE, TaskPriority.P3_USER_TASK,
+				"physically blocked build", null,
+				BlueprintBuildExecutor.blueprintBuilt(rt.runtimeServicesForTest(),
+					placement.placementId),
+				160L, RetryPolicy.DEFAULT, true, "no-remote", params), world.getTime());
+		});
+
+		context.runAtTick(180, () -> {
+			AvatarEntity avatar = rt.resolveAvatarFor(owner.getUuid()).orElseThrow();
+			int placed = 0;
+			for (BlockPos pos : BlockPos.iterate(context.getAbsolutePos(
+					new BlockPos(5, 2, 5)), context.getAbsolutePos(
+					new BlockPos(7, 4, 7)))) {
+				if (world.getBlockState(pos).isOf(Blocks.STONE)) placed++;
+			}
+			context.assertTrue(placed == 0,
+				"an unreachable worker must place zero remote blocks, found " + placed);
+			context.assertTrue(avatar.items().countOf(
+					new Identifier("minecraft:stone")) == 64,
+				"failed pathfinding must not consume construction material");
+			cleanUp(rt, owner);
+			context.complete();
+		});
+	}
+
+	/** Vanilla StructureTemplate decoding feeds the exact same resolved-cell pipeline. */
+	@GameTest(templateName = FLOOR, tickLimit = 40,
+		batchId = "squire-blueprint-native-nbt")
+	public void nativeStructureNbtImportsBlockStatesAirAndPaletteSlots(TestContext context) {
+		try {
+			NbtCompound root = new NbtCompound();
+			root.put("size", ints(3, 1, 1));
+			NbtList palette = new NbtList();
+			NbtCompound stairs = new NbtCompound();
+			stairs.putString("Name", "minecraft:oak_stairs");
+			NbtCompound properties = new NbtCompound();
+			properties.putString("facing", "north");
+			properties.putString("half", "bottom");
+			properties.putString("shape", "straight");
+			properties.putString("waterlogged", "false");
+			stairs.put("Properties", properties);
+			palette.add(stairs);
+			NbtCompound air = new NbtCompound();
+			air.putString("Name", "minecraft:air");
+			palette.add(air);
+			NbtCompound wall = new NbtCompound();
+			wall.putString("Name", "minecraft:cobblestone_wall");
+			NbtCompound wallProperties = new NbtCompound();
+			wallProperties.putString("north", "low");
+			wall.put("Properties", wallProperties);
+			palette.add(wall);
+			root.put("palette", palette);
+			NbtList blocks = new NbtList();
+			blocks.add(structureBlock(0, 0, 0, 0));
+			blocks.add(structureBlock(1, 0, 0, 2));
+			blocks.add(structureBlock(2, 0, 0, 1));
+			root.put("blocks", blocks);
+			root.put("entities", new NbtList());
+			root.putInt("DataVersion", 3465);
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			NbtIo.writeCompressed(root, output);
+
+			Blueprint blueprint = new BlueprintLoader().load("native_test", """
+				{"schemaVersion":1,"id":"native_test","format":"minecraft:structure_nbt",
+				 "structure":"squire:test/native","airMode":"clear",
+				 "materialSlots":[{"id":"roof","type":"ROOF",
+				   "defaultFamily":"squire:spruce","requiredVariants":["stairs"]}],
+				 "palette":{"minecraft:oak_stairs":{"slot":"roof","variant":"stairs"}}}
+				""", id -> new ByteArrayInputStream(output.toByteArray()));
+			Blueprint.Resolved resolved = blueprint.resolve(BlockPos.ORIGIN, Direction.EAST);
+			context.assertTrue(resolved.toPlace().size() == 2,
+				"native structure must import both solid blocks");
+			context.assertTrue(resolved.toClear().size() == 1,
+				"airMode=clear must import one negative-space cell");
+			Blueprint.Cell stairCell = resolved.toPlace().stream()
+				.filter(cell -> "minecraft:spruce_stairs".equals(cell.blockId()))
+				.findFirst().orElseThrow();
+			context.assertTrue("east".equals(stairCell.properties()
+				.get("facing")), "NBT block state must rotate with the blueprint");
+			Blueprint.Cell wallCell = resolved.toPlace().stream()
+				.filter(cell -> "minecraft:cobblestone_wall".equals(cell.blockId()))
+				.findFirst().orElseThrow();
+			context.assertTrue("low".equals(wallCell.properties().get("east"))
+					&& "none".equals(wallCell.properties().get("north")),
+				"native rotation must move directional wall connections, not only facing");
+			context.complete();
+		} catch (Exception bad) {
+			throw new AssertionError("native NBT import failed", bad);
+		}
+	}
+
+	private static NbtCompound structureBlock(int x, int y, int z, int state) {
+		NbtCompound block = new NbtCompound();
+		block.put("pos", ints(x, y, z));
+		block.putInt("state", state);
+		return block;
+	}
+
+	private static NbtList ints(int... values) {
+		NbtList list = new NbtList();
+		for (int value : values) list.add(NbtInt.of(value));
+		return list;
+	}
+
+	/** Imported structures must resolve into valid 1.20.1 block items in every rotation. */
+	@GameTest(templateName = FLOOR, tickLimit = 200, batchId = "squire-blueprint-import")
+	public void keepItLevelImportsResolveToVanillaStatesInEveryRotation(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		for (String id : KEEPITLEVEL) {
+			Blueprint blueprint = rt.blueprints().registry().byId(id).orElseThrow();
+			context.assertTrue("MIT".equals(blueprint.metadata().license()),
+				id + " lost its redistribution license metadata");
+			int cells = -1;
+			for (Direction direction : Direction.Type.HORIZONTAL) {
+				Blueprint.Resolved resolved = blueprint.resolve(BlockPos.ORIGIN, direction);
+				if (cells < 0) cells = resolved.cellCount();
+				context.assertTrue(cells == resolved.cellCount(),
+					id + " changed cell count when rotated");
+				for (Blueprint.Cell cell : resolved.toPlace()) {
+					context.assertTrue(cell.blockId().startsWith("minecraft:"),
+						id + " still requires " + cell.blockId());
+					BlueprintManager.targetState(cell);
+				}
+			}
+			context.assertTrue(BlueprintManager.unknownBlocks(blueprint,
+				rt.blueprints().registry().materials()).isEmpty(),
+				id + " contains an invalid or unplaceable state");
+		}
+		context.complete();
+	}
+
+	/** A redistributed asset goes through the real item-consuming construction executor. */
+	@GameTest(templateName = FLOOR, tickLimit = 600, batchId = "squire-blueprint-import-build")
+	public void importedFountainIsActuallyBuiltFromItsResolvedBlueprint(TestContext context) {
+		SquireRuntime rt = runtime(context);
+		ServerWorld world = context.getWorld();
+		FakePlayer owner = fakeOwner(world, "bp-import-build-owner");
+		BlockPos origin = context.getAbsolutePos(new BlockPos(3, 2, 3));
+
+		context.runAtTick(5, () -> {
+			AvatarEntity avatar = summon(context, rt, owner, new BlockPos(1, 2, 1));
+			Blueprint blueprint = rt.blueprints().registry().byId("keepitlevel_fountain")
+				.orElseThrow();
+			BlueprintPlacement placement = new BlueprintPlacement(UUID.randomUUID(),
+				owner.getUuid(), avatar.agentId(), blueprint.id(),
+				world.getRegistryKey().getValue().toString(), origin, Direction.NORTH,
+				rt.tickNow());
+			rt.blueprints().put(placement);
+			Map<Identifier, Integer> required = new java.util.LinkedHashMap<>();
+			for (Blueprint.Cell cell : blueprint.resolve(origin, Direction.NORTH).toPlace()) {
+				required.merge(BlueprintManager.itemId(cell.blockId()), 1, Integer::sum);
+			}
+			for (var entry : required.entrySet()) {
+				avatar.items().insert(new ItemStack(Registries.ITEM.get(entry.getKey()),
+					entry.getValue()));
+			}
+			avatar.items().insert(new ItemStack(Items.IRON_PICKAXE));
+			Map<String, Object> params = Map.of(BlueprintBuildExecutor.PARAM_PLACEMENT_ID,
+				placement.placementId.toString());
+			rt.scheduler().submit(new Task(avatar.agentId(), owner.getUuid(),
+				BlueprintBuildExecutor.TYPE, TaskPriority.P3_USER_TASK,
+				"build imported fountain", null,
+				BlueprintBuildExecutor.blueprintBuilt(rt.runtimeServicesForTest(),
+					placement.placementId), 500L, RetryPolicy.DEFAULT, true, "import", params),
+				world.getTime());
+		});
+
+		context.runAtTick(480, () -> {
+			BlueprintPlacement placement = rt.blueprints().activeOf(owner.getUuid())
+				.orElseThrow();
+			Blueprint.Resolved resolved = rt.blueprints().resolve(placement).orElseThrow();
+			for (Blueprint.Cell cell : resolved.toPlace()) {
+				context.assertTrue(BlueprintManager.matches(world.getBlockState(cell.pos()), cell),
+					"imported build diverged from preview at " + cell.pos());
+			}
 			cleanUp(rt, owner);
 			context.complete();
 		});

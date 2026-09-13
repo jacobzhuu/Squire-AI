@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/misc/gapfill_lg_stone",
+  "format": "minecraft:structure_nbt",
+  "displayName": "缝隙填充 · gapfill_lg_stone",
+  "tier": 1,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 1,
+  "structure": "squire:keepitlevel/infrastructure/misc/gapfill_lg_stone",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/misc/gapfill_lg_stone.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    23,
+    1,
+    23
+  ],
+  "primaryOffset": {
+    "x": 11,
+    "y": 0,
+    "z": 11
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    }
+  ],
+  "neighborComputedProperties": {}
+}

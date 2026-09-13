@@ -101,8 +101,13 @@ public final class PlayerNotifier {
 			root.add("queued", entries);
 			Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
 			Files.writeString(tmp, root.toString());
-			Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
-				StandardCopyOption.ATOMIC_MOVE);
+			try {
+				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING,
+					StandardCopyOption.ATOMIC_MOVE);
+			} catch (java.nio.file.AtomicMoveNotSupportedException
+					| java.nio.file.AccessDeniedException atomicMoveUnavailable) {
+				Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+			}
 		} catch (Exception e) {
 			LOG.warn("[notify] save failed: {}", e.toString());
 		}

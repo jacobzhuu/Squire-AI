@@ -72,8 +72,10 @@ public final class Addressing {
 	}
 
 	private static int indexOfIgnoreCase(String haystack, String needle) {
-		return haystack.toLowerCase(Locale.ROOT)
-			.indexOf(needle.toLowerCase(Locale.ROOT));
+		for (int i=0;i<=haystack.length()-needle.length();i++) {
+            if(haystack.regionMatches(true,i,needle,0,needle.length()))return i;
+        }
+        return -1;
 	}
 
 	/**
@@ -83,7 +85,7 @@ public final class Addressing {
 	 * 只有在两边都是 ASCII 的情况下才补一个空格——中文本来就不写空格，
 	 * 补进去会让「帮我 拿点东西」对不上短语表。</p>
 	 */
-	private static String join(String before, String after) {
+	static String join(String before, String after) {
 		String left = trimEnd(before);
 		String right = trimStart(after);
 		if (left.isEmpty()) {

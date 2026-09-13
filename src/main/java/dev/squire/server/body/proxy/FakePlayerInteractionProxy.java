@@ -51,6 +51,36 @@ public final class FakePlayerInteractionProxy {
 		return !state.isToolRequired() || (tool != null && tool.isSuitableFor(state));
 	}
 
+	/** Advice uses the same harvest predicate as execution, including minimum tool tier. */
+	public static ItemStack recommendedHarvestTool(BlockState state) {
+		if (canHarvest(state, ItemStack.EMPTY)) return ItemStack.EMPTY;
+		for (String material : List.of("wooden", "stone", "iron", "diamond", "netherite", "golden"))
+			for (String type : List.of("pickaxe", "shovel", "axe", "hoe", "sword")) {
+				var item = net.minecraft.registry.Registries.ITEM.get(new net.minecraft.util.Identifier("minecraft", material + "_" + type));
+				var stack = new ItemStack(item);
+				if (canHarvest(state, stack)) return stack;
+			}
+		for (var item : net.minecraft.registry.Registries.ITEM) {
+			var stack = new ItemStack(item);
+			if (canHarvest(state, stack)) return stack;
+		}
+		return ItemStack.EMPTY;
+	}
+
+	public static String missingHarvestToolMessage(BlockState state) {
+		ItemStack tool = recommendedHarvestTool(state);
+		String name = tool.getName().getString();
+		String id = net.minecraft.registry.Registries.ITEM.getId(tool.getItem()).toString();
+		String[] parts = id.replace("minecraft:", "").split("_");
+		if (id.startsWith("minecraft:") && parts.length == 2) {
+			String material = java.util.Map.of("wooden", "木", "stone", "石", "iron", "铁", "diamond", "钻石", "netherite", "下界合金", "golden", "金").get(parts[0]);
+			String type = java.util.Map.of("pickaxe", "镐", "shovel", "铲", "axe", "斧", "hoe", "锄", "sword", "剑").get(parts[1]);
+			if (material != null && type != null) name = material + type;
+		}
+		return "缺少能采集“" + state.getBlock().getName().getString() + "”的工具。"
+			+ (tool.isEmpty() ? "请提供适用于该方块的工具。" : "可提供：" + name + "（放进侍从背包或丢在他脚边）。");
+	}
+
 	/**
 	 * Break a block using the avatar's tool stack.
 	 *

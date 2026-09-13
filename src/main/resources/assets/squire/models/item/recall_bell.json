@@ -1,6 +1,117 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "squire:item/recall_bell"
-  }
+  "parent": "squire:item/recall_bell_body",
+  "overrides": [
+    {
+      "predicate": {
+        "squire:bell_state": 0.0,
+        "squire:bell_quality": 0.0
+      },
+      "model": "squire:item/recall_bell_0_0"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.0,
+        "squire:bell_quality": 0.25
+      },
+      "model": "squire:item/recall_bell_0_1"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.0,
+        "squire:bell_quality": 0.5
+      },
+      "model": "squire:item/recall_bell_0_2"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.0,
+        "squire:bell_quality": 0.75
+      },
+      "model": "squire:item/recall_bell_0_3"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.25,
+        "squire:bell_quality": 0.0
+      },
+      "model": "squire:item/recall_bell_1_0"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.25,
+        "squire:bell_quality": 0.25
+      },
+      "model": "squire:item/recall_bell_1_1"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.25,
+        "squire:bell_quality": 0.5
+      },
+      "model": "squire:item/recall_bell_1_2"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.25,
+        "squire:bell_quality": 0.75
+      },
+      "model": "squire:item/recall_bell_1_3"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.5,
+        "squire:bell_quality": 0.0
+      },
+      "model": "squire:item/recall_bell_2_0"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.5,
+        "squire:bell_quality": 0.25
+      },
+      "model": "squire:item/recall_bell_2_1"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.5,
+        "squire:bell_quality": 0.5
+      },
+      "model": "squire:item/recall_bell_2_2"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.5,
+        "squire:bell_quality": 0.75
+      },
+      "model": "squire:item/recall_bell_2_3"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.75,
+        "squire:bell_quality": 0.0
+      },
+      "model": "squire:item/recall_bell_3_0"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.75,
+        "squire:bell_quality": 0.25
+      },
+      "model": "squire:item/recall_bell_3_1"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.75,
+        "squire:bell_quality": 0.5
+      },
+      "model": "squire:item/recall_bell_3_2"
+    },
+    {
+      "predicate": {
+        "squire:bell_state": 0.75,
+        "squire:bell_quality": 0.75
+      },
+      "model": "squire:item/recall_bell_3_3"
+    }
+  ]
 }

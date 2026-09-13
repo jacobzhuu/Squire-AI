@@ -388,6 +388,7 @@ public final class TaskScheduler {
 						return false;
 					}
 					case WORK_DONE -> {
+						task.setLastErrorCode(null); // transient retry errors must not survive a successful execution
 						task.setExecutionState(tick); // remember when verification began
 						task.transitionTo(TaskState.VERIFYING);
 						return true;
@@ -409,7 +410,10 @@ public final class TaskScheduler {
 					case MET -> {
 						return true;
 					}
-					case NOT_MET_YET -> retryOrFail(task, tick);
+					case NOT_MET_YET -> {
+                            task.setLastErrorCode("POSTCONDITION_NOT_MET");
+                            retryOrFail(task, tick);
+                        }
 					case FAILED -> fail(task, "POSTCONDITION_FAILED");
 				}
 				return true;
@@ -422,7 +426,8 @@ public final class TaskScheduler {
 
 	private void retryOrFail(Task task, long tick) {
 		if (task.attemptsUsed() <= task.retryPolicy().maxRetries()) {
-			task.setLastErrorCode("RETRYING");
+			if (task.lastErrorCode().isEmpty()) task.setLastErrorCode("EXECUTION_FAILED");
+            LOG.info("[task] retry {} type={} cause={}", task.taskId(), task.type(), task.lastErrorCode().orElse("EXECUTION_FAILED"));
 			task.transitionTo(TaskState.RETRYING);
 			toReady(task);
 			pending.add(task);

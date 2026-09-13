@@ -25,10 +25,15 @@ import net.minecraft.util.Identifier;
  */
 public final class SquireScreens {
 
+	public static final Identifier RECALL_PANEL_PACKET = new Identifier(SquireMod.MOD_ID, "squire_panel_recall");
+    public static final Identifier SWITCH_PANEL_PACKET = new Identifier(SquireMod.MOD_ID, "squire_switch_panel");
+
 	public static final Identifier STATE_PACKET =
 		new Identifier(SquireMod.MOD_ID, "squire_panel_state");
+	public static final Identifier TERRAIN_ACTION_PACKET = new Identifier(SquireMod.MOD_ID, "squire_terrain_action");
 	public static final Identifier CHAT_PACKET =
 		new Identifier(SquireMod.MOD_ID, "squire_panel_chat");
+	public static final Identifier BLUEPRINT_SELECT_PACKET = new Identifier(SquireMod.MOD_ID, "blueprint_select");
 	/** 按键打开现有伙伴的面板；绝不凭空创建或跨维度搬运实体。 */
 	public static final Identifier OPEN_PANEL_PACKET =
 		new Identifier(SquireMod.MOD_ID, "squire_open_panel");
@@ -63,14 +68,54 @@ public final class SquireScreens {
 
 	/** Register all client-to-server panel request receivers. */
 	public static void register() {
+        ServerPlayNetworking.registerGlobalReceiver(RECALL_PANEL_PACKET,(server,player,handler,buf,sender) -> {
+            int syncId=buf.readVarInt();
+            server.execute(() -> {
+                if (!(player.currentScreenHandler instanceof SquireScreenHandler panel) || panel.syncId!=syncId || !panel.canUse(player)) return;
+                java.util.UUID id=panel.avatarEntity()==null?panel.snapshotAgent:panel.avatarEntity().agentId();
+                if(id==null)return;
+                var rt=dev.squire.server.runtime.SquireRuntime.get();var result=rt.recallSelectedWithBell(player,id);
+                player.sendMessage(Text.literal(result.message()),false);
+                if(result.success()) rt.agents().resolveByAgentId(id).ifPresent(a -> open(player,a));
+            });
+        });
+        ServerPlayNetworking.registerGlobalReceiver(SWITCH_PANEL_PACKET, (server,player,handler,buf,sender) -> {
+            int syncId=buf.readVarInt(); java.util.UUID target=buf.readUuid();
+            server.execute(() -> {
+                if (!(player.currentScreenHandler instanceof SquireScreenHandler panel) || panel.syncId!=syncId || !panel.canUse(player)) return;
+                var rt=dev.squire.server.runtime.SquireRuntime.get();
+                var record=rt.agentStore().recordOfAgent(target).orElse(null);
+                if(record==null || !record.ownerId.equals(player.getUuid())) return;
+                var avatar=rt.agents().resolveByAgentId(target).orElse(null);
+                if(avatar!=null) open(player,avatar);
+                else openSnapshot(player,record);
+            });
+        });
+		ServerPlayNetworking.registerGlobalReceiver(TERRAIN_ACTION_PACKET, (server, player, handler, buf, sender) -> {
+			int syncId = buf.readVarInt(), action = buf.readVarInt(); String review = buf.readString(128);
+			server.execute(() -> {
+				if (player.currentScreenHandler instanceof SquireScreenHandler panel && panel.syncId == syncId && panel.canUse(player))
+					panel.terrainAction(player, action, review);
+			});
+		});
+		ServerPlayNetworking.registerGlobalReceiver(BLUEPRINT_SELECT_PACKET, (server, player, handler, buf, sender) -> {
+			int syncId = buf.readVarInt(); String id = buf.readString(512); long version = buf.readLong();
+			server.execute(() -> {
+				if (player.currentScreenHandler instanceof SquireScreenHandler panel && panel.syncId == syncId && panel.canUse(player))
+					panel.selectBlueprint(player, id, version);
+			});
+		});
 		ServerPlayNetworking.registerGlobalReceiver(CHAT_PACKET,
 			(server, player, handler, buf, sender) -> {
-				String message = buf.readString(MAX_CHAT_LENGTH);
+				int syncId = buf.readVarInt();
+                String message = buf.readString(MAX_CHAT_LENGTH);
 				server.execute(() -> {
 					// 面板里说的话和聊天框里说的话走完全同一条管线，
 					// 免得两边行为逐渐分叉。
-					if (!message.isBlank()) {
-						dev.squire.server.input.InputGateway.acceptChat(player, message);
+					if (!message.isBlank() && player.currentScreenHandler instanceof SquireScreenHandler panel
+                            && panel.syncId == syncId && panel.canUse(player) && panel.avatarEntity() != null) {
+                        dev.squire.server.runtime.SquireRuntime.get().agents().withTarget(player.getUuid(),
+                            panel.avatarEntity().agentId(), () -> dev.squire.server.input.InputGateway.acceptChat(player, message));
 					}
 				});
 			});
@@ -79,7 +124,8 @@ public final class SquireScreens {
 				// 槽位 + 名称 + 动作 id + 档位参数。以前这里收的是一句自然语言，
 				// 点一下要重新送回输入网关——也就是可能再走一次模型。现在收的是
 				// 一个 CommandCatalog 里的动作 id，执行走服务端动作那条路。
-				int slot = buf.readVarInt();
+				int syncId = buf.readVarInt();
+                int slot = buf.readVarInt();
 				String name = buf.readString(
 					dev.squire.server.shortcut.ShortcutStore.MAX_NAME_LENGTH);
 				String entryId = buf.readString(
@@ -87,7 +133,8 @@ public final class SquireScreens {
 				String arg = buf.readString(
 					dev.squire.server.shortcut.ShortcutStore.MAX_ARG_LENGTH);
 				server.execute(() -> {
-					var result = dev.squire.server.runtime.SquireRuntime.get()
+					if (!(player.currentScreenHandler instanceof SquireScreenHandler current) || current.syncId != syncId || !current.canUse(player)) return;
+                    var result = dev.squire.server.runtime.SquireRuntime.get()
 						.bindShortcutAt(player, slot, name, entryId, arg);
 					player.sendMessage(Text.literal(result.message()), false);
 					if (player.currentScreenHandler instanceof SquireScreenHandler panel) {
@@ -127,17 +174,16 @@ public final class SquireScreens {
 		ServerPlayNetworking.registerGlobalReceiver(OPEN_PANEL_PACKET,
 			(server, player, handler, buf, sender) -> server.execute(() -> {
 				var runtime = dev.squire.server.runtime.SquireRuntime.get();
-				AvatarEntity avatar = runtime.agents()
-					.resolveForOwnerNow(player.getUuid()).orElse(null);
+				AvatarEntity avatar = runtime.agentStore().recordOfOwner(player.getUuid())
+					.flatMap(record -> runtime.agents().resolveByAgentId(record.agentId))
+					.orElse(null);
 				if (avatar == null) {
+                    var record = runtime.agentStore().recordOfOwner(player.getUuid());
+                    if (record.isPresent()) {openSnapshot(player,record.get());return;}
 					boolean known = runtime.agentStore().recordOfOwner(player.getUuid())
 						.isPresent();
 					player.sendMessage(Text.translatable(known
 						? "squire.summon.use_bell" : "squire.summon.hint"), false);
-					return;
-				}
-				if (avatar.getWorld() != player.getWorld()) {
-					player.sendMessage(Text.translatable("squire.summon.use_bell"), false);
 					return;
 				}
 				open(player, avatar);
@@ -151,6 +197,8 @@ public final class SquireScreens {
 	 * 客户端工厂会去读一个 buf，服务端这边必须对称地写。
 	 */
 	public static void open(ServerPlayerEntity player, AvatarEntity avatar) {
+        if (!player.getUuid().equals(avatar.ownerId()) && !player.hasPermissionLevel(2)) return;
+        dev.squire.server.runtime.SquireRuntime.get().agentStore().setPrimary(avatar.agentId());
 		player.openHandledScreen(new ExtendedScreenHandlerFactory() {
 			@Override
 			public Text getDisplayName() {
@@ -185,11 +233,30 @@ public final class SquireScreens {
 	 * 把面板状态推给单个玩家。字段顺序只存在于 {@link dev.squire.server.gui.PanelState}，
 	 * 两端都走那一处，不可能再漂。
 	 */
+    public static void openSnapshot(ServerPlayerEntity player, dev.squire.server.agent.SquireAgentStateStore.AgentRecord record) {
+        if (!record.ownerId.equals(player.getUuid())) return;
+        dev.squire.server.runtime.SquireRuntime.get().agentStore().setPrimary(record.agentId);
+        player.openHandledScreen(new ExtendedScreenHandlerFactory() {
+            public Text getDisplayName() {return Text.literal(record.displayName);}
+            public void writeScreenOpeningData(ServerPlayerEntity p,PacketByteBuf buf) {buf.writeVarInt(-1);}
+            public ScreenHandler createMenu(int syncId,net.minecraft.entity.player.PlayerInventory inventory,net.minecraft.entity.player.PlayerEntity p) {
+                var panel=new SquireScreenHandler(syncId,inventory); panel.snapshotAgent=record.agentId;return panel;
+            }
+        });
+        if(player.currentScreenHandler instanceof SquireScreenHandler panel) panel.syncState(player);
+    }
+
 	public static void sendState(ServerPlayerEntity player, int syncId,
 		dev.squire.server.gui.PanelState state) {
 		PacketByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(syncId);
 		state.write(buf);
-		ServerPlayNetworking.send(player, STATE_PACKET, buf);
+		var runtime = dev.squire.server.runtime.SquireRuntime.get();
+		var placement = runtime.blueprints().activeOf(player.getUuid()).orElse(null);
+		buf.writeString(placement == null || dev.squire.server.blueprint.TerrainLeveling.parse(placement.blueprintId).isEmpty()
+			? "" : placement.placementId + "/" + placement.terrainReview, 128);
+		buf.writeBoolean(player.currentScreenHandler instanceof SquireScreenHandler panel && panel.canExchange(player));
+        buf.writeBoolean(player.currentScreenHandler instanceof SquireScreenHandler panel && panel.avatarEntity()!=null && panel.avatarEntity().isAlive());
+        ServerPlayNetworking.send(player, STATE_PACKET, buf);
 	}
 }

@@ -1,0 +1,43 @@
+{
+  "schemaVersion":1,"id":"watchtower","format":"squire:steps",
+  "displayName":"石基瞭望塔","tier":2,"category":"DEFENCE","minEngineerLevel":4,"size":[7,16,7],
+  "requiredAbilities":["build.blueprint"],
+  "metadata":{"author":"Squire contributors","source":"bundled:squire","license":"Apache-2.0","style":"medieval_frontier","description":"石塔身、木质瞭望平台、护栏和分层塔盖。","tags":["tower","defence","landmark"]},
+  "materialSlots":[
+    {"id":"foundation","displayName":"塔基","type":"FOUNDATION","defaultFamily":"squire:cobblestone","requiredVariants":["block"]},
+    {"id":"frame","displayName":"木构件","type":"FRAME","defaultFamily":"squire:dark_oak","requiredVariants":["log","fence"]},
+    {"id":"wall","displayName":"塔墙","type":"WALL","defaultFamily":"squire:stone_bricks","requiredVariants":["block"]},
+    {"id":"floor","displayName":"平台","type":"FLOOR","defaultFamily":"squire:spruce","requiredVariants":["planks"]},
+    {"id":"roof","displayName":"塔顶","type":"ROOF","defaultFamily":"squire:deepslate_tiles","requiredVariants":["stairs","slab"]},
+    {"id":"window","displayName":"观察窗","type":"WINDOW","defaultFamily":"squire:glass","requiredVariants":["pane"]}
+  ],
+  "steps":[
+    {"material":{"slot":"foundation","variant":"block"},"from":[1,0,1],"to":[5,0,5],"what":"塔基"},
+    {"material":{"slot":"wall","variant":"block"},"from":[1,1,1],"to":[5,7,1],"what":"北塔墙"},
+    {"material":{"slot":"wall","variant":"block"},"from":[1,1,5],"to":[5,7,5],"what":"南塔墙"},
+    {"material":{"slot":"wall","variant":"block"},"from":[1,1,2],"to":[1,7,4],"what":"西塔墙"},
+    {"material":{"slot":"wall","variant":"block"},"from":[5,1,2],"to":[5,7,4],"what":"东塔墙"},
+    {"dig":true,"from":[2,1,2],"to":[4,7,4],"what":"清理塔内"},
+    {"dig":true,"from":[3,1,5],"to":[3,2,5],"what":"塔门"},
+    {"material":{"slot":"window","variant":"pane"},"from":[3,2,1],"optional":true,"what":"观察窗"},
+    {"material":{"slot":"window","variant":"pane"},"from":[1,5,3],"optional":true,"what":"观察窗"},
+    {"material":{"slot":"window","variant":"pane"},"from":[5,5,3],"optional":true,"what":"观察窗"},
+    {"block":"minecraft:ladder","from":[3,1,2],"to":[3,7,2],"properties":{"facing":"south"},"what":"塔内梯"},
+    {"material":{"slot":"floor","variant":"planks"},"from":[0,8,0],"to":[6,8,6],"what":"瞭望平台"},
+    {"material":{"slot":"frame","variant":"log"},"from":[0,9,0],"to":[0,11,0],"properties":{"axis":"y"},"what":"角柱"},
+    {"material":{"slot":"frame","variant":"log"},"from":[6,9,0],"to":[6,11,0],"properties":{"axis":"y"},"what":"角柱"},
+    {"material":{"slot":"frame","variant":"log"},"from":[0,9,6],"to":[0,11,6],"properties":{"axis":"y"},"what":"角柱"},
+    {"material":{"slot":"frame","variant":"log"},"from":[6,9,6],"to":[6,11,6],"properties":{"axis":"y"},"what":"角柱"},
+    {"material":{"slot":"frame","variant":"fence"},"from":[0,9,0],"to":[6,9,0],"what":"北护栏"},
+    {"material":{"slot":"frame","variant":"fence"},"from":[0,9,6],"to":[6,9,6],"what":"南护栏"},
+    {"material":{"slot":"frame","variant":"fence"},"from":[0,9,1],"to":[0,9,5],"what":"西护栏"},
+    {"material":{"slot":"frame","variant":"fence"},"from":[6,9,1],"to":[6,9,5],"what":"东护栏"},
+    {"material":{"slot":"roof","variant":"stairs"},"from":[0,12,0],"to":[6,12,0],"properties":{"facing":"north"},"what":"北屋檐"},
+    {"material":{"slot":"roof","variant":"stairs"},"from":[0,12,6],"to":[6,12,6],"properties":{"facing":"south"},"what":"南屋檐"},
+    {"material":{"slot":"roof","variant":"stairs"},"from":[0,12,1],"to":[0,12,5],"properties":{"facing":"west"},"what":"西屋檐"},
+    {"material":{"slot":"roof","variant":"stairs"},"from":[6,12,1],"to":[6,12,5],"properties":{"facing":"east"},"what":"东屋檐"},
+    {"material":{"slot":"roof","variant":"slab"},"from":[1,13,1],"to":[5,13,5],"what":"上层塔盖"},
+    {"material":{"slot":"roof","variant":"slab"},"from":[2,14,2],"to":[4,14,4],"what":"塔顶"},
+    {"material":{"slot":"frame","variant":"fence"},"from":[3,15,3],"optional":true,"what":"旗杆"}
+  ]
+}

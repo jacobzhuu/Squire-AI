@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert5",
+  "format": "minecraft:structure_nbt",
+  "displayName": "道路铁路组件 · Tier 5 · railrd_md_vert",
+  "tier": 5,
+  "category": "INFRASTRUCTURE",
+  "minEngineerLevel": 9,
+  "structure": "squire:keepitlevel/infrastructure/railroad/railrd_md_vert5",
+  "airMode": "clear",
+  "entityPolicy": "strip",
+  "blockEntityPolicy": "strip",
+  "offsetY": 0,
+  "metadata": {
+    "author": "Richard Gowen (@alt_bier)",
+    "source": "https://github.com/gowenrw/keepitlevel_mc_style/blob/74259e3da775f467275adb57b076caefdea84d99/blueprints/keepitlevel/infrastructure/railroad/railrd_md_vert5.blueprint",
+    "license": "MIT",
+    "style": "KeepItLevel",
+    "tags": [
+      "keepitlevel",
+      "catalog",
+      "infrastructure"
+    ]
+  },
+  "sourceFrame": [
+    5,
+    31,
+    11
+  ],
+  "primaryOffset": {
+    "x": 3,
+    "y": 6,
+    "z": 0
+  },
+  "groundY": 0,
+  "siteRequirements": [],
+  "materialSlots": [
+    {
+      "id": "stone_bricks",
+      "displayName": "石砖砌体",
+      "type": "FOUNDATION",
+      "defaultFamily": "squire:stone_bricks",
+      "requiredVariants": [
+        "block",
+        "slab",
+        "stairs"
+      ]
+    }
+  ],
+  "materialBindings": [
+    {
+      "block": "minecraft:stone_bricks",
+      "slot": "stone_bricks",
+      "variant": "block"
+    },
+    {
+      "block": "minecraft:stone_brick_stairs",
+      "slot": "stone_bricks",
+      "variant": "stairs"
+    },
+    {
+      "block": "minecraft:stone_brick_slab",
+      "slot": "stone_bricks",
+      "variant": "slab"
+    }
+  ],
+  "neighborComputedProperties": {
+    "minecraft:stone_brick_stairs": [
+      "shape"
+    ],
+    "minecraft:deepslate_brick_wall": [
+      "up",
+      "north",
+      "south",
+      "east",
+      "west"
+    ]
+  }
+}
